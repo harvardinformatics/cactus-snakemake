@@ -1,0 +1,191 @@
+host: holygpu8a22202.rc.fas.harvard.edu
+Building DAG of jobs...
+shared_storage_local_copies: True
+remote_exec: True
+Using shell: /usr/bin/bash
+Provided remote nodes: 1
+Provided resources: mem_mb=50000, mem_mib=47684, disk_mb=1000, disk_mib=954, cpus_per_task=64
+Resources before job selection: {'mem_mb': 50000, 'mem_mib': 47684, 'disk_mb': 1000, 'disk_mib': 954, 'cpus_per_task': 64, '_cores': 9223372036854775807, '_nodes': 1, '_job_count': 9223372036854775807}
+Ready jobs: 1
+Select jobs to execute...
+Selecting jobs to run using greedy solver.
+Selected jobs: 1
+Resources after job selection: {'mem_mb': 50000, 'mem_mib': 0, 'disk_mb': 1000, 'disk_mib': 0, 'cpus_per_task': 0, '_cores': 9223372036854775806, '_nodes': 0, '_job_count': 9223372036854775807}
+Execute 1 jobs...
+
+[Thu Feb  6 16:46:26 2025]
+rule blast:
+    input: /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simCow.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simDog.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simHuman.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simMouse.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simRat.chr6
+    output: /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/Anc2.cigar
+    jobid: 0
+    reason: Forced execution
+    wildcards: internal_node=Anc2
+    resources: mem_mb=50000, mem_mib=47684, disk_mb=1000, disk_mib=954, tmpdir=<TBD>, slurm_partition=gpu, cpus_per_task=64, runtime=120, slurm_extra='--gres=gpu:4'
+
+General args: ['--force', '--target-files-omit-workdir-adjustment', '--keep-storage-local-copies', '--max-inventory-time 0', '--nocolor', '--notemp', '--no-hooks', '--nolock', '--ignore-incomplete', '', '--verbose ', '--rerun-triggers params mtime software-env input code', '', '', '', '--conda-frontend conda', '', '', '', '', '', '--shared-fs-usage input-output persistence storage-local-copies source-cache sources software-deployment', '', '--wrapper-prefix https://github.com/snakemake/snakemake-wrappers/raw/', '', '', '--configfiles /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-cfg.yaml', '', '--printshellcmds ', '', '--latency-wait 15', '--scheduler ilp', '', '--local-storage-prefix .snakemake/storage', '--scheduler-solver-path /n/home07/gthomas/miniconda3/envs/cactus-smk/bin', '', '', '', '', '', '--default-resources base64//bWVtX21iPTEwMDAwMA== base64//ZGlza19tYj1tYXgoMippbnB1dC5zaXplX21iLCAxMDAwKQ== base64//dG1wZGlyPXN5c3RlbV90bXBkaXI= base64//c2x1cm1fcGFydGl0aW9uPSdzaGFyZWQn base64//Y3B1c19wZXJfdGFzaz04 base64//cnVudGltZT0xNDQw']
+This job is a group job: False
+The call for this job is: srun -n1 --cpu-bind=q --cpus-per-task 64 /n/home07/gthomas/miniconda3/envs/cactus-smk/bin/python3.12 -m snakemake --snakefile /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/cactus_gpu.smk --target-jobs 'blast:internal_node=Anc2' --allowed-rules 'blast' --cores all --attempt 1 --force-use-threads  --resources 'mem_mb=50000' 'mem_mib=47684' 'disk_mb=1000' 'disk_mib=954' 'cpus_per_task=64' --force --target-files-omit-workdir-adjustment --keep-storage-local-copies --max-inventory-time 0 --nocolor --notemp --no-hooks --nolock --ignore-incomplete --verbose  --rerun-triggers params mtime software-env input code --conda-frontend conda --shared-fs-usage input-output persistence storage-local-copies source-cache sources software-deployment --wrapper-prefix https://github.com/snakemake/snakemake-wrappers/raw/ --configfiles /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-cfg.yaml --printshellcmds  --latency-wait 15 --scheduler ilp --local-storage-prefix .snakemake/storage --scheduler-solver-path /n/home07/gthomas/miniconda3/envs/cactus-smk/bin --default-resources base64//bWVtX21iPTEwMDAwMA== base64//ZGlza19tYj1tYXgoMippbnB1dC5zaXplX21iLCAxMDAwKQ== base64//dG1wZGlyPXN5c3RlbV90bXBkaXI= base64//c2x1cm1fcGFydGl0aW9uPSdzaGFyZWQn base64//Y3B1c19wZXJfdGFzaz04 base64//cnVudGltZT0xNDQw --mode remote
+Job is running on host: holygpu8a22202.rc.fas.harvard.edu
+host: holygpu8a22202.rc.fas.harvard.edu
+Building DAG of jobs...
+shared_storage_local_copies: True
+remote_exec: True
+Using shell: /usr/bin/bash
+Provided cores: 64
+Rules claiming more threads will be scaled down.
+Provided resources: mem_mb=50000, mem_mib=47684, disk_mb=1000, disk_mib=954, cpus_per_task=64
+Resources before job selection: {'mem_mb': 50000, 'mem_mib': 47684, 'disk_mb': 1000, 'disk_mib': 954, 'cpus_per_task': 64, '_cores': 64, '_nodes': 9223372036854775807, '_job_count': 9223372036854775807}
+Ready jobs: 1
+Select jobs to execute...
+Selecting jobs to run using greedy solver.
+Selected jobs: 1
+Resources after job selection: {'mem_mb': 0, 'mem_mib': 0, 'disk_mb': 0, 'disk_mib': 0, 'cpus_per_task': 0, '_cores': 63, '_nodes': 9223372036854775806, '_job_count': 9223372036854775807}
+Execute 1 jobs...
+
+[Thu Feb  6 16:46:29 2025]
+localrule blast:
+    input: /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simCow.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simDog.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simHuman.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simMouse.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simRat.chr6
+    output: /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/Anc2.cigar
+    jobid: 0
+    reason: Forced execution
+    wildcards: internal_node=Anc2
+    resources: mem_mb=50000, mem_mib=47684, disk_mb=1000, disk_mib=954, tmpdir=/tmp, slurm_partition=gpu, cpus_per_task=64, runtime=120, slurm_extra='--gres=gpu:4'
+
+singularity exec --nv --cleanenv --bind /n/holylfs05/LABS/informatics/Users/gthomas/tmp/:/tmp /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/bin/cactus_v2.9.3-gpu.sif cactus-blast /tmp/Anc2-blast /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/evolverMammals.txt /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/Anc2.cigar --root Anc2 --logInfo --retryCount 0 --lastzCores 64 --gpu 1 --restart
+[2025-02-06T21:46:34+0000] [MainThread] [I] [toil.statsAndLogging] Enabling realtime logging in Toil
+[2025-02-06T21:46:34+0000] [MainThread] [W] [toil.lib.humanize] Deprecated toil method.  Please use "toil.lib.conversions.human2bytes()" instead."
+[2025-02-06T21:46:34+0000] [MainThread] [W] [toil.lib.humanize] Deprecated toil method.  Please use "toil.lib.conversions.human2bytes()" instead."
+[2025-02-06T21:46:34+0000] [MainThread] [I] [toil.statsAndLogging] Cactus Command: /home/cactus/cactus_env/bin/cactus-blast /tmp/Anc2-blast /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/evolverMammals.txt /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/Anc2.cigar --root Anc2 --logInfo --retryCount 0 --lastzCores 64 --gpu 1 --restart
+[2025-02-06T21:46:34+0000] [MainThread] [I] [toil.statsAndLogging] Cactus Commit: 20488aeb80c3ef985034e538b36ad97ed632cad2
+[2025-02-06T21:46:34+0000] [MainThread] [W] [toil.common] Requested restart but the workflow has already been completed; allowing exports to rerun.
+Traceback (most recent call last):
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/jobStores/fileJobStore.py", line 710, in read_shared_file_stream
+    with open(self._get_shared_file_path(shared_file_name), 'rb' if encoding == None else 'rt', encoding=encoding, errors=errors) as f:
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/Anc2-blast/files/shared/rootJobStoreID'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/jobStores/abstractJobStore.py", line 283, in load_root_job
+    with self.read_shared_file_stream(self.rootJobStoreIDFileName) as f:
+  File "/usr/lib/python3.10/contextlib.py", line 135, in __enter__
+    return next(self.gen)
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/jobStores/fileJobStore.py", line 715, in read_shared_file_stream
+    raise NoSuchFileException(shared_file_name)
+toil.jobStores.abstractJobStore.NoSuchFileException: File 'rootJobStoreID' does not exist.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/common.py", line 953, in restart
+    self._jobStore.load_root_job()
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/jobStores/abstractJobStore.py", line 286, in load_root_job
+    raise JobException('No job has been set as the root in this job store')
+toil.job.JobException: No job has been set as the root in this job store
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/jobStores/fileJobStore.py", line 710, in read_shared_file_stream
+    with open(self._get_shared_file_path(shared_file_name), 'rb' if encoding == None else 'rt', encoding=encoding, errors=errors) as f:
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/Anc2-blast/files/shared/rootJobReturnValue'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/cactus/cactus_env/bin/cactus-blast", line 8, in <module>
+    sys.exit(main())
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/cactus/blast/cactus_blast.py", line 90, in main
+    runCactusBlastOnly(options)
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/cactus/blast/cactus_blast.py", line 100, in runCactusBlastOnly
+    paf_id = toil.restart()
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/common.py", line 957, in restart
+    return self._jobStore.get_root_job_return_value()
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/jobStores/abstractJobStore.py", line 321, in get_root_job_return_value
+    with self.read_shared_file_stream('rootJobReturnValue') as fH:
+  File "/usr/lib/python3.10/contextlib.py", line 135, in __enter__
+    return next(self.gen)
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/jobStores/fileJobStore.py", line 715, in read_shared_file_stream
+    raise NoSuchFileException(shared_file_name)
+toil.jobStores.abstractJobStore.NoSuchFileException: File 'rootJobReturnValue' does not exist.
+Full Traceback (most recent call last):
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/site-packages/snakemake/executors/local.py", line 423, in run_wrapper
+    run(
+  File "/n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/cactus_gpu.smk", line 211, in __rule_blast
+    ####################
+            ^^^^^^^^^^^^^
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/site-packages/snakemake/shell.py", line 357, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command 'set -euo pipefail;  singularity exec --nv --cleanenv --bind /n/holylfs05/LABS/informatics/Users/gthomas/tmp/:/tmp /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/bin/cactus_v2.9.3-gpu.sif cactus-blast /tmp/Anc2-blast /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/evolverMammals.txt /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/Anc2.cigar --root Anc2 --logInfo --retryCount 0 --lastzCores 64 --gpu 1 --restart' returned non-zero exit status 1.
+
+Full Traceback (most recent call last):
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/site-packages/snakemake/executors/local.py", line 423, in run_wrapper
+    run(
+  File "/n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/cactus_gpu.smk", line 211, in __rule_blast
+    ####################
+            ^^^^^^^^^^^^^
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/site-packages/snakemake/shell.py", line 357, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command 'set -euo pipefail;  singularity exec --nv --cleanenv --bind /n/holylfs05/LABS/informatics/Users/gthomas/tmp/:/tmp /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/bin/cactus_v2.9.3-gpu.sif cactus-blast /tmp/Anc2-blast /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/evolverMammals.txt /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/Anc2.cigar --root Anc2 --logInfo --retryCount 0 --lastzCores 64 --gpu 1 --restart' returned non-zero exit status 1.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/site-packages/snakemake/executors/local.py", line 261, in _callback
+    raise ex
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/site-packages/snakemake/executors/local.py", line 247, in cached_or_run
+    run_func(*args)
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/site-packages/snakemake/executors/local.py", line 459, in run_wrapper
+    raise RuleException(
+snakemake.exceptions.RuleException: CalledProcessError in file /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/cactus_gpu.smk, line 174:
+Command 'set -euo pipefail;  singularity exec --nv --cleanenv --bind /n/holylfs05/LABS/informatics/Users/gthomas/tmp/:/tmp /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/bin/cactus_v2.9.3-gpu.sif cactus-blast /tmp/Anc2-blast /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/evolverMammals.txt /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/Anc2.cigar --root Anc2 --logInfo --retryCount 0 --lastzCores 64 --gpu 1 --restart' returned non-zero exit status 1.
+
+RuleException:
+CalledProcessError in file /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/cactus_gpu.smk, line 174:
+Command 'set -euo pipefail;  singularity exec --nv --cleanenv --bind /n/holylfs05/LABS/informatics/Users/gthomas/tmp/:/tmp /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/bin/cactus_v2.9.3-gpu.sif cactus-blast /tmp/Anc2-blast /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/evolverMammals.txt /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/Anc2.cigar --root Anc2 --logInfo --retryCount 0 --lastzCores 64 --gpu 1 --restart' returned non-zero exit status 1.
+[Thu Feb  6 16:46:34 2025]
+Error in rule blast:
+    jobid: 0
+    input: /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simCow.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simDog.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simHuman.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simMouse.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simRat.chr6
+    output: /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/Anc2.cigar
+
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Storing output in storage.
+Full Traceback (most recent call last):
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/site-packages/snakemake/cli.py", line 2158, in args_to_api
+    dag_api.execute_workflow(
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/site-packages/snakemake/api.py", line 595, in execute_workflow
+    workflow.execute(
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/site-packages/snakemake/workflow.py", line 1302, in execute
+    raise WorkflowError("At least one job did not complete successfully.")
+snakemake_interface_common.exceptions.WorkflowError: At least one job did not complete successfully.
+
+WorkflowError:
+At least one job did not complete successfully.
+JOBDIR: /n/holylfs05/LABS/informatics/Users/gthomas/tmp/Anc2-blast EXISTS? True
+
+srun: error: holygpu8a22202: task 0: Exited with exit code 1
+[Thu Feb  6 16:46:35 2025]
+Error in rule blast:
+    jobid: 0
+    input: /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simCow.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simDog.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simHuman.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simMouse.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simRat.chr6
+    output: /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/Anc2.cigar
+
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Storing output in storage.
+Full Traceback (most recent call last):
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/site-packages/snakemake/cli.py", line 2158, in args_to_api
+    dag_api.execute_workflow(
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/site-packages/snakemake/api.py", line 595, in execute_workflow
+    workflow.execute(
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/site-packages/snakemake/workflow.py", line 1302, in execute
+    raise WorkflowError("At least one job did not complete successfully.")
+snakemake_interface_common.exceptions.WorkflowError: At least one job did not complete successfully.
+
+WorkflowError:
+At least one job did not complete successfully.

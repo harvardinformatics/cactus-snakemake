@@ -23,7 +23,8 @@
 working_dir: /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests
 # Where the snakemake pipeline will be run. I usually set this one directory above my output directory, though it shouldn't matter.
 
-cactus_path: /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/bin/cactus_v2.9.3-gpu.sif
+#cactus_path: /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/bin/cactus_v2.9.3-gpu.sif
+cactus_path: download
 
 input_file: /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals.txt
 # Same as input file for cactus-prepare, though a similar file with ancestor genomes should have been created in your output directory
@@ -41,15 +42,15 @@ use_gpu: True
 
 #############################################################################
 
-mask_partition: "gpu"
-mask_gpu: 2
-mask_cpu: 64
+mask_partition: "gpu_test"
+mask_gpu: 1
+mask_cpu: 8
 mask_mem: 25000
 mask_time: 30
 
 ##########################
 
-blast_partition: "gpu"
+blast_partition: "gpu_test"
 blast_gpu: 4
 blast_cpu: 64
 blast_mem: 50000
@@ -57,7 +58,8 @@ blast_time: 120
 
 ##########################
 
-align_partition: "gpu"
+align_partition: "gpu_test"
+align_gpu: 4
 align_cpu: 24
 align_mem: 25000 
 align_time: 120

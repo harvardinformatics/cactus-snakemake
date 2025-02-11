@@ -3,6 +3,9 @@
 tests/evolverMammals-out/*
 !tests/evolverMammals-out/evolverMammals.txt
 
+tests/evolverMammals-out-working/
+tests/evolverMammals-out-in-progress/
+
 *.snakemake*
 *__pycache__*
 

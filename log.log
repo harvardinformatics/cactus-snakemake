@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/bin/snakemake", line 6, in <module>
+    from snakemake.cli import main
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/site-packages/snakemake/cli.py", line 15, in <module>
+    from snakemake_interface_executor_plugins.registry import ExecutorPluginRegistry
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/site-packages/snakemake_interface_executor_plugins/registry/__init__.py", line 18, in <module>
+    from snakemake_interface_executor_plugins.registry.plugin import Plugin
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/site-packages/snakemake_interface_executor_plugins/registry/plugin.py", line 18, in <module>
+    class Plugin(PluginBase):
+KeyboardInterrupt

@@ -32,3 +32,7 @@ halAppendSubtree evolverMammals-out/evolverMammals.hal evolverMammals-out/Anc1.h
 halAppendSubtree evolverMammals-out/evolverMammals.hal evolverMammals-out/Anc2.hal Anc2 Anc2 --merge --hdf5InMemory
 halAppendSubtree evolverMammals-out/evolverMammals.hal evolverMammals-out/mr.hal mr mr --merge --hdf5InMemory
 
+
+
+.snakemake/log/2025-02-11T094139.028986.snakemake.log
+/n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/.snakemake/slurm_logs/rule_align/Anc1/3465515.log
