@@ -10,3 +10,5 @@ tests/evolverMammals-out-in-progress/
 *__pycache__*
 
 bin/
+
+tests/*.sif

@@ -17,22 +17,25 @@ import lib.treelib as treelib
 DRY_RUN = False;
 if any([arg in sys.argv for arg in ["--dry-run", "--dryrun", "-n"]]):
     DRY_RUN = True;
-
-print(DRY_RUN);
 # Whether the pipeline is running in dry-run mode
 
-sys.exit();
+log_level = "info";
 
-log_level = "error";
+if any([arg in sys.argv for arg in ["--rulegraph", "--dag"]]):
+    log_level = "notset";
+# Set the log level based on the arguments
+
+#log_level = "debug";
+# Uncomment to set the log level to debug
+
 log_verbosity = "screen"; # "screen", "file", "both"
 log_filename = f"cactus.{log_level}.log"; # Log file name if log_verbosity is "file" or "both"
 cactuslib.configureLogging(log_filename, log_level.upper(), log_verbosity.upper())
-logger = logging.getLogger('cactuslib')
+cactuslib_logger = logging.getLogger('cactuslib')
 # Setup logging if debugging
 
 wd = config["working_dir"];
 os.chdir(wd);
-#print(os.getcwd());
 # Switching to the working directory of the project so paths can be relative
 
 USE_GPU = config["use_gpu"]
@@ -45,12 +48,12 @@ if config["cactus_path"].lower() in ["download", ""]:
     cactus_image_path = cactuslib.downloadCactusImage(USE_GPU);
 else:
     cactus_image_path = config["cactus_path"];
-# The path to the cactus image, either downloaded or specified in the config file
+    # The path to the cactus image, either downloaded or specified in the config file
 
-if not os.path.exists(cactus_image_path):
-    logger.error(f"Could not find cactus image at {cactus_image_path}");
-    sys.exit(1);
-# Check if the cactus image exists
+    if not os.path.exists(cactus_image_path):
+        cactuslib_logger.error(f"Could not find cactus image at {cactus_image_path}");
+        sys.exit(1);
+    # Check if the cactus image exists
 
 CACTUS_PATH = "singularity exec --nv --cleanenv " + cactus_image_path;
 CACTUS_PATH_TMP = "singularity exec --nv --cleanenv --bind " + TMPDIR + ":/tmp " + cactus_image_path;
@@ -63,6 +66,7 @@ INPUT_FILE = config["input_file"];
 # The cactus input file used to generate the config file with cactus-prepare
 
 OUTPUT_DIR = config["output_dir"];
+OVERWRITE_OUTPUT_DIR = config["overwrite_output_dir"];
 # The output directory specified when cactus-prepare was run
 
 OUTPUT_HAL = os.path.join(OUTPUT_DIR, config["final_hal"]);
@@ -74,7 +78,7 @@ OUTPUT_HAL = os.path.join(OUTPUT_DIR, config["final_hal"]);
 #############################################################################
 # cactus-prepare
 
-cactuslib.runCactusPrepare(INPUT_FILE, CACTUS_PATH, OUTPUT_DIR, OUTPUT_HAL, USE_GPU);
+cactuslib.runCactusPrepare(INPUT_FILE, CACTUS_PATH, OUTPUT_DIR, OVERWRITE_OUTPUT_DIR, OUTPUT_HAL, USE_GPU);
 CACTUS_FILE = os.path.join(OUTPUT_DIR, os.path.basename(INPUT_FILE));
 # Run cactus-prepare to generate the cactus input file with ancestral nodes and labeled tree
 
@@ -101,8 +105,9 @@ internals = cactuslib.parseInternals(internals, tips, tinfo, anc_tree);
 # The tree is parsed to get the root node and the internal nodes are updated with the correct names
 
 if log_level == "debug":
-    logger.debug(f"EXITING: {__file__}");
+    cactuslib_logger.debug("EXITING BEFORE RULES. DEBUG MODE.");
     sys.exit(0);
+# Exit before running rules if in debug mode
 
 #############################################################################
 # Final rule - rule that depends on final expected output file and initiates all
@@ -112,14 +117,14 @@ localrules: all
 
 rule all:
     input:
-        expand(os.path.join(OUTPUT_DIR, "{final_tip}"), final_tip=[tips[name]['output'] for name in tips]),
+        os.path.join(OUTPUT_DIR, "hal-append-subtree.log"),
+        # The log file from the append rule (halAppendSubtree)  
+
+        #expand(os.path.join(OUTPUT_DIR, "{final_tip}"), final_tip=[tips[name]['output'] for name in tips]),
         # The masked input files from rule mask
 
-        expand(os.path.join(OUTPUT_DIR, "{internal_node}.fa"), internal_node=[node for node in internals]),
+        #expand(os.path.join(OUTPUT_DIR, "{internal_node}.fa"), internal_node=[node for node in internals]),
         # The final FASTA sequences from each internal node after rules blast, align, and convert
-
-        os.path.join(OUTPUT_DIR, "hal-append-subtree.log"),
-        # The log file from the append rule (halAppendSubtree)    
 
         #OUTPUT_MAF
         #os.path.join(OUTPUT_DIR, root_name + ".maf")
@@ -143,13 +148,13 @@ rule mask:
         genome_name = lambda wildcards: [ name for name in tips if tips[name]['output'] == wildcards.final_tip ][0],
         host_tmp_dir = lambda wildcards: os.path.join(TMPDIR, [ name for name in tips if tips[name]['output'] == wildcards.final_tip ][0] + "-mask"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
         job_tmp_dir = lambda wildcards: os.path.join("/tmp", [ name for name in tips if tips[name]['output'] == wildcards.final_tip ][0] + "-mask"), # This is the tmp dir in the container, which is bound to the host tmp dir
-        gpu_opt = "--gpu " + str(config["mask_gpu"]) if USE_GPU else ""
+        gpu_opt = f"--gpu {config["mask_gpu"]}" if USE_GPU else ""
     resources:
         slurm_partition = config["mask_partition"],
         cpus_per_task = config["mask_cpu"],
         mem_mb = config["mask_mem"],
         runtime = config["mask_time"],
-        slurm_extra = "'--gres=gpu:" + str(config["mask_gpu"]) + "'"
+        slurm_extra = f"'--gres=gpu:{config["mask_gpu"]}'" if USE_GPU else ""
     # shell:
     #     """
     #     {params.path} cactus-preprocess {params.job_dir} {params.input_file} {params.cactus_file} --inputNames {params.genome_name} --realTimeLogging true --logInfo --retryCount 0 --maxCores {resources.cpus_per_task} {params.gpu_opt}
@@ -177,13 +182,13 @@ rule blast:
         node = lambda wildcards: wildcards.internal_node,
         host_tmp_dir = lambda wildcards: os.path.join(TMPDIR, wildcards.internal_node + "-blast"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
         job_tmp_dir = lambda wildcards: os.path.join("/tmp", wildcards.internal_node + "-blast"), # This is the tmp dir in the container, which is bound to the host tmp dir
-        gpu_opt = "--gpu " + str(config["blast_gpu"]) if USE_GPU else ""
+        gpu_opt = f"--gpu {config["blast_gpu"]}" if USE_GPU else ""
     resources:
         slurm_partition = config["blast_partition"],
         cpus_per_task = config["blast_cpu"],
         mem_mb = config["blast_mem"],
         runtime = config["blast_time"],
-        slurm_extra = "'--gres=gpu:" + str(config["blast_gpu"]) + "'"
+        slurm_extra = f"'--gres=gpu:{config["blast_gpu"]}'" + "'" if USE_GPU else ""
     run:
         if os.path.isdir(params.host_tmp_dir):
             shell("{params.path} cactus-blast {params.job_tmp_dir} {params.cactus_file} {output} --root {params.node} --logInfo --retryCount 0 --lastzCores {resources.cpus_per_task} {params.gpu_opt} --restart")
@@ -209,18 +214,18 @@ rule align:
         host_tmp_dir = lambda wildcards: os.path.join(TMPDIR, wildcards.internal_node + "-align"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
         job_tmp_dir = lambda wildcards: os.path.join("/tmp", wildcards.internal_node + "-align"), # This is the tmp dir in the container, which is bound to the host tmp dir
         work_dir = TMPDIR,
-        gpu_opt = "--gpu " + str(config["align_gpu"]) if USE_GPU else ""
+        gpu_opt = f"--gpu {config["align_gpu"]}" if USE_GPU else ""
     resources:
         slurm_partition = config["align_partition"],
         cpus_per_task = config["align_cpu"],
         mem_mb = config["align_mem"],
         runtime = config["align_time"],
-        slurm_extra = "'--gres=gpu:" + str(config["align_gpu"]) + "'"
+        slurm_extra = f"'--gres=gpu:{config["align_gpu"]}'" + "'" if USE_GPU else ""
     run:
         if os.path.isdir(params.host_tmp_dir):
-            shell("{params.path} cactus-align {params.job_tmp_dir} {params.cactus_file} {input.cigar_file} {output} --root {params.node} --logInfo --retryCount 0 --workDir {params.work_dir} --maxCores {resources.cpus_per_task} --defaultDisk 450G --gpu --restart")
+            shell("{params.path} cactus-align {params.job_tmp_dir} {params.cactus_file} {input.cigar_file} {output} --root {params.node} --logInfo --retryCount 0 --workDir {params.work_dir} --maxCores {resources.cpus_per_task} --defaultDisk 450G {params.gpu_opt} --restart")
         else:
-            shell("{params.path} cactus-align {params.job_tmp_dir} {params.cactus_file} {input.cigar_file} {output} --root {params.node} --logInfo --retryCount 0 --workDir {params.work_dir} --maxCores {resources.cpus_per_task} --defaultDisk 450G --gpu")
+            shell("{params.path} cactus-align {params.job_tmp_dir} {params.cactus_file} {input.cigar_file} {output} --root {params.node} --logInfo --retryCount 0 --workDir {params.work_dir} --maxCores {resources.cpus_per_task} --defaultDisk 450G {params.gpu_opt}")
 ## This rule runs cactus-align for every internal node
 ## Runtimes for turtles range from 4 to 16 hours with the above resources
 

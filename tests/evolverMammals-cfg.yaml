@@ -31,6 +31,11 @@ input_file: /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/e
 # when you ran cactus-prepare.
 
 output_dir: /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/
+# The output directory for the snakemake pipeline. This should be the same as the outDir in cactus-prepare.
+# This directory will be created if it doesn't exist.
+
+overwrite_output_dir: True
+# If the output directory already exists and you don't care if the files within it might be overwritten, set this to True.
 
 final_hal: evolverMammals.hal
 # The name you want for the final HAL file.
@@ -38,11 +43,19 @@ final_hal: evolverMammals.hal
 tmp_dir: /n/holylfs05/LABS/informatics/Users/gthomas/tmp/
 # A temporary directory for snakemake and cactus to use. Should have lots of space.
 
-use_gpu: True
+use_gpu: False
+# Whether or not to use the GPU version of cactus.
+# If you don't have a GPU, set this to False.
+# Either way, be sure to set the correct values for the partitions and GPUs below.
 
 #############################################################################
+## Below are the partitions and resources for each rule in the snakemake pipeline.
+## Be sure to adjust them to meet your needs and the resources available on your cluster.
+## Notably, for mask, blast, and align, if you use the GPU version of cactus, you will need to
+## provide a partition with GPUs and set the gpu values to the number of GPUs you want to use.
+## If you are not using the cactus GPU version, the gpu values will be ignored.
 
-mask_partition: "gpu_test"
+mask_partition: "shared"
 mask_gpu: 1
 mask_cpu: 8
 mask_mem: 25000
@@ -50,15 +63,15 @@ mask_time: 30
 
 ##########################
 
-blast_partition: "gpu_test"
+blast_partition: "shared"
 blast_gpu: 4
-blast_cpu: 64
+blast_cpu: 48
 blast_mem: 50000
 blast_time: 120
 
 ##########################
 
-align_partition: "gpu_test"
+align_partition: "shared"
 align_gpu: 4
 align_cpu: 24
 align_mem: 25000 

@@ -13,7 +13,7 @@ import lib.treelib as treelib
 
 #############################################################################
 
-logger = logging.getLogger('cactuslib')
+cactuslib_logger = logging.getLogger('cactuslib')
 # Create the logger
 
 #############################################################################
@@ -26,18 +26,18 @@ def configureLogging(log_filename: str, log_level : str, log_verbosity: str) -> 
     # Format the log messages
 
     
-    if not logger.hasHandlers():
+    if not cactuslib_logger.hasHandlers():
     # Check if logger has handlers already (necessary to prevent duplicate handlers in some cases)        
         if log_verbosity in ["BOTH", "FILE"]:
             handler_file = logging.FileHandler(log_filename)
             handler_file.setFormatter(logging.Formatter(fmt=log_format, datefmt=date_format))
-            logger.addHandler(handler_file)
+            cactuslib_logger.addHandler(handler_file)
         # Add file handler if specified
 
         if log_verbosity in ["BOTH", "SCREEN"]:
             handler_stderr = logging.StreamHandler()
             handler_stderr.setFormatter(logging.Formatter(fmt=log_format, datefmt=date_format))
-            logger.addHandler(handler_stderr)
+            cactuslib_logger.addHandler(handler_stderr)
         # Add stream handler if specified
 
         if log_verbosity not in ["BOTH", "FILE", "SCREEN"]:
@@ -57,11 +57,18 @@ def configureLogging(log_filename: str, log_level : str, log_verbosity: str) -> 
     # Map of string levels to logging module constants
     
     try:
-        logger.setLevel(level_map[log_level])
-        logger.debug(f"Logging level set to {log_level}")
+        cactuslib_logger.setLevel(level_map[log_level])
+        cactuslib_logger.debug(f"Logging level set to {log_level}")
     except KeyError:
         raise ValueError(f"Invalid logging level: {log_level}. Choose from {list(level_map.keys())}")
     # Set the logging level and handle invalid levels
+
+#############################################################################
+
+def turnOffLogger(log):
+    for handler in log.handlers[:]:  # Handle a copy of handlers list
+        log.removeHandler(handler)
+        handler.close()
 
 #############################################################################
 
@@ -106,7 +113,7 @@ def fetchLatestCactusTag(get_gpu: bool) -> str:
     if not isinstance(latest_version_tag, str) or not pattern.match(latest_version_tag):
         raise RuntimeError(f"Latest tag '{latest_version_tag}' does not match expected format.")
 
-    logger.debug(f"Latest {'GPU' if get_gpu else 'non-GPU'} version tag: {latest_version_tag}")
+    cactuslib_logger.info(f"Latest {'GPU' if get_gpu else 'non-GPU'} version tag: {latest_version_tag}")
     return latest_version_tag
 
 #############################################################################
@@ -115,9 +122,9 @@ def downloadCactusImage(use_gpu: bool) -> None:
     latest_tag = fetchLatestCactusTag(use_gpu)
 
     # Ensure there is a valid tag returned
-    if not latest_tag:
-        print(f"No valid tag found for {'GPU' if use_gpu else 'non-GPU'} version.")
-        return None
+    # if not latest_tag:
+    #     print(f"No valid tag found for {'GPU' if use_gpu else 'non-GPU'} version.")
+    #     return None
 
     image_uri = f"docker://quay.io/comparative-genomics-toolkit/cactus:{latest_tag}"
 
@@ -125,33 +132,40 @@ def downloadCactusImage(use_gpu: bool) -> None:
     image_name = f"cactus_{latest_tag.replace('/', '_')}.sif"
 
     if os.path.exists(image_name):
-        logger.debug(f"Image {image_name} already exists.")
-        logger.debug("=" * 87);
+        cactuslib_logger.warning(f"Image {image_name} already exists. This image will be used.")
+        cactuslib_logger.debug("=" * 87);
         return os.path.abspath(image_name)
 
     else:
         # The singularity pull command with the output file name
         command = ['singularity', 'pull', '--disable-cache', image_name, image_uri]
 
-        logger.debug(f"Cactus image name to download: {image_name}")
-        logger.debug(f"Command to pull image: {' '.join(command)}")
-        logger.debug("===================================================================================");
+        cactuslib_logger.info(f"Cactus image name to download: {image_name}")
+        cactuslib_logger.info(f"Command to pull image: {' '.join(command)}")
+        cactuslib_logger.debug("===================================================================================");
 
         try:
             subprocess.run(command, check=True)
-            print(f"Successfully pulled {image_uri} to {os.path.abspath(image_name)}")
+            cactuslib_logger.info(f"Successfully pulled {image_uri} to {os.path.abspath(image_name)}")
             return os.path.abspath(image_name)
         except subprocess.CalledProcessError as e:
-            print(f"Failed to pull the image: {e}")
-            return None
+            cactuslib_logger.error(f"Failed to pull the image: {e}")
+            sys.exit(1)
+
 
 #############################################################################
 
-def runCactusPrepare(input_file, cactus_path, output_dir, output_hal, use_gpu):
+def runCactusPrepare(input_file, cactus_path, output_dir, overwite_output_dir, output_hal, use_gpu):
 # This function runs cactus-prepare on the input file and saves the output in the output directory
 
     if not os.path.exists(output_dir):
+        cactuslib_logger.info(f"Creating output directory: {output_dir}")
         os.makedirs(output_dir);
+    elif os.path.exists(output_dir) and not overwite_output_dir:
+        cactuslib_logger.error(f"Output directory already exists: {output_dir}. Set overwrite_output_dir to True in your config file to overwrite.")
+        sys.exit(1);
+    else:
+        cactuslib_logger.info(f"Output directory {output_dir} already exists and overwrite_output_dir is True. Continuing.");
     # Make the output directory if it doesn't exist
 
     cactus_path_list = cactus_path.split(" ");
@@ -161,18 +175,18 @@ def runCactusPrepare(input_file, cactus_path, output_dir, output_hal, use_gpu):
         command.append("--gpu");
     # The command to run cactus-prepare
 
-    logger.debug(f"Command to run cactus-prepare: {' '.join(command)}");
-    logger.debug("===================================================================================");
+    cactuslib_logger.info(f"Command to run cactus-prepare: {' '.join(command)}");
+    cactuslib_logger.debug("===================================================================================");
     # Debug output
 
     try:
         with open("cactus-prepare.log", "w") as log_file:
             subprocess.run(command, check=True, stdout=log_file, stderr=subprocess.STDOUT)
     except FileNotFoundError as e:
-        logger.error(f"File not found: {e}")
+        cactuslib_logger.error(f"File not found: {e}")
         sys.exit(1)
     except subprocess.CalledProcessError as e:
-        logger.error(f"Error running cactus-prepare: {e}")
+        cactuslib_logger.error(f"Error running cactus-prepare: {e}")
         sys.exit(1)
     # Run the command and check for errors
 
@@ -193,8 +207,7 @@ def readTips(input_file):
         # Skip any blank lines
 
         if first:
-            #tree = line.strip();
-            logger.debug(f"USER INPUT TREE: {line.strip()}");
+            cactuslib_logger.info(f"USER INPUT TREE: {line.strip()}");
             first = False;
             continue;
         # The first line contains the input tree... skip
@@ -204,11 +217,11 @@ def readTips(input_file):
         tips[line[0]] = { 'input' : [line[1]], 'name' : line[0], 'output' : "NA" };
     ## Read the genome names and original genome fasta file paths from the same cactus input file used with cactus-prepare
 
-    if logger.isEnabledFor(logging.DEBUG):
-        logger.debug("TREE TIPS:");
+    if cactuslib_logger.isEnabledFor(logging.DEBUG):
+        cactuslib_logger.debug("TREE TIPS:");
         for g in tips:
-            logger.debug(f"{g}: {tips[g]}")
-        logger.debug("===================================================================================");
+            cactuslib_logger.debug(f"{g}: {tips[g]}")
+        cactuslib_logger.debug("===================================================================================");
     ## Some output for debugging
 
     return tips;
@@ -250,7 +263,7 @@ def initializeInternals(cactus_file, tips):
                                     'seq-file' : cur_base };
     ## Read the internal node labels and output file paths from the file generated by cactus-prepare
 
-    logger.debug(f"CACTUS LABELED TREE: {anc_tree}");
+    cactuslib_logger.info(f"CACTUS LABELED TREE: {anc_tree}");
 
     return internals, anc_tree;
 
@@ -304,11 +317,11 @@ def parseInternals(internals, tips, tinfo, anc_tree):
         # Add the expected input seqs to the main internals dict for this node       
     ## Another loop through the tree to get the input sequences for each node
 
-    if logger.isEnabledFor(logging.DEBUG):
-        logger.debug("TREE INTERNAL NODES:");
+    if cactuslib_logger.isEnabledFor(logging.DEBUG):
+        cactuslib_logger.debug("TREE INTERNAL NODES:");
         for g in internals:
-            logger.debug(f"{g}: {internals[g]}");
-        logger.debug("===================================================================================");
+            cactuslib_logger.debug(f"{g}: {internals[g]}");
+        cactuslib_logger.debug("===================================================================================");
     ## Some output for debugging
 
     return internals;
