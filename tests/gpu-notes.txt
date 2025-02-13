@@ -1,0 +1,19 @@
+mask:
+    gpu == 1 works
+    gpu == 2 works*
+    gpu == 3 works*
+    gpu == 4 works*
+blast:
+    gpu == 1 works
+    gpu == 2 doesn't work
+    gpu == 3 doesn't work
+    gpu == 4 doesn't work
+
+    toil.batchSystems.abstractBatchSystem.InsufficientSystemResources: The job 'run_lastz' kind-run_lastz/instance-yaev5p41 v1 is requesting [{'count': 2, 'kind': 'gpu', 'api': 'cuda', 'brand': 'nvidia'}] accelerators, more than the maximum of [{'kind': 'gpu', 'brand': 'nvidia', 'api': 'cuda', 'count': 1}] accelerators that SingleMachineBatchSystem was configured with. The accelerator {'count': 2, 'kind': 'gpu', 'api': 'cuda', 'brand': 'nvidia'} could not be provided. Scale is set to 1.
+align:
+    gpu == 1 works
+    gpu == 2 works*
+    gpu == 3 works*
+    gpu == 4 works*
+
+* note that "works" here means "runs to completion". I have yet to determine if it is actually using all the GPUs specified

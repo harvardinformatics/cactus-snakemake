@@ -179,8 +179,15 @@ def runCactusPrepare(input_file, cactus_path, output_dir, overwite_output_dir, o
     cactuslib_logger.debug("===================================================================================");
     # Debug output
 
+    if use_gpu:
+        logfile = "cactus-prepare-gpu.log";
+    else:
+        logfile = "cactus-prepare.log";
+    logpath = os.path.join(output_dir, logfile);
+    # The log file name
+
     try:
-        with open("cactus-prepare.log", "w") as log_file:
+        with open(logpath, "w") as log_file:
             subprocess.run(command, check=True, stdout=log_file, stderr=subprocess.STDOUT)
     except FileNotFoundError as e:
         cactuslib_logger.error(f"File not found: {e}")

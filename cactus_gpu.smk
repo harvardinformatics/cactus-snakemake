@@ -188,7 +188,7 @@ rule blast:
         cpus_per_task = config["blast_cpu"],
         mem_mb = config["blast_mem"],
         runtime = config["blast_time"],
-        slurm_extra = f"'--gres=gpu:{config["blast_gpu"]}'" + "'" if USE_GPU else ""
+        slurm_extra = f"'--gres=gpu:{config["blast_gpu"]}'" if USE_GPU else ""
     run:
         if os.path.isdir(params.host_tmp_dir):
             shell("{params.path} cactus-blast {params.job_tmp_dir} {params.cactus_file} {output} --root {params.node} --logInfo --retryCount 0 --lastzCores {resources.cpus_per_task} {params.gpu_opt} --restart")
@@ -214,13 +214,13 @@ rule align:
         host_tmp_dir = lambda wildcards: os.path.join(TMPDIR, wildcards.internal_node + "-align"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
         job_tmp_dir = lambda wildcards: os.path.join("/tmp", wildcards.internal_node + "-align"), # This is the tmp dir in the container, which is bound to the host tmp dir
         work_dir = TMPDIR,
-        gpu_opt = f"--gpu {config["align_gpu"]}" if USE_GPU else ""
+        gpu_opt = "--gpu" if USE_GPU else ""
     resources:
         slurm_partition = config["align_partition"],
         cpus_per_task = config["align_cpu"],
         mem_mb = config["align_mem"],
         runtime = config["align_time"],
-        slurm_extra = f"'--gres=gpu:{config["align_gpu"]}'" + "'" if USE_GPU else ""
+        slurm_extra = f"'--gres=gpu:{config["align_gpu"]}'" if USE_GPU else ""
     run:
         if os.path.isdir(params.host_tmp_dir):
             shell("{params.path} cactus-align {params.job_tmp_dir} {params.cactus_file} {input.cigar_file} {output} --root {params.node} --logInfo --retryCount 0 --workDir {params.work_dir} --maxCores {resources.cpus_per_task} --defaultDisk 450G {params.gpu_opt} --restart")
