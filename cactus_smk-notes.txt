@@ -1,0 +1,47 @@
+Example cmd for mouse genome
+
+Need to first run the cactus-preprocess script to generate commands and cactus config files:
+cactus-prepare genomes.txt --outDir turtle-output --outSeqFile turtle-output/turtles.txt --outHal turtle-output/turtles.hal --jobStore jobstore --gpu --defaultCores 32
+time -p singularity exec --nv --cleanenv ../bin/cactus_v2.9.3-gpu.sif cactus-prepare evolverMammals.txt --outDir evolverMammals-out/ --outHal evolverMammals-out/evolverMammals.hal --gpu
+
+Run snakemake
+snakemake -p -s cactus_gpu.smk --configfile turtle-cfg.yaml --profile profiles/slurm_profile/ --dryrun
+
+To generate rulegraph image:
+snakemake -p -s cactus_gpu.smk --configfile turtle-cfg.yaml --profile profiles/slurm_profile/ --dryrun --rulegraph | dot -Tpng > dag-new.png
+
+############################################################################
+
+Cactus works by rounds of depth of the input tree and runs several steps at each node of the tree.
+For tip nodes Cactus runs its preprocess command which masks the input fasta for each genome
+  1. Preprocess (mask)
+      Inputs: Original genome fasta
+      Output: Masked genome fasta with same basename as input fasta, but in the Cactus output directory
+
+For each internal node, cactus runs 3 commands:
+  2. Blast
+      Inputs: The fasta sequences of the descendant nodes. For a tip this is the one from step 1, for an internal node
+              this is the result of step 4
+      Output: A .cigar file
+
+  3. Align
+      Inputs: The .cigar file from the previous step and the fasta sequences of the descendant nodes. 
+              For a tip this is the one from step 1, for an internal node this is the result of step 4 
+      Output: A .hal file
+              
+  4. Convert (hal2fasta)
+      Inputs: The .hal file from the previous step
+      Output: A fasta file for the current node
+
+  5. Append (halAppendSubtree)
+      Inputs: All .hal files from each internal node in the tree
+      Outputs: The .hal file at the root of the tree (Anc00.hal) with all alignments appended to it
+
+  6. MAF (hal2mafMP.py)
+      Inputs: The appended .hal file from halAppendSubtree
+      Output: The alignment in MAF format
+
+############################################################################
+
+BLAST test command:
+singularity exec --nv --cleanenv --bind /n/holylfs05/LABS/informatics/Users/gthomas/tmp/:/tmp /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/cactus_v2.9.3-gpu.sif cactus-blast /tmp/mr-blast /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/evolverMammals.txt /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/mr.cigar --root mr --logInfo --retryCount 0 --lastzCores 64 --gpu 4 --restart

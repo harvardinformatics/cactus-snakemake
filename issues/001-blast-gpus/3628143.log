@@ -1,0 +1,238 @@
+2025-02-12 13:41:47 - cactuslib - INFO - Latest GPU version tag: v2.9.3-gpu
+2025-02-12 13:41:47 - cactuslib - WARNING - Image cactus_v2.9.3-gpu.sif already exists. This image will be used.
+2025-02-12 13:41:47 - cactuslib - INFO - Output directory /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/ already exists and overwrite_output_dir is True. Continuing.
+2025-02-12 13:41:47 - cactuslib - INFO - Command to run cactus-prepare: singularity exec --nv --cleanenv /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/cactus_v2.9.3-gpu.sif cactus-prepare /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals.txt --outDir /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/ --outHal /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/evolverMammals.hal --gpu
+2025-02-12 13:41:48 - cactuslib - INFO - USER INPUT TREE: ((simHuman_chr6:0.144018,(simMouse_chr6:0.084509,simRat_chr6:0.091589)mr:0.271974):0.020593,(simCow_chr6:0.18908,simDog_chr6:0.16303):0.032898);
+2025-02-12 13:41:48 - cactuslib - INFO - CACTUS LABELED TREE: ((simHuman_chr6:0.144018,(simMouse_chr6:0.084509,simRat_chr6:0.091589)mr:0.271974)Anc1:0.020593,(simCow_chr6:0.18908,simDog_chr6:0.16303)Anc2:0.032898)Anc0;
+host: holygpu7c26204.rc.fas.harvard.edu
+Building DAG of jobs...
+shared_storage_local_copies: True
+remote_exec: True
+Using shell: /usr/bin/bash
+Provided remote nodes: 1
+Provided resources: mem_mb=50000, mem_mib=47684, disk_mb=1000, disk_mib=954, cpus_per_task=64
+Resources before job selection: {'mem_mb': 50000, 'mem_mib': 47684, 'disk_mb': 1000, 'disk_mib': 954, 'cpus_per_task': 64, '_cores': 9223372036854775807, '_nodes': 1, '_job_count': 9223372036854775807}
+Ready jobs: 1
+Select jobs to execute...
+Selecting jobs to run using greedy solver.
+Selected jobs: 1
+Resources after job selection: {'mem_mb': 50000, 'mem_mib': 0, 'disk_mb': 1000, 'disk_mib': 0, 'cpus_per_task': 0, '_cores': 9223372036854775806, '_nodes': 0, '_job_count': 9223372036854775807}
+Execute 1 jobs...
+
+[Wed Feb 12 13:41:48 2025]
+rule blast:
+    input: /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simCow.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simDog.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simHuman.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simMouse.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simRat.chr6
+    output: /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/mr.cigar
+    jobid: 0
+    reason: Forced execution
+    wildcards: internal_node=mr
+    resources: mem_mb=50000, mem_mib=47684, disk_mb=1000, disk_mib=954, tmpdir=<TBD>, slurm_partition=gpu_test, cpus_per_task=64, runtime=120, slurm_extra='--gres=gpu:4'
+
+General args: ['--force', '--target-files-omit-workdir-adjustment', '--keep-storage-local-copies', '--max-inventory-time 0', '--nocolor', '--notemp', '--no-hooks', '--nolock', '--ignore-incomplete', '', '--verbose ', '--rerun-triggers mtime code params input software-env', '', '', '', '--conda-frontend conda', '', '', '', '', '', '--shared-fs-usage sources storage-local-copies input-output software-deployment persistence source-cache', '', '--wrapper-prefix https://github.com/snakemake/snakemake-wrappers/raw/', '', '', '--configfiles /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-cfg.yaml', '', '--printshellcmds ', '', '--latency-wait 15', '--scheduler ilp', '', '--local-storage-prefix .snakemake/storage', '--scheduler-solver-path /n/home07/gthomas/miniconda3/envs/cactus-smk/bin', '', '', '', '', '', '--default-resources base64//bWVtX21iPTEwMDAwMA== base64//ZGlza19tYj1tYXgoMippbnB1dC5zaXplX21iLCAxMDAwKQ== base64//dG1wZGlyPXN5c3RlbV90bXBkaXI= base64//c2x1cm1fcGFydGl0aW9uPSdzaGFyZWQn base64//Y3B1c19wZXJfdGFzaz04 base64//cnVudGltZT0xNDQw']
+This job is a group job: False
+The call for this job is: srun -n1 --cpu-bind=q --cpus-per-task 64 /n/home07/gthomas/miniconda3/envs/cactus-smk/bin/python3.12 -m snakemake --snakefile /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/cactus_gpu.smk --target-jobs 'blast:internal_node=mr' --allowed-rules 'blast' --cores all --attempt 1 --force-use-threads  --resources 'mem_mb=50000' 'mem_mib=47684' 'disk_mb=1000' 'disk_mib=954' 'cpus_per_task=64' --force --target-files-omit-workdir-adjustment --keep-storage-local-copies --max-inventory-time 0 --nocolor --notemp --no-hooks --nolock --ignore-incomplete --verbose  --rerun-triggers mtime code params input software-env --conda-frontend conda --shared-fs-usage sources storage-local-copies input-output software-deployment persistence source-cache --wrapper-prefix https://github.com/snakemake/snakemake-wrappers/raw/ --configfiles /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-cfg.yaml --printshellcmds  --latency-wait 15 --scheduler ilp --local-storage-prefix .snakemake/storage --scheduler-solver-path /n/home07/gthomas/miniconda3/envs/cactus-smk/bin --default-resources base64//bWVtX21iPTEwMDAwMA== base64//ZGlza19tYj1tYXgoMippbnB1dC5zaXplX21iLCAxMDAwKQ== base64//dG1wZGlyPXN5c3RlbV90bXBkaXI= base64//c2x1cm1fcGFydGl0aW9uPSdzaGFyZWQn base64//Y3B1c19wZXJfdGFzaz04 base64//cnVudGltZT0xNDQw --mode remote
+Job is running on host: holygpu7c26204.rc.fas.harvard.edu
+2025-02-12 13:41:51 - cactuslib - INFO - Latest GPU version tag: v2.9.3-gpu
+2025-02-12 13:41:51 - cactuslib - WARNING - Image cactus_v2.9.3-gpu.sif already exists. This image will be used.
+2025-02-12 13:41:51 - cactuslib - INFO - Output directory /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/ already exists and overwrite_output_dir is True. Continuing.
+2025-02-12 13:41:51 - cactuslib - INFO - Command to run cactus-prepare: singularity exec --nv --cleanenv /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/cactus_v2.9.3-gpu.sif cactus-prepare /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals.txt --outDir /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/ --outHal /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/evolverMammals.hal --gpu
+2025-02-12 13:41:52 - cactuslib - INFO - USER INPUT TREE: ((simHuman_chr6:0.144018,(simMouse_chr6:0.084509,simRat_chr6:0.091589)mr:0.271974):0.020593,(simCow_chr6:0.18908,simDog_chr6:0.16303):0.032898);
+2025-02-12 13:41:52 - cactuslib - INFO - CACTUS LABELED TREE: ((simHuman_chr6:0.144018,(simMouse_chr6:0.084509,simRat_chr6:0.091589)mr:0.271974)Anc1:0.020593,(simCow_chr6:0.18908,simDog_chr6:0.16303)Anc2:0.032898)Anc0;
+host: holygpu7c26204.rc.fas.harvard.edu
+Building DAG of jobs...
+shared_storage_local_copies: True
+remote_exec: True
+Using shell: /usr/bin/bash
+Provided cores: 64
+Rules claiming more threads will be scaled down.
+Provided resources: mem_mb=50000, mem_mib=47684, disk_mb=1000, disk_mib=954, cpus_per_task=64
+Resources before job selection: {'mem_mb': 50000, 'mem_mib': 47684, 'disk_mb': 1000, 'disk_mib': 954, 'cpus_per_task': 64, '_cores': 64, '_nodes': 9223372036854775807, '_job_count': 9223372036854775807}
+Ready jobs: 1
+Select jobs to execute...
+Selecting jobs to run using greedy solver.
+Selected jobs: 1
+Resources after job selection: {'mem_mb': 0, 'mem_mib': 0, 'disk_mb': 0, 'disk_mib': 0, 'cpus_per_task': 0, '_cores': 63, '_nodes': 9223372036854775806, '_job_count': 9223372036854775807}
+Execute 1 jobs...
+
+[Wed Feb 12 13:41:52 2025]
+localrule blast:
+    input: /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simCow.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simDog.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simHuman.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simMouse.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simRat.chr6
+    output: /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/mr.cigar
+    jobid: 0
+    reason: Forced execution
+    wildcards: internal_node=mr
+    resources: mem_mb=50000, mem_mib=47684, disk_mb=1000, disk_mib=954, tmpdir=/tmp, slurm_partition=gpu_test, cpus_per_task=64, runtime=120, slurm_extra='--gres=gpu:4'
+
+singularity exec --nv --cleanenv --bind /n/holylfs05/LABS/informatics/Users/gthomas/tmp/:/tmp /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/cactus_v2.9.3-gpu.sif cactus-blast /tmp/mr-blast /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/evolverMammals.txt /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/mr.cigar --root mr --logInfo --retryCount 0 --lastzCores 64 --gpu 4
+[2025-02-12T18:41:53+0000] [MainThread] [I] [toil.statsAndLogging] Enabling realtime logging in Toil
+[2025-02-12T18:41:53+0000] [MainThread] [W] [toil.lib.humanize] Deprecated toil method.  Please use "toil.lib.conversions.human2bytes()" instead."
+[2025-02-12T18:41:53+0000] [MainThread] [W] [toil.lib.humanize] Deprecated toil method.  Please use "toil.lib.conversions.human2bytes()" instead."
+[2025-02-12T18:41:53+0000] [MainThread] [I] [toil.statsAndLogging] Cactus Command: /home/cactus/cactus_env/bin/cactus-blast /tmp/mr-blast /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/evolverMammals.txt /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/mr.cigar --root mr --logInfo --retryCount 0 --lastzCores 64 --gpu 4
+[2025-02-12T18:41:53+0000] [MainThread] [I] [toil.statsAndLogging] Cactus Commit: 20488aeb80c3ef985034e538b36ad97ed632cad2
+[2025-02-12T18:41:53+0000] [MainThread] [I] [toil.statsAndLogging] Importing file:///n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simDog.chr6
+[2025-02-12T18:41:57+0000] [MainThread] [I] [toil.statsAndLogging] Importing file:///n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simHuman.chr6
+[2025-02-12T18:41:57+0000] [MainThread] [I] [toil.statsAndLogging] Importing file:///n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simMouse.chr6
+[2025-02-12T18:41:57+0000] [MainThread] [I] [toil.statsAndLogging] Importing file:///n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simRat.chr6
+[2025-02-12T18:41:58+0000] [MainThread] [I] [toil] Running Toil version 7.0.0-d569ea5711eb310ffd5703803f7250ebf7c19576 on host holygpu7c26204.rc.fas.harvard.edu.
+[2025-02-12T18:41:58+0000] [MainThread] [I] [toil.realtimeLogger] Starting real-time logging.
+[2025-02-12T18:41:58+0000] [MainThread] [I] [toil.leader] Issued job 'sanitize_then_make_paf_alignments' kind-sanitize_then_make_paf_alignments/instance-amjp4rgi v1 with job batch system ID: 1 and disk: 2.0 Gi, memory: 2.0 Gi, cores: 1, accelerators: [], preemptible: False
+[2025-02-12T18:41:58+0000] [MainThread] [I] [toil.leader] 0 jobs are running, 0 jobs are issued and waiting to run
+[2025-02-12T18:41:58+0000] [MainThread] [I] [toil.leader] Issued job 'sanitize_fasta_header' kind-sanitize_fasta_header/instance-qmip003i v1 with job batch system ID: 2 and disk: 4.1 Mi, memory: 2.0 Gi, cores: 1, accelerators: [], preemptible: False
+[2025-02-12T18:41:58+0000] [MainThread] [I] [toil.leader] Issued job 'sanitize_fasta_header' kind-sanitize_fasta_header/instance-nzzd4gzc v1 with job batch system ID: 3 and disk: 4.4 Mi, memory: 2.0 Gi, cores: 1, accelerators: [], preemptible: False
+[2025-02-12T18:41:58+0000] [MainThread] [I] [toil.leader] Issued job 'sanitize_fasta_header' kind-sanitize_fasta_header/instance-daqw91mi v1 with job batch system ID: 4 and disk: 4.3 Mi, memory: 2.0 Gi, cores: 1, accelerators: [], preemptible: False
+[2025-02-12T18:41:58+0000] [MainThread] [I] [toil.leader] Issued job 'sanitize_fasta_header' kind-sanitize_fasta_header/instance-16k119sy v1 with job batch system ID: 5 and disk: 4.0 Mi, memory: 2.0 Gi, cores: 1, accelerators: [], preemptible: False
+[2025-02-12T18:41:59+0000] [MainThread] [I] [toil-rt] 2025-02-12 18:41:59.252919: Running the command: "cactus_sanitizeFastaHeaders /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/1047/job/tmp04afe0u5/simRat_chr6.fa simRat_chr6"
+[2025-02-12T18:41:59+0000] [MainThread] [I] [toil-rt] 2025-02-12 18:41:59.263283: Running the command: "cactus_sanitizeFastaHeaders /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/0d3d/job/tmput3vvino/simMouse_chr6.fa simMouse_chr6"
+[2025-02-12T18:41:59+0000] [MainThread] [I] [toil-rt] 2025-02-12 18:41:59.267451: Successfully ran: "cactus_sanitizeFastaHeaders /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/1047/job/tmp04afe0u5/simRat_chr6.fa simRat_chr6" in 0.0135 seconds and 2.6 Mi memory
+[2025-02-12T18:41:59+0000] [MainThread] [I] [toil-rt] 2025-02-12 18:41:59.275183: Successfully ran: "cactus_sanitizeFastaHeaders /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/0d3d/job/tmput3vvino/simMouse_chr6.fa simMouse_chr6" in 0.0109 seconds and 2.7 Mi memory
+[2025-02-12T18:41:59+0000] [MainThread] [I] [toil-rt] 2025-02-12 18:41:59.279330: Running the command: "cactus_analyseAssembly simMouse_chr6.sanitized.fa"
+[2025-02-12T18:41:59+0000] [MainThread] [I] [toil-rt] 2025-02-12 18:41:59.287529: Successfully ran: "cactus_analyseAssembly simMouse_chr6.sanitized.fa" in 0.0073 seconds and 2.6 Mi memory
+[2025-02-12T18:41:59+0000] [MainThread] [I] [toil-rt] 2025-02-12 18:41:59.288926: Running the command: "cactus_sanitizeFastaHeaders /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/f6de/job/tmp_a9nm7g_/simDog_chr6.fa simDog_chr6"
+[2025-02-12T18:41:59+0000] [MainThread] [I] [toil-rt] 2025-02-12 18:41:59.294239: Running the command: "cactus_analyseAssembly simRat_chr6.sanitized.fa"
+[2025-02-12T18:41:59+0000] [MainThread] [I] [toil-rt] 2025-02-12 18:41:59.301037: Successfully ran: "cactus_analyseAssembly simRat_chr6.sanitized.fa" in 0.006 seconds and 2.6 Mi memory
+[2025-02-12T18:41:59+0000] [MainThread] [I] [toil-rt] 2025-02-12 18:41:59.301275: Successfully ran: "cactus_sanitizeFastaHeaders /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/f6de/job/tmp_a9nm7g_/simDog_chr6.fa simDog_chr6" in 0.0113 seconds and 2.6 Mi memory
+[2025-02-12T18:41:59+0000] [MainThread] [I] [toil-rt] 2025-02-12 18:41:59.304526: Running the command: "cactus_sanitizeFastaHeaders /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/c0fe/job/tmpbpvow8e8/simHuman_chr6.fa simHuman_chr6"
+[2025-02-12T18:41:59+0000] [MainThread] [I] [toil-rt] 2025-02-12 18:41:59.305607: Running the command: "cactus_analyseAssembly simDog_chr6.sanitized.fa"
+[2025-02-12T18:41:59+0000] [MainThread] [I] [toil-rt] 2025-02-12 18:41:59.312256: Successfully ran: "cactus_analyseAssembly simDog_chr6.sanitized.fa" in 0.0057 seconds and 2.7 Mi memory
+[2025-02-12T18:41:59+0000] [MainThread] [I] [toil-rt] 2025-02-12 18:41:59.316372: Successfully ran: "cactus_sanitizeFastaHeaders /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/c0fe/job/tmpbpvow8e8/simHuman_chr6.fa simHuman_chr6" in 0.0109 seconds and 2.7 Mi memory
+[2025-02-12T18:41:59+0000] [MainThread] [I] [toil-rt] 2025-02-12 18:41:59.339367: Running the command: "cactus_analyseAssembly simHuman_chr6.sanitized.fa"
+[2025-02-12T18:41:59+0000] [MainThread] [I] [toil-rt] 2025-02-12 18:41:59.345937: Successfully ran: "cactus_analyseAssembly simHuman_chr6.sanitized.fa" in 0.0058 seconds and 2.7 Mi memory
+[2025-02-12T18:41:59+0000] [MainThread] [I] [toil.leader] Issued job 'make_paf_alignments' kind-make_paf_alignments/instance-5vmqtj6a v1 with job batch system ID: 6 and disk: 2.0 Gi, memory: 2.0 Gi, cores: 1, accelerators: [], preemptible: False
+[2025-02-12T18:41:59+0000] [Thread-4 (statsAndLoggingAggregator)] [I] [toil.statsAndLogging] Got message from job at time 02-12-2025 18:41:59: Assembly stats for simMouse_chr6: Input-sample: simMouse_chr6.sanitized.fa Total-sequences: 1 Total-length: 636262 Proportion-repeat-masked: 0.228360 ProportionNs: 0.000000 Total-Ns: 0 N50: 636262 Median-sequence-length: 636262 Max-sequence-length: 636262 Min-sequence-length: 636262
+
+[2025-02-12T18:41:59+0000] [Thread-4 (statsAndLoggingAggregator)] [I] [toil.statsAndLogging] Got message from job at time 02-12-2025 18:41:59: Assembly stats for simHuman_chr6: Input-sample: simHuman_chr6.sanitized.fa Total-sequences: 1 Total-length: 601863 Proportion-repeat-masked: 0.244403 ProportionNs: 0.000000 Total-Ns: 0 N50: 601863 Median-sequence-length: 601863 Max-sequence-length: 601863 Min-sequence-length: 601863
+
+[2025-02-12T18:41:59+0000] [Thread-4 (statsAndLoggingAggregator)] [I] [toil.statsAndLogging] Got message from job at time 02-12-2025 18:41:59: Assembly stats for simRat_chr6: Input-sample: simRat_chr6.sanitized.fa Total-sequences: 1 Total-length: 647215 Proportion-repeat-masked: 0.270678 ProportionNs: 0.000000 Total-Ns: 0 N50: 647215 Median-sequence-length: 647215 Max-sequence-length: 647215 Min-sequence-length: 647215
+
+[2025-02-12T18:41:59+0000] [Thread-4 (statsAndLoggingAggregator)] [I] [toil.statsAndLogging] Got message from job at time 02-12-2025 18:41:59: Assembly stats for simDog_chr6: Input-sample: simDog_chr6.sanitized.fa Total-sequences: 1 Total-length: 593897 Proportion-repeat-masked: 0.196243 ProportionNs: 0.000000 Total-Ns: 0 N50: 593897 Median-sequence-length: 593897 Max-sequence-length: 593897 Min-sequence-length: 593897
+
+[2025-02-12T18:42:00+0000] [MainThread] [I] [toil.leader] Issued job 'make_chunked_alignments' kind-make_chunked_alignments/instance-ieoyuyhl v1 with job batch system ID: 7 and disk: 4.8 Mi, memory: 2.0 Gi, cores: 1, accelerators: [], preemptible: False
+[2025-02-12T18:42:00+0000] [MainThread] [I] [toil.leader] Issued job 'make_ingroup_to_outgroup_alignments_0' kind-make_ingroup_to_outgroup_alignments_0/instance-a48_fc18 v1 with job batch system ID: 8 and disk: 2.0 Gi, memory: 2.0 Gi, cores: 1, accelerators: [], preemptible: False
+[2025-02-12T18:42:00+0000] [MainThread] [I] [toil.leader] Issued job 'make_ingroup_to_outgroup_alignments_0' kind-make_ingroup_to_outgroup_alignments_0/instance-aylcy90l v1 with job batch system ID: 9 and disk: 2.0 Gi, memory: 2.0 Gi, cores: 1, accelerators: [], preemptible: False
+[2025-02-12T18:42:00+0000] [MainThread] [I] [toil-rt] 2025-02-12 18:42:00.461380: Running the command: "faffy chunk -c 6000000000 -o 10000 --dir /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/a3e3/job/tmpu991h8ns /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/a3e3/job/tmperogizm4.tmp"
+[2025-02-12T18:42:00+0000] [MainThread] [I] [toil-rt] 2025-02-12 18:42:00.473232: Successfully ran: "faffy chunk -c 6000000000 -o 10000 --dir /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/a3e3/job/tmpu991h8ns /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/a3e3/job/tmperogizm4.tmp" in 0.0109 seconds and 3.4 Mi memory
+[2025-02-12T18:42:00+0000] [MainThread] [I] [toil-rt] 2025-02-12 18:42:00.479522: Running the command: "faffy chunk -c 6000000000 -o 10000 --dir /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/a3e3/job/tmpi5upln31 /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/a3e3/job/tmpavxogu9h.tmp"
+[2025-02-12T18:42:00+0000] [MainThread] [I] [toil-rt] 2025-02-12 18:42:00.489251: Successfully ran: "faffy chunk -c 6000000000 -o 10000 --dir /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/a3e3/job/tmpi5upln31 /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/a3e3/job/tmpavxogu9h.tmp" in 0.0089 seconds and 3.5 Mi memory
+[2025-02-12T18:42:00+0000] [MainThread] [I] [toil-rt] 2025-02-12 18:42:00.650957: Running the command: "faffy chunk -c 6000000000 -o 10000 --dir /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/4f55/089c/tmpkbssd2q8 /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/4f55/089c/tmplkfo7qrk.tmp"
+[2025-02-12T18:42:00+0000] [MainThread] [I] [toil-rt] 2025-02-12 18:42:00.660586: Successfully ran: "faffy chunk -c 6000000000 -o 10000 --dir /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/4f55/089c/tmpkbssd2q8 /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/4f55/089c/tmplkfo7qrk.tmp" in 0.0085 seconds and 3.5 Mi memory
+[2025-02-12T18:42:00+0000] [MainThread] [I] [toil-rt] 2025-02-12 18:42:00.666479: Running the command: "faffy chunk -c 6000000000 -o 10000 --dir /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/4f55/089c/tmp4ugsj7u7 /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/4f55/089c/tmpupy7hno7.tmp"
+[2025-02-12T18:42:00+0000] [MainThread] [I] [toil-rt] 2025-02-12 18:42:00.676399: Successfully ran: "faffy chunk -c 6000000000 -o 10000 --dir /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/4f55/089c/tmp4ugsj7u7 /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/4f55/089c/tmpupy7hno7.tmp" in 0.0088 seconds and 3.4 Mi memory
+[2025-02-12T18:42:00+0000] [MainThread] [I] [toil-rt] 2025-02-12 18:42:00.706105: Running the command: "faffy chunk -c 6000000000 -o 10000 --dir /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/dda9/cc1f/tmp0ys1ypai /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/dda9/cc1f/tmphe8xt3jb.tmp"
+[2025-02-12T18:42:00+0000] [MainThread] [I] [toil-rt] 2025-02-12 18:42:00.737200: Successfully ran: "faffy chunk -c 6000000000 -o 10000 --dir /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/dda9/cc1f/tmp0ys1ypai /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/dda9/cc1f/tmphe8xt3jb.tmp" in 0.0298 seconds and 3.4 Mi memory
+[2025-02-12T18:42:00+0000] [MainThread] [I] [toil-rt] 2025-02-12 18:42:00.764444: Running the command: "faffy chunk -c 6000000000 -o 10000 --dir /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/dda9/cc1f/tmp1jhtw8sk /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/dda9/cc1f/tmpn5tz32n3.tmp"
+[2025-02-12T18:42:00+0000] [MainThread] [I] [toil-rt] 2025-02-12 18:42:00.774084: Successfully ran: "faffy chunk -c 6000000000 -o 10000 --dir /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/dda9/cc1f/tmp1jhtw8sk /tmp/toilwf-7b93d3a201f65304b083f1734c1976c1/dda9/cc1f/tmpn5tz32n3.tmp" in 0.0086 seconds and 3.5 Mi memory
+[2025-02-12T18:42:02+0000] [MainThread] [I] [toil.realtimeLogger] Stopping real-time logging server.
+[2025-02-12T18:42:02+0000] [MainThread] [I] [toil.realtimeLogger] Joining real-time logging server thread.
+Traceback (most recent call last):
+  File "/home/cactus/cactus_env/bin/cactus-blast", line 8, in <module>
+    sys.exit(main())
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/cactus/blast/cactus_blast.py", line 90, in main
+    runCactusBlastOnly(options)
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/cactus/blast/cactus_blast.py", line 139, in runCactusBlastOnly
+    paf_id = toil.start(Job.wrapJobFn(sanitize_then_make_paf_alignments, NXNewick().writeString(spanning_tree),
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/common.py", line 930, in start
+    return self._runMainLoop(rootJobDescription)
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/common.py", line 1417, in _runMainLoop
+    jobCache=self._jobCache).run()
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/leader.py", line 262, in run
+    self.innerLoop()
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/leader.py", line 765, in innerLoop
+    self._processReadyJobs()
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/leader.py", line 658, in _processReadyJobs
+    self._processReadyJob(message.job_id, message.result_status)
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/leader.py", line 574, in _processReadyJob
+    self._runJobSuccessors(job_id)
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/leader.py", line 461, in _runJobSuccessors
+    self.issueJobs(successors)
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/leader.py", line 941, in issueJobs
+    self.issueJob(job)
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/leader.py", line 918, in issueJob
+    jobBatchSystemID = self.batchSystem.issueBatchJob(' '.join(workerCommand), jobNode, job_environment=job_environment)
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/batchSystems/singleMachine.py", line 759, in issueBatchJob
+    self.check_resource_request(scaled_desc)
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/batchSystems/singleMachine.py", line 509, in check_resource_request
+    raise e
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/batchSystems/singleMachine.py", line 505, in check_resource_request
+    super().check_resource_request(requirer)
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/batchSystems/abstractBatchSystem.py", line 371, in check_resource_request
+    raise e
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/batchSystems/abstractBatchSystem.py", line 366, in check_resource_request
+    self._check_accelerator_request(requirer)
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/batchSystems/singleMachine.py", line 515, in _check_accelerator_request
+    raise InsufficientSystemResources(requirer, 'accelerators', self.accelerator_identities, details=[
+toil.batchSystems.abstractBatchSystem.InsufficientSystemResources: The job 'run_lastz' kind-run_lastz/instance-tqdjs4tj v1 is requesting [{'count': 4, 'kind': 'gpu', 'api': 'cuda', 'brand': 'nvidia'}] accelerators, more than the maximum of [{'kind': 'gpu', 'brand': 'nvidia', 'api': 'cuda', 'count': 1}, {'kind': 'gpu', 'brand': 'nvidia', 'api': 'cuda', 'count': 1}] accelerators that SingleMachineBatchSystem was configured with. The accelerator {'count': 4, 'kind': 'gpu', 'api': 'cuda', 'brand': 'nvidia'} could not be provided. Scale is set to 1.
+Full Traceback (most recent call last):
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/site-packages/snakemake/executors/local.py", line 423, in run_wrapper
+    run(
+  File "/n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/cactus_gpu.smk", line 233, in __rule_blast
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/site-packages/snakemake/shell.py", line 357, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command 'set -euo pipefail;  singularity exec --nv --cleanenv --bind /n/holylfs05/LABS/informatics/Users/gthomas/tmp/:/tmp /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/cactus_v2.9.3-gpu.sif cactus-blast /tmp/mr-blast /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/evolverMammals.txt /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/mr.cigar --root mr --logInfo --retryCount 0 --lastzCores 64 --gpu 4' returned non-zero exit status 1.
+
+Full Traceback (most recent call last):
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/site-packages/snakemake/executors/local.py", line 423, in run_wrapper
+    run(
+  File "/n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/cactus_gpu.smk", line 233, in __rule_blast
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/site-packages/snakemake/shell.py", line 357, in __new__
+    raise sp.CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command 'set -euo pipefail;  singularity exec --nv --cleanenv --bind /n/holylfs05/LABS/informatics/Users/gthomas/tmp/:/tmp /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/cactus_v2.9.3-gpu.sif cactus-blast /tmp/mr-blast /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/evolverMammals.txt /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/mr.cigar --root mr --logInfo --retryCount 0 --lastzCores 64 --gpu 4' returned non-zero exit status 1.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/site-packages/snakemake/executors/local.py", line 261, in _callback
+    raise ex
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/site-packages/snakemake/executors/local.py", line 247, in cached_or_run
+    run_func(*args)
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/site-packages/snakemake/executors/local.py", line 459, in run_wrapper
+    raise RuleException(
+snakemake.exceptions.RuleException: CalledProcessError in file /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/cactus_gpu.smk, line 196:
+Command 'set -euo pipefail;  singularity exec --nv --cleanenv --bind /n/holylfs05/LABS/informatics/Users/gthomas/tmp/:/tmp /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/cactus_v2.9.3-gpu.sif cactus-blast /tmp/mr-blast /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/evolverMammals.txt /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/mr.cigar --root mr --logInfo --retryCount 0 --lastzCores 64 --gpu 4' returned non-zero exit status 1.
+
+RuleException:
+CalledProcessError in file /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/cactus_gpu.smk, line 196:
+Command 'set -euo pipefail;  singularity exec --nv --cleanenv --bind /n/holylfs05/LABS/informatics/Users/gthomas/tmp/:/tmp /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/cactus_v2.9.3-gpu.sif cactus-blast /tmp/mr-blast /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/evolverMammals.txt /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/mr.cigar --root mr --logInfo --retryCount 0 --lastzCores 64 --gpu 4' returned non-zero exit status 1.
+[Wed Feb 12 13:42:03 2025]
+Error in rule blast:
+    jobid: 0
+    input: /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simCow.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simDog.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simHuman.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simMouse.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simRat.chr6
+    output: /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/mr.cigar
+
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Storing output in storage.
+Full Traceback (most recent call last):
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/site-packages/snakemake/cli.py", line 2158, in args_to_api
+    dag_api.execute_workflow(
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/site-packages/snakemake/api.py", line 595, in execute_workflow
+    workflow.execute(
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/site-packages/snakemake/workflow.py", line 1302, in execute
+    raise WorkflowError("At least one job did not complete successfully.")
+snakemake_interface_common.exceptions.WorkflowError: At least one job did not complete successfully.
+
+WorkflowError:
+At least one job did not complete successfully.
+srun: error: holygpu7c26204: task 0: Exited with exit code 1
+[Wed Feb 12 13:42:03 2025]
+Error in rule blast:
+    jobid: 0
+    input: /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simCow.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simDog.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simHuman.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simMouse.chr6, /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/simRat.chr6
+    output: /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/mr.cigar
+
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Storing output in storage.
+Full Traceback (most recent call last):
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/site-packages/snakemake/cli.py", line 2158, in args_to_api
+    dag_api.execute_workflow(
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/site-packages/snakemake/api.py", line 595, in execute_workflow
+    workflow.execute(
+  File "/n/home07/gthomas/miniconda3/envs/cactus-smk/lib/python3.12/site-packages/snakemake/workflow.py", line 1302, in execute
+    raise WorkflowError("At least one job did not complete successfully.")
+snakemake_interface_common.exceptions.WorkflowError: At least one job did not complete successfully.
+
+WorkflowError:
+At least one job did not complete successfully.

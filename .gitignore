@@ -3,7 +3,12 @@
 tests/evolverMammals-out/*
 !tests/evolverMammals-out/evolverMammals.txt
 
+tests/evolverMammals-out-gpu/*
+!tests/evolverMammals-out-gpu/evolverMammals.txt
+
 *.snakemake*
 *__pycache__*
 
 bin/
+
+tests/*.sif
