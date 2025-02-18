@@ -40,3 +40,8 @@ For each internal node, cactus runs 3 commands:
   6. MAF (hal2mafMP.py)
       Inputs: The appended .hal file from halAppendSubtree
       Output: The alignment in MAF format
+
+############################################################################
+
+BLAST test command:
+singularity exec --nv --cleanenv --bind /n/holylfs05/LABS/informatics/Users/gthomas/tmp/:/tmp /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/cactus_v2.9.3-gpu.sif cactus-blast /tmp/mr-blast /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/evolverMammals.txt /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/mr.cigar --root mr --logInfo --retryCount 0 --lastzCores 64 --gpu 4 --restart
