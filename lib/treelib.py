@@ -10,8 +10,8 @@ import re
 
 def remBranchLength(treestring):
 # Removes branch lengths from a tree.
-	treestring = re.sub('[)][\d\w<>/.eE_:-]+', ')', treestring);
-	treestring = re.sub(':[\d.eE-]+', '', treestring);
+	treestring = re.sub(r'[)][\d\w<>/.eE_:-]+', ')', treestring);
+	treestring = re.sub(r':[\d.eE-]+', '', treestring);
 	return treestring;
     
 #############################################################################
@@ -167,7 +167,7 @@ def treeParse(tree, debug=False):
 		if nodes[node] == 'tip':
 			supports[node] = "NA";
 			if node + ":" in tree:
-				cur_bl = re.findall(node + ":[\d.Ee-]+", new_tree);
+				cur_bl = re.findall(node + r":[\d.Ee-]+", new_tree);
 				cur_bl = cur_bl[0].replace(node + ":", "");
 				if debug:
 					print("FOUND BL:", cur_bl);
@@ -187,14 +187,14 @@ def treeParse(tree, debug=False):
 
 			elif node + ":" in new_tree:
 				supports[node] = "NA";
-				cur_bl = re.findall(node + ":[\d.Ee-]+", new_tree);
+				cur_bl = re.findall(node + r":[\d.Ee-]+", new_tree);
 				cur_bl = cur_bl[0].replace(node + ":", "");
 				if debug:
 					print("FOUND BL:", cur_bl);
 				bl[node] = cur_bl;								
 
 			else:
-				cur_bsl = re.findall(node + "[\d\w<>_*+.Ee/-]+:[\d.Ee-]+", new_tree);
+				cur_bsl = re.findall(node + r"[\d\w<>_*+.Ee/-]+:[\d.Ee-]+", new_tree);
 				if cur_bsl:
 				# If the pattern above is found then the node has both support and branch length
 					cur_bs = cur_bsl[0].replace(node, "");
@@ -207,7 +207,7 @@ def treeParse(tree, debug=False):
 					#new_tree = new_tree.replace(cur_bs, "");
 				else:
 				# If it is not found then the branch only has a label
-					cur_bs = re.findall(node + "[\w*+.<> -]+", new_tree);
+					cur_bs = re.findall(node + r"[\w*+.<> -]+", new_tree);
 					cur_bs = cur_bs[0].replace(node, "");
 					if debug:
 						print("FOUND LABEL:", cur_bs);

@@ -8,34 +8,40 @@
 #############################################################################
 #
 # Below are the parameters you need to set for the cactus snakemake pipeline.
-# YOU WILL NEED TO CHANGE THESE
 #
 
-cactus_path: download
+cactus_path: 
+# File path or "download".
 # Provide the path to the cactus singularity container. 
 # If you don't have it, set this to "download" and the pipeline will download it for you.
 
-input_file: evolverMammals.txt
+input_file: 
+# File path.
 # Same as input file for cactus-prepare, though a similar file with ancestor genomes should have been created in your output directory
 # when you ran cactus-prepare.
 
-output_dir: evolverMammals-out-gpu/
-# The output directory for the snakemake pipeline. This should be the same as the outDir in cactus-prepare.
-# This directory will be created if it doesn't exist.
+output_dir: 
+# Directory path.
+# The desired output directory for the snakemake pipeline. This directory will be created if it doesn't exist.
 
-overwrite_output_dir: True
+overwrite_output_dir:
+# True/False.
 # If the output directory already exists and you don't care if the files within it might be overwritten, set this to True.
+# Otherwise, set it to False and the pipeline will exit and tell you if the output directory already exists.
 
-final_hal: evolverMammals.hal
+final_hal: 
+# File path.
 # The name you want for the final HAL file. This will be created within output_dir.
 
-tmp_dir: /n/holylfs05/LABS/informatics/Users/gthomas/tmp/evolverMammals/
+tmp_dir:
+# Directory path.
 # A temporary directory for snakemake and cactus to use. Should have lots of space.
 
-use_gpu: True
+use_gpu:
+# True/False.
 # Whether or not to use the GPU version of cactus.
+# If you have GPU partitions and want to use them, set this to True.
 # If you don't have a GPU partition, set this to False.
-# Either way, be sure to set the correct values for the partitions and GPUs below.
 
 #############################################################################
 ## Below are the partitions and resources for each rule in the snakemake pipeline.
@@ -47,54 +53,54 @@ use_gpu: True
 ## The partitions are specific to the Harvard cluster. If you run this on a different cluster
 ## you must change them.
 
-mask_partition: "gpu_test"  # If use_gpu is True, this must be a partition with GPUs
-mask_gpu: 4                 # If use_gpu is False, this will be ignored
-mask_cpu: 8
-mask_mem: 25000             # in MB
-mask_time: 30               # in minutes
+mask_partition: ""  # If use_gpu is True, this must be a partition with GPUs
+mask_gpu:           # If use_gpu is False, this will be ignored
+mask_cpu: 
+mask_mem:           # in MB
+mask_time:          # in minutes
 
 ##########################
 
-blast_partition: "gpu_test" # If use_gpu is True, this must be a partition with GPUs
-blast_gpu: 1                # If use_gpu is False, this will be ignored -- CURRENTLY ONLY WORKS WITH 1 GPU
-blast_cpu: 48
-blast_mem: 50000            # in MB
-blast_time: 120             # in minutes
+blast_partition: "" # If use_gpu is True, this must be a partition with GPUs
+blast_gpu:          # If use_gpu is False, this will be ignored -- CURRENTLY ONLY WORKS WITH 1 GPU
+blast_cpu: 
+blast_mem:          # in MB
+blast_time:         # in minutes
 
 ##########################
 
-align_partition: "gpu_test" # If use_gpu is True, this must be a partition with GPUs
-align_gpu: 2                # If use_gpu is False, this will be ignored
-align_cpu: 24
-align_mem: 25000            # in MB
-align_time: 120             # in minutes
+align_partition: "" # If use_gpu is True, this must be a partition with GPUs
+align_gpu:          # If use_gpu is False, this will be ignored
+align_cpu: 
+align_mem:          # in MB
+align_time:         # in minutes
 
 ##########################
 
-convert_partition: "shared"
-convert_cpu: 8
-convert_mem: 8000           # in MB
-convert_time: 30            # in minutes
+convert_partition: ""
+convert_cpu: 
+convert_mem:        # in MB
+convert_time:       # in minutes
 
 ##########################
 
-copy_partition: "shared"
-copy_cpu: 1
-copy_mem: 8000            # in MB
-copy_time: 30             # in minutes
+copy_partition: ""
+copy_cpu: 
+copy_mem:           # in MB
+copy_time:          # in minutes
 
 ##########################
 
-append_partition: "shared"
-append_cpu: 8
-append_mem: 8000          # in MB
-append_time: 30           # in minutes
+append_partition: ""
+append_cpu: 
+append_mem:         # in MB
+append_time:        # in minutes
 
 ##########################
 
-maf_partition: "shared"
-maf_cpu: 8
-maf_mem: 25000            # in MB
-maf_time: 60              # in minutes
+maf_partition: ""
+maf_cpu: 
+maf_mem:            # in MB
+maf_time:           # in minutes
 
 ##########################

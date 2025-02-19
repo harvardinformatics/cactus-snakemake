@@ -12,3 +12,6 @@ tests/evolverMammals-out-gpu/*
 bin/
 
 tests/*.sif
+tests/gpu-test.log
+tests/gpu-usage.log
+turtles/
