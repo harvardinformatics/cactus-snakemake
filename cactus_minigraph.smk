@@ -88,7 +88,7 @@ OVERWRITE_OUTPUT_DIR = config["overwrite_output_dir"];
 # The output directory specified when cactus-prepare was run
 
 INPUT_FILE_COPY = os.path.join(OUTPUT_DIR, os.path.basename(INPUT_FILE_ORIG));
-cactuslib_logger.info(f"During rule minigraph, a copy of the input file will be created and modified at {INPUT_FILE_COPY}");
+cactuslib_logger.info(f"During rule copy_input, a copy of the input file will be created and modified at {INPUT_FILE_COPY}");
 # A copy of the input file must be created and used since cactus-minigraph modifies the input file
 
 CHROMS_DIR = os.path.join(OUTPUT_DIR, "chroms");
@@ -155,29 +155,57 @@ rule all:
 # #############################################################################
 # # Pipeline rules
 
-rule minigraph:
+rule copy_input:
     input:
         cactus_input = INPUT_FILE_ORIG
     output:
-        sv_gfa = os.path.join(OUTPUT_DIR, f"{PREFIX}.sv.gfa"),
         cactus_input_copy = INPUT_FILE_COPY
+    run:
+        import os
+
+        # Define the new base directory
+        new_base_dir = os.path.dirname(input.cactus_input)
+
+        # Read the input file
+        with open(input.cactus_input, "r") as infile:
+            lines = infile.readlines()
+        
+        # Write to the output file
+        with open(output.cactus_input_copy, "w") as outfile:
+            for line in lines:
+                label, path = line.strip().split("\t")
+                
+                # Determine if the path is a URL or absolute
+                if not (path.startswith("http://") or path.startswith("https://") or os.path.isabs(path)):
+                    # It's a relative path, update it
+                    path = os.path.normpath(os.path.join(new_base_dir, path))
+                
+                # Write the updated line to the output file
+                outfile.write(f"{label}\t{path}\n")
+# This is necessary because cactus-minigraph modifies the input file, which means if we used the original, snakemake would think 
+# it always needs to re-run the whole pipeline. This rule makes a copy of the input file and updates the paths to be absolute.
+
+####################
+
+rule minigraph:
+    input:
+        cactus_input = INPUT_FILE_COPY
+    output:
+        sv_gfa = os.path.join(OUTPUT_DIR, f"{PREFIX}.sv.gfa"),
     params:
         path = CACTUS_PATH,
-        cactus_input_copy = INPUT_FILE_COPY,
         ref_genome = REF_GENOME,
-        job_tmp_dir = os.path.join(TMPDIR, "minigraph"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
-        gpu_opt = f"--gpu {config["minigraph_gpu"]}" if USE_GPU else ""
+        job_tmp_dir = os.path.join(TMPDIR, "minigraph") # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
     resources:
         slurm_partition = config["minigraph_partition"],
         cpus_per_task = config["minigraph_cpu"],
         mem_mb = config["minigraph_mem"],
-        runtime = config["minigraph_time"],
-        slurm_extra = f"'--gres=gpu:{config["minigraph_gpu"]}'" if USE_GPU else ""
+        runtime = config["minigraph_time"]
     run:
         if os.path.isdir(params.job_tmp_dir):
-            shell("cp {input.cactus_input} {params.cactus_input_copy}; {params.path} cactus-minigraph {params.job_tmp_dir} {params.cactus_input_copy} {output.sv_gfa} --reference {params.ref_genome} {params.gpu_opt} --restart")
+            shell("{params.path} cactus-minigraph {params.job_tmp_dir} {input.cactus_input} {output.sv_gfa} --reference {params.ref_genome} --restart")
         else:
-            shell("cp {input.cactus_input} {params.cactus_input_copy}; {params.path} cactus-minigraph {params.job_tmp_dir} {params.cactus_input_copy} {output.sv_gfa} --reference {params.ref_genome} {params.gpu_opt}")
+            shell("{params.path} cactus-minigraph {params.job_tmp_dir} {input.cactus_input} {output.sv_gfa} --reference {params.ref_genome}")
 
 ####################
 
@@ -194,19 +222,17 @@ rule graphmap:
     params:
         path = CACTUS_PATH,
         ref_genome = REF_GENOME,
-        job_tmp_dir = os.path.join(TMPDIR, "graphmap"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
-        gpu_opt = f"--gpu {config["graphmap_gpu"]}" if USE_GPU else ""
+        job_tmp_dir = os.path.join(TMPDIR, "graphmap") # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
     resources:
         slurm_partition = config["graphmap_partition"],
         cpus_per_task = config["graphmap_cpu"],
         mem_mb = config["graphmap_mem"],
-        runtime = config["graphmap_time"],
-        slurm_extra = f"'--gres=gpu:{config["graphmap_gpu"]}'" if USE_GPU else ""
+        runtime = config["graphmap_time"]
     run:
         if os.path.isdir(params.job_tmp_dir):
-            shell("{params.path} cactus-graphmap {params.job_tmp_dir} {input.cactus_input} {input.sv_gfa} {output.paf} --outputFasta {output.fasta} --reference {params.ref_genome} {params.gpu_opt} --restart")
+            shell("{params.path} cactus-graphmap {params.job_tmp_dir} {input.cactus_input} {input.sv_gfa} {output.paf} --outputFasta {output.fasta} --reference {params.ref_genome} --restart")
         else:
-            shell("{params.path} cactus-graphmap {params.job_tmp_dir} {input.cactus_input} {input.sv_gfa} {output.paf} --outputFasta {output.fasta} --reference {params.ref_genome} {params.gpu_opt}")
+            shell("{params.path} cactus-graphmap {params.job_tmp_dir} {input.cactus_input} {input.sv_gfa} {output.paf} --outputFasta {output.fasta} --reference {params.ref_genome}")
 
 ####################
 
@@ -220,23 +246,21 @@ checkpoint split:
         seq_dir = directory(CHROMS_SEQFILE_DIR),
         chroms_file = CHROMS_FILE,
         contig_sizes = os.path.join(CHROMS_DIR, "contig_sizes.tsv"),
-        minigraph_split_log = os.path.join(OUTPUT_DIR, "minigraph.split.log")
+        minigraph_split_log = os.path.join(CHROMS_DIR, "minigraph.split.log")
     params:
         path = CACTUS_PATH,
         ref_genome = REF_GENOME,
-        job_tmp_dir = os.path.join(TMPDIR, "split"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
-        gpu_opt = f"--gpu {config["split_gpu"]}" if USE_GPU else ""
+        job_tmp_dir = os.path.join(TMPDIR, "split") # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
     resources:
         slurm_partition = config["split_partition"],
         cpus_per_task = config["split_cpu"],
         mem_mb = config["split_mem"],
-        runtime = config["split_time"],
-        slurm_extra = f"'--gres=gpu:{config["split_gpu"]}'" if USE_GPU else ""
+        runtime = config["split_time"]
     run:
         if os.path.isdir(params.job_tmp_dir):
-            shell("{params.path} cactus-graphmap-split {params.job_tmp_dir} {input.cactus_input} {input.sv_gfa} {input.paf} --outDir {output.chroms_dir} --reference {params.ref_genome} {params.gpu_opt} --restart")
+            shell("{params.path} cactus-graphmap-split {params.job_tmp_dir} {input.cactus_input} {input.sv_gfa} {input.paf} --outDir {output.chroms_dir} --reference {params.ref_genome} --restart")
         else:
-            shell("{params.path} cactus-graphmap-split {params.job_tmp_dir} {input.cactus_input} {input.sv_gfa} {input.paf} --outDir {output.chroms_dir} --reference {params.ref_genome} {params.gpu_opt}")
+            shell("{params.path} cactus-graphmap-split {params.job_tmp_dir} {input.cactus_input} {input.sv_gfa} {input.paf} --outDir {output.chroms_dir} --reference {params.ref_genome}")
             
 ####################
 
@@ -251,7 +275,7 @@ rule align:
         path = CACTUS_PATH,
         ref_genome = REF_GENOME,
         job_tmp_dir = lambda wc: os.path.join(TMPDIR, f"align-{wc.chrom}"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
-        gpu_opt = f"--gpu {config["align_gpu"]}" if USE_GPU else ""
+        gpu_opt = "--gpu" if USE_GPU else ""
     resources:
         slurm_partition = config["align_partition"],
         cpus_per_task = config["align_cpu"],
@@ -304,15 +328,13 @@ rule join:
         ref_genome = REF_GENOME,
         chrom_haldir = ALIGN_DIR,
         prefix = PREFIX,
-        job_tmp_dir = os.path.join(TMPDIR, "join"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
-        gpu_opt = f"--gpu {config["align_gpu"]}" if USE_GPU else ""
+        job_tmp_dir = os.path.join(TMPDIR, "join") # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
     resources:
         slurm_partition = config["align_partition"],
         cpus_per_task = config["align_cpu"],
         mem_mb = config["align_mem"],
-        runtime = config["align_time"],
-        slurm_extra = f"'--gres=gpu:{config["align_gpu"]}'" if USE_GPU else ""
+        runtime = config["align_time"]
     shell:
-        "{params.path} cactus-graphmap-join {params.job_tmp_dir} --vg {params.chrom_haldir}/*.vg --hal {params.chrom_haldir}/*.hal --outDir {output.join_outdir} --outName {params.prefix} --reference {params.ref_genome} --vcf --giraffe clip {params.gpu_opt}"
+        "{params.path} cactus-graphmap-join {params.job_tmp_dir} --vg {params.chrom_haldir}/*.vg --hal {params.chrom_haldir}/*.hal --outDir {output.join_outdir} --outName {params.prefix} --reference {params.ref_genome} --vcf --giraffe clip"
 
 #############################################################################
