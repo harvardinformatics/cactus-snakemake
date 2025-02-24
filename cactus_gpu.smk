@@ -1,5 +1,5 @@
 #############################################################################
-# Pipeline for read mapping simulations with varying divergence
+# Pipeline for running cactus for whole genome alignment
 #############################################################################
 
 import sys

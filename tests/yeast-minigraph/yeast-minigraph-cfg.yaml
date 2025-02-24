@@ -1,0 +1,92 @@
+#############################################################################
+# This config file is a necessary input file for the cactus GPU snakemake
+# pipeline. It contains the parameters needed to run the pipeline.
+#############################################################################
+
+# time -p snakemake -p -s cactus_gpu.smk --configfile tests/evolverMammals-cfg.yaml --profile profiles/slurm_profile/ --dryrun
+
+#############################################################################
+#
+# Below are the parameters you need to set for the cactus snakemake pipeline.
+# YOU WILL NEED TO CHANGE THESE
+#
+
+cactus_path: download
+# Provide the path to the cactus singularity container. 
+# If you don't have it, set this to "download" and the pipeline will download it for you.
+
+input_file: yeastPangenome.txt
+# Same as input file for cactus-prepare, though a similar file with ancestor genomes should have been created in your output directory
+# when you ran cactus-prepare.
+
+output_dir: yeastPangenome-out-slurm/
+# The output directory for the snakemake pipeline. This should be the same as the outDir in cactus-prepare.
+# This directory will be created if it doesn't exist.
+
+overwrite_output_dir: True
+# If the output directory already exists and you don't care if the files within it might be overwritten, set this to True.
+
+reference: S288C
+
+prefix: yeast
+
+#final_hal: evolverMammals.hal
+# The name you want for the final HAL file. This will be created within output_dir.
+
+tmp_dir: /n/holylfs05/LABS/informatics/Users/gthomas/tmp/yeastPangenome/
+# A temporary directory for snakemake and cactus to use. 
+# Will be created if it doesn't exist, but it should be located somewhere with lots of space.
+
+use_gpu: False
+# Whether or not to use the GPU version of cactus.
+# If you don't have a GPU partition, set this to False.
+# Either way, be sure to set the correct values for the partitions and GPUs below.
+
+#############################################################################
+## Below are the partitions and resources for each rule in the snakemake pipeline.
+## Be sure to adjust them to meet your needs and the resources available on your cluster.
+## Notably, for mask, blast, and align, if you use the GPU version of cactus, you will need to
+## provide a partition with GPUs and set the gpu values to the number of GPUs you want to use.
+## If you are not using the cactus GPU version, the gpu values will be ignored.
+##
+## The partitions are specific to the Harvard cluster. If you run this on a different cluster
+## you must change them.
+
+minigraph_partition: "shared"  # If use_gpu is True, this must be a partition with GPUs
+minigraph_gpu: 4                 # If use_gpu is False, this will be ignored
+minigraph_cpu: 1
+minigraph_mem: 25000             # in MB
+minigraph_time: 30               # in minutes
+
+##########################
+
+graphmap_partition: "shared" # If use_gpu is True, this must be a partition with GPUs
+graphmap_gpu: 1                # If use_gpu is False, this will be ignored -- CURRENTLY ONLY WORKS WITH 1 GPU
+graphmap_cpu: 1
+graphmap_mem: 50000            # in MB
+graphmap_time: 30             # in minutes
+
+##########################
+
+split_partition: "shared" # If use_gpu is True, this must be a partition with GPUs
+split_gpu: 1                # If use_gpu is False, this will be ignored -- CURRENTLY ONLY WORKS WITH 1 GPU
+split_cpu: 1
+split_mem: 50000            # in MB
+split_time: 30     
+
+##########################
+
+align_partition: "shared" # If use_gpu is True, this must be a partition with GPUs
+align_gpu: 2                # If use_gpu is False, this will be ignored
+align_cpu: 1
+align_mem: 25000            # in MB
+align_time: 30             # in minutes
+
+##########################
+
+join_partition: "shared"
+join_cpu: 1
+join_mem: 8000           # in MB
+join_time: 30            # in minutes
+
+##########################

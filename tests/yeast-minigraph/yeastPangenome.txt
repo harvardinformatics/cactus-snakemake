@@ -1,0 +1,8 @@
+(S288C:1.0,SK1:1.0,DBVPG6044:1.0,UWOPS034614:1.0,Y12:1.0,YPS128:1.0,_MINIGRAPH_:1.0);
+S288C	https://github.com/ComparativeGenomicsToolkit/cactusTestData/raw/master/yeast/S288C.fa.gz
+SK1	https://github.com/ComparativeGenomicsToolkit/cactusTestData/raw/master/yeast/SK1.fa.gz
+DBVPG6044	https://github.com/ComparativeGenomicsToolkit/cactusTestData/raw/master/yeast/DBVPG6044.fa.gz
+UWOPS034614	https://github.com/ComparativeGenomicsToolkit/cactusTestData/raw/master/yeast/UWOPS034614.fa.gz
+Y12	https://github.com/ComparativeGenomicsToolkit/cactusTestData/raw/master/yeast/Y12.fa.gz
+YPS128	https://github.com/ComparativeGenomicsToolkit/cactusTestData/raw/master/yeast/YPS128.fa.gz
+_MINIGRAPH_	file:///n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/yeast-minigraph/yeastPangenome-out-slurm/yeast.sv.gfa.fa
