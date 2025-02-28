@@ -30,8 +30,8 @@ if any([arg in sys.argv for arg in ["--rulegraph", "--dag"]]):
 
 log_verbosity = "screen"; # "screen", "file", "both"
 log_filename = f"cactus-minigraph.{log_level}.log"; # Log file name if log_verbosity is "file" or "both"
-cactuslib.configureLogging(log_filename, log_level.upper(), log_verbosity.upper())
-cactuslib_logger = logging.getLogger('cactuslib')
+cactuslib.configureLogging(log_filename, log_level.upper(), log_verbosity.upper());
+cactuslib_logger = logging.getLogger('cactuslib');
 # Setup logging if debugging
 
 # wd = config["working_dir"];
@@ -68,8 +68,11 @@ else:
         sys.exit(1);
     # Check if the cactus image exists
 
-CACTUS_PATH = "singularity exec --nv --cleanenv " + cactus_image_path;
-CACTUS_PATH_TMP = "singularity exec --nv --cleanenv --bind " + TMPDIR + ":/tmp " + cactus_image_path;
+# CACTUS_PATH = f"singularity exec --nv --cleanenv {cactus_image_path}"
+# CACTUS_PATH_TMP = f"singularity exec --nv --cleanenv --bind {TMPDIR}:/tmp {cactus_image_path}"
+
+CACTUS_PATH = ["singularity", "exec", "--nv", "--cleanenv", cactus_image_path]
+CACTUS_PATH_TMP = ["singularity", "exec", "--nv", "--cleanenv", "--bind", f"{TMPDIR}:/tmp", cactus_image_path]
 # The path to the cactus image with and without a tmpdir binding
 
 #############################################################################
@@ -163,6 +166,8 @@ rule copy_input:
     run:
         import os
 
+        print("COPY INPUT")
+
         # Define the new base directory
         new_base_dir = os.path.dirname(input.cactus_input)
 
@@ -195,23 +200,35 @@ rule minigraph:
     params:
         path = CACTUS_PATH,
         ref_genome = REF_GENOME,
-        job_tmp_dir = os.path.join(TMPDIR, "minigraph") # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
+        job_tmp_dir = os.path.join(TMPDIR, "minigraph"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
+        rule_name = "minigraph"
+    log:
+        job_log = os.path.join(OUTPUT_DIR, "logs", f"{PREFIX}.minigraph.log")
     resources:
         slurm_partition = config["minigraph_partition"],
         cpus_per_task = config["minigraph_cpu"],
         mem_mb = config["minigraph_mem"],
         runtime = config["minigraph_time"]
     run:
-        if os.path.isdir(params.job_tmp_dir):
-            shell("{params.path} cactus-minigraph {params.job_tmp_dir} {input.cactus_input} {output.sv_gfa} --reference {params.ref_genome} --restart")
-        else:
-            shell("{params.path} cactus-minigraph {params.job_tmp_dir} {input.cactus_input} {output.sv_gfa} --reference {params.ref_genome}")
+        cmd = params.path + [
+            "cactus-minigraph",
+            params.job_tmp_dir,
+            input.cactus_input,
+            output.sv_gfa,
+            "--reference",
+            params.ref_genome
+        ];
+        cactuslib.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name);
+    # shell:
+    #     """
+    #     {params.path} cactus-minigraph {params.job_tmp_dir} {input.cactus_input} {output.sv_gfa} --reference {params.ref_genome} --restart
+    #     """
+    # Keeping shell around now for debugging purposes
 
 ####################
 
 rule graphmap:
     input:
-        cactus_input = INPUT_FILE_COPY,
         sv_gfa = os.path.join(OUTPUT_DIR, f"{PREFIX}.sv.gfa")
     output:
         paf = os.path.join(OUTPUT_DIR, f"{PREFIX}.paf"),
@@ -221,18 +238,35 @@ rule graphmap:
         paf_unfiltered = os.path.join(OUTPUT_DIR, f"{PREFIX}.paf.unfiltered.gz")
     params:
         path = CACTUS_PATH,
+        cactus_input = INPUT_FILE_COPY,
         ref_genome = REF_GENOME,
-        job_tmp_dir = os.path.join(TMPDIR, "graphmap") # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
+        job_tmp_dir = os.path.join(TMPDIR, "graphmap"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
+        rule_name = "graphmap"
+    log:
+        job_log = os.path.join(OUTPUT_DIR, "logs", f"{PREFIX}.graphmap.log")
     resources:
         slurm_partition = config["graphmap_partition"],
         cpus_per_task = config["graphmap_cpu"],
         mem_mb = config["graphmap_mem"],
         runtime = config["graphmap_time"]
     run:
-        if os.path.isdir(params.job_tmp_dir):
-            shell("{params.path} cactus-graphmap {params.job_tmp_dir} {input.cactus_input} {input.sv_gfa} {output.paf} --outputFasta {output.fasta} --reference {params.ref_genome} --restart")
-        else:
-            shell("{params.path} cactus-graphmap {params.job_tmp_dir} {input.cactus_input} {input.sv_gfa} {output.paf} --outputFasta {output.fasta} --reference {params.ref_genome}")
+        cmd = params.path + [
+            "cactus-graphmap",
+            params.job_tmp_dir,
+            params.cactus_input,
+            input.sv_gfa,
+            output.paf,
+            "--outputFasta",
+            output.fasta,
+            "--reference",
+            params.ref_genome
+        ];
+        cactuslib.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name);
+    # shell:
+    #     """
+    #     {params.path} cactus-graphmap {params.job_tmp_dir} {input.cactus_input} {input.sv_gfa} {output.paf} --outputFasta {output.fasta} --reference {params.ref_genome}
+    #     """
+    # Keeping shell around now for debugging purposes
 
 ####################
 
@@ -242,26 +276,43 @@ checkpoint split:
         sv_gfa = os.path.join(OUTPUT_DIR, f"{PREFIX}.sv.gfa"),
         paf = os.path.join(OUTPUT_DIR, f"{PREFIX}.paf")
     output:
-        chroms_dir = directory(CHROMS_DIR),
-        seq_dir = directory(CHROMS_SEQFILE_DIR),
+        # chroms_dir = directory(CHROMS_DIR),
+        # seq_dir = directory(CHROMS_SEQFILE_DIR),
         chroms_file = CHROMS_FILE,
         contig_sizes = os.path.join(CHROMS_DIR, "contig_sizes.tsv"),
         minigraph_split_log = os.path.join(CHROMS_DIR, "minigraph.split.log")
     params:
         path = CACTUS_PATH,
         ref_genome = REF_GENOME,
-        job_tmp_dir = os.path.join(TMPDIR, "split") # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
+        chroms_dir = CHROMS_DIR,
+        job_tmp_dir = os.path.join(TMPDIR, "split"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
+        rule_name = "split"
+    log:
+        job_log = os.path.join(OUTPUT_DIR, "logs", f"{PREFIX}.split.log")
     resources:
         slurm_partition = config["split_partition"],
         cpus_per_task = config["split_cpu"],
         mem_mb = config["split_mem"],
         runtime = config["split_time"]
     run:
-        if os.path.isdir(params.job_tmp_dir):
-            shell("{params.path} cactus-graphmap-split {params.job_tmp_dir} {input.cactus_input} {input.sv_gfa} {input.paf} --outDir {output.chroms_dir} --reference {params.ref_genome} --restart")
-        else:
-            shell("{params.path} cactus-graphmap-split {params.job_tmp_dir} {input.cactus_input} {input.sv_gfa} {input.paf} --outDir {output.chroms_dir} --reference {params.ref_genome}")
-            
+        cmd = params.path + [
+            "cactus-graphmap-split",
+            params.job_tmp_dir,
+            input.cactus_input,
+            input.sv_gfa,
+            input.paf,
+            "--outDir",
+            params.chroms_dir,
+            "--reference",
+            params.ref_genome
+        ];
+        cactuslib.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name);
+    # shell:
+    #     """
+    #     {params.path} cactus-graphmap-split {params.job_tmp_dir} {input.cactus_input} {input.sv_gfa} {input.paf} --outDir {output.chroms_dir} --reference {params.ref_genome}
+    #     """
+    # # Keeping shell around now for debugging purposes
+
 ####################
 
 rule align:
@@ -274,21 +325,43 @@ rule align:
     params:
         path = CACTUS_PATH,
         ref_genome = REF_GENOME,
-        job_tmp_dir = lambda wc: os.path.join(TMPDIR, f"align-{wc.chrom}"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
-        gpu_opt = "--gpu" if USE_GPU else ""
+        job_tmp_dir = os.path.join(TMPDIR, "align-{chrom}"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
+        gpu_opt = "--gpu" if USE_GPU else "",
+        rule_name = "align"
+    log:
+        job_log = os.path.join(OUTPUT_DIR, "logs", f"{PREFIX}.align.{{chrom}}.log")
     resources:
         slurm_partition = config["align_partition"],
         cpus_per_task = config["align_cpu"],
         mem_mb = config["align_mem"],
         runtime = config["align_time"],
         slurm_extra = f"'--gres=gpu:{config["align_gpu"]}'" if USE_GPU else ""
-    shell:
-        "{params.path} cactus-align {params.job_tmp_dir} {input.chrom_seqfile} {input.chrom_paf} {output.chrom_hal} --pangenome --reference {params.ref_genome} --outVG {params.gpu_opt}"
-    # run:
-    #     if os.path.isdir(params.job_tmp_dir):
-    #         shell("{params.path} cactus-align {params.job_tmp_dir} {input.chrom_seqfiles} {input.chrome_pafs} --pangenome --reference {params.ref_genome} --outHal {output.chrome_hals} --outVG {params.gpu_opt} --restart")
-    #     else:
-    #         shell("{params.path} cactus-align {params.job_tmp_dir} {input.chrom_seqfiles} {input.chrome_pafs} --pangenome --reference {params.ref_genome} --outHal {output.chrome_hals} --outVG {params.gpu_opt}")
+    run:
+
+        #job_log_path = os.path.join(OUTPUT_DIR, "logs", f"{PREFIX}.align.{wildcards.chrom}.log")
+        #job_tmp_dir = os.path.join(TMPDIR, f"align-{wildcards.chrom}")
+
+        cmd = params.path + [
+            "cactus-align",
+            params.job_tmp_dir,
+            input.chrom_seqfile,
+            input.chrom_paf,
+            output.chrom_hal,
+            "--pangenome",
+            "--reference",
+            params.ref_genome,
+            "--outVG"
+        ];
+
+        if params.gpu_opt:
+            cmd.append("--gpu");
+
+        cactuslib.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name, wildcards.chrom);
+    # shell:
+    #     """
+    #     {params.path} cactus-align {params.job_tmp_dir} {input.chrom_seqfile} {input.chrom_paf} {output.chrom_hal} --pangenome --reference {params.ref_genome} --outVG {params.gpu_opt}
+    #     """
+    # Keeping shell around now for debugging purposes
 
 ####################
 
@@ -312,7 +385,6 @@ rule join:
         chrom_hal = expand(os.path.join(ALIGN_DIR, "{chrom}.hal"), chrom=gatherChromosomes),
         chrom_vg = expand(os.path.join(ALIGN_DIR, "{chrom}.vg"), chrom=gatherChromosomes)
     output:
-        join_outdir = directory(FINAL_DIR),
         final_hal = os.path.join(FINAL_DIR, f"{PREFIX}.full.hal"),
         final_gfa = os.path.join(FINAL_DIR, f"{PREFIX}.gfa.gz"),
         final_vcf = os.path.join(FINAL_DIR, f"{PREFIX}.vcf.gz"),
@@ -327,14 +399,51 @@ rule join:
         path = CACTUS_PATH,
         ref_genome = REF_GENOME,
         chrom_haldir = ALIGN_DIR,
+        join_outdir = FINAL_DIR,
         prefix = PREFIX,
-        job_tmp_dir = os.path.join(TMPDIR, "join") # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
+        job_tmp_dir = os.path.join(TMPDIR, "join"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
+        rule_name = "join"
+    log:
+        job_log = os.path.join(OUTPUT_DIR, "logs", f"{PREFIX}.join.log")
     resources:
         slurm_partition = config["align_partition"],
         cpus_per_task = config["align_cpu"],
         mem_mb = config["align_mem"],
         runtime = config["align_time"]
-    shell:
-        "{params.path} cactus-graphmap-join {params.job_tmp_dir} --vg {params.chrom_haldir}/*.vg --hal {params.chrom_haldir}/*.hal --outDir {output.join_outdir} --outName {params.prefix} --reference {params.ref_genome} --vcf --giraffe clip"
+    run:
+        vg_files = [
+            os.path.join(params.chrom_haldir, f) for f in os.listdir(params.chrom_haldir)
+            if f.endswith('.vg')
+        ]
+
+        hal_files = [
+            os.path.join(params.chrom_haldir, f) for f in os.listdir(params.chrom_haldir)
+            if f.endswith('.hal')
+        ]
+        # Need to manually expand the vg and hal files since subprocess.run() won't do it later on
+
+        cmd = params.path + [
+            "cactus-graphmap-join",
+            params.job_tmp_dir,
+            "--vg"
+        ] + vg_files + [
+            "--hal"
+        ] + hal_files + [
+            "--outDir",
+            params.join_outdir,
+            "--outName",
+            params.prefix,
+            "--reference",
+            params.ref_genome,
+            "--vcf",
+            "--giraffe",
+            "clip"
+        ];
+        cactuslib.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name);
+    # shell:
+    #     """
+    #     {params.path} cactus-graphmap-join {params.job_tmp_dir} --vg {params.chrom_haldir}/*.vg --hal {params.chrom_haldir}/*.hal --outDir {output.join_outdir} --outName {params.prefix} --reference {params.ref_genome} --vcf --giraffe clip
+    #     """
+    # Keeping shell around now for debugging purposes
 
 #############################################################################

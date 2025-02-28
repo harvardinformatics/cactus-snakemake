@@ -1,0 +1,44 @@
+2025-02-28 16:15:46 - RULE preprocess-simHuman.chr6 - INFO - runCommand1 - Running command: singularity exec --nv --cleanenv /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/cactus_v2.9.4.sif cactus-preprocess /tmp/simHuman_chr6-preprocess /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/evolverMammals.txt /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/evolverMammals-out-new/evolverMammals.txt --inputNames simHuman_chr6 --logInfo --retryCount 0 --maxCores 8
+-------------------- COMMAND LOG BEGIN --------------------
+
+WARNING: Could not find any nv files on this host!
+[2025-02-28T21:15:47+0000] [MainThread] [I] [toil.statsAndLogging] Enabling realtime logging in Toil
+[2025-02-28T21:15:47+0000] [MainThread] [W] [toil.lib.humanize] Deprecated toil method.  Please use "toil.lib.conversions.human2bytes()" instead."
+[2025-02-28T21:15:47+0000] [MainThread] [W] [toil.lib.humanize] Deprecated toil method.  Please use "toil.lib.conversions.human2bytes()" instead."
+[2025-02-28T21:15:47+0000] [MainThread] [I] [toil.statsAndLogging] Cactus Command: /home/cactus/cactus_env/bin/cactus-preprocess /tmp/simHuman_chr6-preprocess /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/evolverMammals.txt /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/evolverMammals-out-new/evolverMammals.txt --inputNames simHuman_chr6 --logInfo --retryCount 0 --maxCores 8
+[2025-02-28T21:15:47+0000] [MainThread] [I] [toil.statsAndLogging] Cactus Commit: 7668c130deea8a39253d0e93e46374ec8b56eade
+[2025-02-28T21:15:47+0000] [MainThread] [I] [toil.statsAndLogging] Importing evolverMammals-seq/simHuman.chr6
+[2025-02-28T21:15:52+0000] [MainThread] [I] [toil.jobStores.abstractJobStore] Importing input file:///n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/evolverMammals-seq/simHuman.chr6...
+[2025-02-28T21:15:52+0000] [MainThread] [I] [toil] Running Toil version 8.0.0-d2ae0ea9ab49f238670dbf6aafd20de7afdd8514 on host holybioinf.rc.fas.harvard.edu.
+[2025-02-28T21:15:52+0000] [MainThread] [I] [toil.realtimeLogger] Starting real-time logging.
+[2025-02-28T21:15:52+0000] [MainThread] [I] [toil.leader] Issued job 'unzip_then_pp' kind-unzip_then_pp/instance-_h93axnj v1 with job batch system ID: 1 and disk: 2.0 Gi, memory: 2.0 Gi, cores: 1, accelerators: [], preemptible: False
+[2025-02-28T21:15:52+0000] [MainThread] [I] [toil.leader] 0 jobs are running, 0 jobs are issued and waiting to run
+[2025-02-28T21:15:52+0000] [MainThread] [I] [toil.leader] Issued job 'CactusPreprocessor' kind-CactusPreprocessor/instance-g80feoqj v1 with job batch system ID: 2 and disk: 1.5 Gi, memory: 2.0 Gi, cores: 1, accelerators: [], preemptible: True
+[2025-02-28T21:15:52+0000] [MainThread] [I] [toil.leader] Issued job 'CactusPreprocessor2' kind-CactusPreprocessor2/instance-kgsmx9vb v1 with job batch system ID: 3 and disk: 2.0 Gi, memory: 2.0 Gi, cores: 1, accelerators: [], preemptible: True
+[2025-02-28T21:15:53+0000] [MainThread] [I] [toil.leader] Issued job 'CutHeadersJob' kind-CutHeadersJob/instance-37imc4qi v1 with job batch system ID: 4 and disk: 1.6 Gi, memory: 2.0 Gi, cores: 1, accelerators: [], preemptible: True
+[2025-02-28T21:15:53+0000] [MainThread] [I] [toil.leader] Issued job 'clean_if_different' kind-clean_if_different/instance-g0k00n4v v1 with job batch system ID: 5 and disk: 2.0 Gi, memory: 2.0 Gi, cores: 1, accelerators: [], preemptible: False
+[2025-02-28T21:15:53+0000] [MainThread] [I] [toil.leader] Issued job 'BatchPreprocessor' kind-BatchPreprocessor/instance-rlnvl4de v1 with job batch system ID: 6 and disk: 2.0 Gi, memory: 2.0 Gi, cores: 1, accelerators: [], preemptible: True
+[2025-02-28T21:15:54+0000] [MainThread] [I] [toil.leader] Issued job 'clean_if_different' kind-clean_if_different/instance-5g7azz1h v1 with job batch system ID: 7 and disk: 2.0 Gi, memory: 2.0 Gi, cores: 1, accelerators: [], preemptible: False
+[2025-02-28T21:15:54+0000] [MainThread] [I] [toil.leader] Issued job 'BatchPreprocessor' kind-BatchPreprocessor/instance-beo_opf7 v1 with job batch system ID: 8 and disk: 2.0 Gi, memory: 2.0 Gi, cores: 1, accelerators: [], preemptible: True
+[2025-02-28T21:15:54+0000] [MainThread] [I] [toil.leader] Issued job 'PreprocessSequence' kind-PreprocessSequence/instance-am7gqmpl v1 with job batch system ID: 9 and disk: 1.6 Gi, memory: 3.3 Gi, cores: 1, accelerators: [], preemptible: True
+[2025-02-28T21:15:55+0000] [MainThread] [I] [toil-rt] 2025-02-28 21:15:55.036611: Running the command: "cactus_redPrefilter /tmp/toilwf-612b01ff36da5d3c9d9e4f1ffca7b3f2/58c4/f136/tmpgzrz61vg/simHuman_chr6.fa -m 20000 -b 0.98"
+[2025-02-28T21:15:55+0000] [MainThread] [I] [toil-rt] 2025-02-28 21:15:55.044960: Successfully ran: "cactus_redPrefilter /tmp/toilwf-612b01ff36da5d3c9d9e4f1ffca7b3f2/58c4/f136/tmpgzrz61vg/simHuman_chr6.fa -m 20000 -b 0.98" in 0.0079 seconds and 2.8 Mi memory
+[2025-02-28T21:15:55+0000] [MainThread] [I] [toil-rt] 2025-02-28 21:15:55.045088: Running the command: "cactus_softmask2hardmask -b /tmp/toilwf-612b01ff36da5d3c9d9e4f1ffca7b3f2/58c4/f136/tmpgzrz61vg/red-in-simHuman_chr6/simHuman_chr6.filter.fa"
+[2025-02-28T21:15:55+0000] [MainThread] [I] [toil-rt] 2025-02-28 21:15:55.051585: Successfully ran: "cactus_softmask2hardmask -b /tmp/toilwf-612b01ff36da5d3c9d9e4f1ffca7b3f2/58c4/f136/tmpgzrz61vg/red-in-simHuman_chr6/simHuman_chr6.filter.fa" in 0.0061 seconds and 2.8 Mi memory
+[2025-02-28T21:15:55+0000] [MainThread] [I] [toil-rt] 2025-02-28 21:15:55.055295: Running the command: "Red -gnm /tmp/toilwf-612b01ff36da5d3c9d9e4f1ffca7b3f2/58c4/f136/tmpgzrz61vg/red-in-simHuman_chr6 -msk /tmp/toilwf-612b01ff36da5d3c9d9e4f1ffca7b3f2/58c4/f136/tmpgzrz61vg/red-out-simHuman_chr6"
+[2025-02-28T21:15:56+0000] [MainThread] [I] [toil-rt] 2025-02-28 21:15:56.116668: Successfully ran: "Red -gnm /tmp/toilwf-612b01ff36da5d3c9d9e4f1ffca7b3f2/58c4/f136/tmpgzrz61vg/red-in-simHuman_chr6 -msk /tmp/toilwf-612b01ff36da5d3c9d9e4f1ffca7b3f2/58c4/f136/tmpgzrz61vg/red-out-simHuman_chr6" in 1.0608 seconds and 164.4 Mi memory
+[2025-02-28T21:15:56+0000] [MainThread] [I] [toil-rt] 2025-02-28 21:15:56.116887: Running the command: "cactus_fasta_softmask_intervals.py --origin=zero /tmp/toilwf-612b01ff36da5d3c9d9e4f1ffca7b3f2/58c4/f136/tmpgzrz61vg/simHuman_chr6.input.masking.bed"
+[2025-02-28T21:15:56+0000] [MainThread] [I] [toil-rt] 2025-02-28 21:15:56.151814: Successfully ran: "cactus_fasta_softmask_intervals.py --origin=zero /tmp/toilwf-612b01ff36da5d3c9d9e4f1ffca7b3f2/58c4/f136/tmpgzrz61vg/simHuman_chr6.input.masking.bed" in 0.0345 seconds and 13.2 Mi memory
+[2025-02-28T21:15:56+0000] [MainThread] [I] [toil-rt] Red masked 102107 bp of simHuman_chr6, increasing masking from 44990 to 147097
+[2025-02-28T21:15:56+0000] [MainThread] [I] [toil-rt] 2025-02-28 21:15:56.169326: Running the command: "cactus_redPrefilter /tmp/toilwf-612b01ff36da5d3c9d9e4f1ffca7b3f2/58c4/f136/tmpgzrz61vg/simHuman_chr6.fa -m 20000 -b 0.98 -x"
+[2025-02-28T21:15:56+0000] [MainThread] [I] [toil-rt] 2025-02-28 21:15:56.174940: Successfully ran: "cactus_redPrefilter /tmp/toilwf-612b01ff36da5d3c9d9e4f1ffca7b3f2/58c4/f136/tmpgzrz61vg/simHuman_chr6.fa -m 20000 -b 0.98 -x" in 0.0052 seconds and 2.8 Mi memory
+[2025-02-28T21:15:56+0000] [MainThread] [I] [toil.leader] Issued job 'clean_if_different' kind-clean_if_different/instance-kt7fcnjy v1 with job batch system ID: 10 and disk: 2.0 Gi, memory: 2.0 Gi, cores: 1, accelerators: [], preemptible: False
+[2025-02-28T21:15:56+0000] [MainThread] [I] [toil.leader] Issued job 'BatchPreprocessor' kind-BatchPreprocessor/instance-94euugll v1 with job batch system ID: 11 and disk: 2.0 Gi, memory: 2.0 Gi, cores: 1, accelerators: [], preemptible: True
+[2025-02-28T21:16:02+0000] [MainThread] [I] [toil.leader] Issued job 'zip_gzs' kind-zip_gzs/instance-g3ww4lo1 v1 with job batch system ID: 12 and disk: 2.0 Gi, memory: 2.0 Gi, cores: 1, accelerators: [], preemptible: False
+[2025-02-28T21:16:08+0000] [MainThread] [I] [toil.jobStores.abstractJobStore] Importing input file:///n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/succeeded.log...
+[2025-02-28T21:16:08+0000] [MainThread] [I] [toil.leader] Finished toil run successfully.
+[2025-02-28T21:16:08+0000] [MainThread] [I] [toil.realtimeLogger] Stopping real-time logging server.
+[2025-02-28T21:16:08+0000] [MainThread] [I] [toil.realtimeLogger] Joining real-time logging server thread.
+[2025-02-28T21:16:08+0000] [MainThread] [I] [toil.common] Successfully deleted the job store: FileJobStore(/tmp/simHuman_chr6-preprocess)
+--------------------  COMMAND LOG END  --------------------
+

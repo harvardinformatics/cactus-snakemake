@@ -63,8 +63,10 @@ else:
         sys.exit(1);
     # Check if the cactus image exists
 
-CACTUS_PATH = "singularity exec --nv --cleanenv " + cactus_image_path;
-CACTUS_PATH_TMP = "singularity exec --nv --cleanenv --bind " + TMPDIR + ":/tmp " + cactus_image_path;
+CACTUS_PATH = ["singularity", "exec", "--nv", "--cleanenv", cactus_image_path]
+CACTUS_PATH_TMP = ["singularity", "exec", "--nv", "--cleanenv", "--bind", TMPDIR + ":/tmp", cactus_image_path]
+#CACTUS_PATH = "singularity exec --nv --cleanenv " + cactus_image_path
+#CACTUS_PATH_TMP = "singularity exec --nv --cleanenv --bind " + TMPDIR + ":/tmp " + cactus_image_path
 # The path to the cactus image with and without a tmpdir binding
 
 #############################################################################
@@ -100,7 +102,7 @@ CACTUS_FILE = os.path.join(OUTPUT_DIR, os.path.basename(INPUT_FILE));
 
 tips = cactuslib.readTips(INPUT_FILE);
 # The main dictionary for storing information and file paths for tips in the tree:
-# [output fasta file from mask step] : { 'input' : "original genome fasta file", 'name' : "genome name in tree", 'output' : "expected output from mask step (same as key)" }
+# [output fasta file from preprocess step] : { 'input' : "original genome fasta file", 'name' : "genome name in tree", 'output' : "expected output from preprocess step (same as key)" }
 
 ####################
 
@@ -134,7 +136,7 @@ rule all:
         # The log file from the append rule (halAppendSubtree)  
 
         #expand(os.path.join(OUTPUT_DIR, "{final_tip}"), final_tip=[tips[name]['output'] for name in tips]),
-        # The masked input files from rule mask
+        # The masked input files from rule preprocess
 
         #expand(os.path.join(OUTPUT_DIR, "{internal_node}.fa"), internal_node=[node for node in internals]),
         # The final FASTA sequences from each internal node after rules blast, align, and convert
@@ -147,9 +149,7 @@ rule all:
 # #############################################################################
 # # Pipeline rules
 
-# --configFile {params.config_file} 
-
-rule mask:
+rule preprocess:
     input:
         lambda wildcards: [ tips[name]['input'] for name in tips if tips[name]['output'] == wildcards.final_tip ][0]
     output:
@@ -159,25 +159,41 @@ rule mask:
         input_file = INPUT_FILE,
         cactus_file = os.path.join(OUTPUT_DIR, CACTUS_FILE),
         genome_name = lambda wildcards: [ name for name in tips if tips[name]['output'] == wildcards.final_tip ][0],
-        host_tmp_dir = lambda wildcards: os.path.join(TMPDIR, [ name for name in tips if tips[name]['output'] == wildcards.final_tip ][0] + "-mask"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
-        job_tmp_dir = lambda wildcards: os.path.join("/tmp", [ name for name in tips if tips[name]['output'] == wildcards.final_tip ][0] + "-mask"), # This is the tmp dir in the container, which is bound to the host tmp dir
-        gpu_opt = f"--gpu {config["mask_gpu"]}" if USE_GPU else ""
+        host_tmp_dir = lambda wildcards: os.path.join(TMPDIR, [ name for name in tips if tips[name]['output'] == wildcards.final_tip ][0] + "-preprocess"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
+        job_tmp_dir = lambda wildcards: os.path.join("/tmp", [ name for name in tips if tips[name]['output'] == wildcards.final_tip ][0] + "-preprocess"), # This is the tmp dir in the container, which is bound to the host tmp dir
+        gpu_opt = f"--gpu {config["preprocess_gpu"]}" if USE_GPU else "",
+        rule_name = "preprocess"
+    log:
+        job_log = os.path.join(OUTPUT_DIR, "logs", "{final_tip}.preprocess.log")
     resources:
-        slurm_partition = config["mask_partition"],
-        cpus_per_task = config["mask_cpu"],
-        mem_mb = config["mask_mem"],
-        runtime = config["mask_time"],
-        slurm_extra = f"'--gres=gpu:{config["mask_gpu"]}'" if USE_GPU else ""
+        slurm_partition = config["preprocess_partition"],
+        cpus_per_task = config["preprocess_cpu"],
+        mem_mb = config["preprocess_mem"],
+        runtime = config["preprocess_time"],
+        slurm_extra = f"'--gres=gpu:{config["preprocess_gpu"]}'" if USE_GPU else ""
+    run:
+        cmd = params.path + [
+            "cactus-preprocess",
+            params.job_tmp_dir,
+            params.input_file,
+            params.cactus_file,
+            "--inputNames",
+            params.genome_name,
+            "--logInfo",
+            "--retryCount", "0",
+            "--maxCores", str(resources.cpus_per_task)
+        ];
+
+        if params.gpu_opt:
+            cmd.append("--gpu");
+
+        cactuslib.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name, wildcards.final_tip)
+        # When not requesting all CPU on a node: toil.batchSystems.abstractBatchSystem.InsufficientSystemResources: The job LastzRepeatMaskJob is requesting 64.0 cores, more than the maximum of 32 cores that SingleMachineBatchSystem was configured with, or enforced by --maxCores.Scale is set to 1.0.
     # shell:
     #     """
     #     {params.path} cactus-preprocess {params.job_dir} {params.input_file} {params.cactus_file} --inputNames {params.genome_name} --realTimeLogging true --logInfo --retryCount 0 --maxCores {resources.cpus_per_task} {params.gpu_opt}
     #     """
-    run:
-        if os.path.isdir(params.host_tmp_dir):
-            shell("{params.path} cactus-preprocess {params.job_tmp_dir} {params.input_file} {params.cactus_file} --inputNames {params.genome_name} --logInfo --retryCount 0 --maxCores {resources.cpus_per_task} {params.gpu_opt}  --restart")
-        else:
-            shell("{params.path} cactus-preprocess {params.job_tmp_dir} {params.input_file} {params.cactus_file} --inputNames {params.genome_name} --logInfo --retryCount 0 --maxCores {resources.cpus_per_task} {params.gpu_opt} ")
-        # When not requesting all CPU on a node: toil.batchSystems.abstractBatchSystem.InsufficientSystemResources: The job LastzRepeatMaskJob is requesting 64.0 cores, more than the maximum of 32 cores that SingleMachineBatchSystem was configured with, or enforced by --maxCores.Scale is set to 1.0.
+    # Keeping shell around now for debugging purposes
 
 ## This rule runs cactus-preprocess for every genome (tip in the tree), which does some masking
 ## Runtimes for turtles range from 8 to 15 minutes with the above resoureces
@@ -188,14 +204,17 @@ rule blast:
     input:
         lambda wildcards: [ os.path.join(OUTPUT_DIR, input_file) for input_file in internals[wildcards.internal_node]['input-seqs'] ]
     output:
-        os.path.join(OUTPUT_DIR, "{internal_node}.cigar")
+        cigar_file = os.path.join(OUTPUT_DIR, "{internal_node}.cigar")
     params:
         path = CACTUS_PATH_TMP,
         cactus_file = os.path.join(OUTPUT_DIR, CACTUS_FILE),
         node = lambda wildcards: wildcards.internal_node,
         host_tmp_dir = lambda wildcards: os.path.join(TMPDIR, wildcards.internal_node + "-blast"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
         job_tmp_dir = lambda wildcards: os.path.join("/tmp", wildcards.internal_node + "-blast"), # This is the tmp dir in the container, which is bound to the host tmp dir
-        gpu_opt = f"--gpu {config["blast_gpu"]}" if USE_GPU else ""
+        gpu_opt = f"--gpu {config["blast_gpu"]}" if USE_GPU else "",
+        rule_name = "blast"
+    log:
+        job_log = os.path.join(OUTPUT_DIR, "logs", "{internal_node}.blast.log")
     resources:
         slurm_partition = config["blast_partition"],
         cpus_per_task = config["blast_cpu"],
@@ -203,10 +222,29 @@ rule blast:
         runtime = config["blast_time"],
         slurm_extra = f"'--gres=gpu:{config["blast_gpu"]}'" if USE_GPU else ""
     run:
-        if os.path.isdir(params.host_tmp_dir):
-            shell("{params.path} cactus-blast {params.job_tmp_dir} {params.cactus_file} {output} --root {params.node} --logInfo --retryCount 0 --lastzCores {resources.cpus_per_task} {params.gpu_opt} --restart")
-        else:
-            shell("{params.path} cactus-blast {params.job_tmp_dir} {params.cactus_file} {output} --root {params.node} --logInfo --retryCount 0 --lastzCores {resources.cpus_per_task} {params.gpu_opt}")
+        cmd = params.path + [
+            "cactus-blast",
+            params.job_tmp_dir,
+            params.cactus_file,
+            output.cigar_file,
+            "--root",
+            params.node,
+            "--logInfo",
+            "--retryCount", "0",
+            "--lastzCores", str(resources.cpus_per_task)
+        ];
+
+        if params.gpu_opt:
+            cmd.append("--gpu");
+            cmd.append("1");
+            # TODO: fix this
+
+        cactuslib.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name, wildcards.internal_node)
+    # shell:
+    #     """
+    #     {params.path} cactus-blast {params.job_tmp_dir} {params.cactus_file} {output} --root {params.node} --logInfo --retryCount 0 --lastzCores {resources.cpus_per_task} {params.gpu_opt}
+    #     """
+    # Keeping shell around now for debugging purposes
 ## This rule runs cactus-blast for every internal node
 ## Runtimes for turtles range from 1 to 10 hours with the above resources
 
@@ -217,7 +255,7 @@ rule align:
         cigar_file = os.path.join(OUTPUT_DIR, "{internal_node}.cigar"),
         #seq_files = lambda wildcards: [ os.path.join(OUTPUT_DIR, input_file) for input_file in internals[wildcards.internal_node]['desc-seqs'] ]
     output:
-        os.path.join(OUTPUT_DIR, "{internal_node}.hal")
+        hal_file = os.path.join(OUTPUT_DIR, "{internal_node}.hal")
     params:
         path = CACTUS_PATH_TMP,
         #config_file = os.path.join(OUTPUT_DIR, CONFIG_FILE),
@@ -227,7 +265,10 @@ rule align:
         host_tmp_dir = lambda wildcards: os.path.join(TMPDIR, wildcards.internal_node + "-align"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
         job_tmp_dir = lambda wildcards: os.path.join("/tmp", wildcards.internal_node + "-align"), # This is the tmp dir in the container, which is bound to the host tmp dir
         work_dir = TMPDIR,
-        gpu_opt = "--gpu" if USE_GPU else ""
+        gpu_opt = "--gpu" if USE_GPU else "",
+        rule_name = "align"
+    log:
+        job_log = os.path.join(OUTPUT_DIR, "logs", "{internal_node}.align.log")
     resources:
         slurm_partition = config["align_partition"],
         cpus_per_task = config["align_cpu"],
@@ -235,10 +276,31 @@ rule align:
         runtime = config["align_time"],
         slurm_extra = f"'--gres=gpu:{config["align_gpu"]}'" if USE_GPU else ""
     run:
-        if os.path.isdir(params.host_tmp_dir):
-            shell("{params.path} cactus-align {params.job_tmp_dir} {params.cactus_file} {input.cigar_file} {output} --root {params.node} --logInfo --retryCount 0 --workDir {params.work_dir} --maxCores {resources.cpus_per_task} --defaultDisk 450G {params.gpu_opt} --restart")
-        else:
-            shell("{params.path} cactus-align {params.job_tmp_dir} {params.cactus_file} {input.cigar_file} {output} --root {params.node} --logInfo --retryCount 0 --workDir {params.work_dir} --maxCores {resources.cpus_per_task} --defaultDisk 450G {params.gpu_opt}")
+        cmd = params.path + [
+            "cactus-align",
+            params.job_tmp_dir,
+            params.cactus_file,
+            input.cigar_file,
+            output.hal_file,
+            "--root",
+            params.node,
+            "--logInfo",
+            "--retryCount", "0",
+            "--workDir",
+            params.work_dir,
+            "--maxCores", str(resources.cpus_per_task),
+            #"--defaultDisk", "450G"
+        ];
+
+        if params.gpu_opt:
+            cmd.append("--gpu");
+
+        cactuslib.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name, wildcards.internal_node)
+    # shell:
+    #     """   
+    #     {params.path} cactus-align {params.job_tmp_dir} {params.cactus_file} {input.cigar_file} {output} --root {params.node} --logInfo --retryCount 0 --workDir {params.work_dir} --maxCores {resources.cpus_per_task} --defaultDisk 450G {params.gpu_opt}
+    #     """
+    # Keeping shell around now for debugging purposes
 ## This rule runs cactus-align for every internal node
 ## Runtimes for turtles range from 4 to 16 hours with the above resources
 

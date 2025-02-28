@@ -5,10 +5,12 @@
 #############################################################################
 
 import sys, os
+import shutil
 import re
 import requests
 import subprocess
 import logging
+from datetime import datetime
 import lib.treelib as treelib
 
 #############################################################################
@@ -62,6 +64,11 @@ def configureLogging(log_filename: str, log_level : str, log_verbosity: str) -> 
     except KeyError:
         raise ValueError(f"Invalid logging level: {log_level}. Choose from {list(level_map.keys())}")
     # Set the logging level and handle invalid levels
+
+#############################################################################
+
+def fmtDT():
+    return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 #############################################################################
 
@@ -132,7 +139,7 @@ def downloadCactusImage(use_gpu: bool) -> None:
     image_name = f"cactus_{latest_tag.replace('/', '_')}.sif"
 
     if os.path.exists(image_name):
-        cactuslib_logger.warning(f"Image {image_name} already exists. This image will be used.")
+        cactuslib_logger.info(f"Image {image_name} already exists. This image will be used.")
         cactuslib_logger.debug("=" * 87);
         return os.path.abspath(image_name)
 
@@ -161,16 +168,16 @@ def runCactusPrepare(input_file, cactus_path, output_dir, overwite_output_dir, o
     if not os.path.exists(output_dir):
         cactuslib_logger.info(f"Creating output directory: {output_dir}")
         os.makedirs(output_dir);
-    elif os.path.exists(output_dir) and not overwite_output_dir:
-        cactuslib_logger.error(f"Output directory already exists: {output_dir}. Set overwrite_output_dir to True in your config file to overwrite.")
-        sys.exit(1);
+    # elif os.path.exists(output_dir) and not overwite_output_dir:
+    #     cactuslib_logger.error(f"Output directory already exists: {output_dir}. Set overwrite_output_dir to True in your config file to overwrite.")
+    #     sys.exit(1);
     else:
-        cactuslib_logger.info(f"Output directory {output_dir} already exists and overwrite_output_dir is True. Continuing.");
+        cactuslib_logger.info(f"Output directory {output_dir} already exists. Continuing.");
     # Make the output directory if it doesn't exist
 
-    cactus_path_list = cactus_path.split(" ");
+    #cactus_path_list = cactus_path.split(" ");
 
-    command = cactus_path_list + ["cactus-prepare", input_file, "--outDir", output_dir, "--outHal", output_hal];
+    command = cactus_path + ["cactus-prepare", input_file, "--outDir", output_dir, "--outHal", output_hal];
     if use_gpu:
         command.append("--gpu");
     # The command to run cactus-prepare
@@ -329,8 +336,88 @@ def parseInternals(internals, tips, tinfo, anc_tree):
         for g in internals:
             cactuslib_logger.debug(f"{g}: {internals[g]}");
         cactuslib_logger.debug("===================================================================================");
+        cactuslib_logger.debug("TREE TIPS:");
+        for g in tips:
+            cactuslib_logger.debug(f"{g}: {tips[g]}")
+        cactuslib_logger.debug("===================================================================================");
     ## Some output for debugging
 
     return internals;
 
+#############################################################################
+
+def printWrite(string, stream):
+    print(string, flush=True);
+    stream.write(string + "\n");
+    stream.flush();
+# For logging in runCommand(), print the string and write it to the file stream
+
+def writeFlush(string, stream):
+    stream.write(string + "\n");
+    stream.flush();
+# For logging in runCommand(), write the string to the file stream
+
 #############################################################################    
+
+def runCommand(cmd, tmpdir, logfile, rule, wc=""):
+
+    if wc:
+        wc = "-" + wc;
+    # If a wild card is specified, add a hyphen so it is formatted
+    # nicer in the print statements
+
+    restart = False;
+
+    with open(logfile, "w+") as logfile_stream:
+        if os.path.isdir(tmpdir):
+            cmd = cmd + ["--restart"];
+            restart = True;
+        # If the tmp dir exists, add the --restart flag to the command
+
+        printWrite(f"{fmtDT()} - RULE {rule}{wc} - INFO - runCommand1 - Running command: {" ".join(cmd)}", logfile_stream);
+        writeFlush("-" * 20 + " COMMAND LOG BEGIN " + "-" * 20 + "\n", logfile_stream);
+        proc = subprocess.run(cmd, stdout=logfile_stream, stderr=logfile_stream);
+        writeFlush("-" * 20 + "  COMMAND LOG END  " + "-" * 20 + "\n", logfile_stream);
+            
+    # Run the command and write the output to the log file
+    
+        rcode = proc.returncode;
+        # Get the return code
+
+        if not restart and rcode != 0:
+            raise Exception(f"{fmtDT()} - RULE {rule}{wc} - ERROR - runCommand2 - Command failed: {" ".join(cmd)}");
+        # If the command failed without a restart, raise an exception
+
+        elif rcode != 0:
+        # If the command failed with a restart, check the log file to see if the error was a FileNotFoundError
+
+            logfile_stream.seek(0)
+            log_data = logfile_stream.read();
+            # Reset the file pointer to the beginning of the log file and read what has been written so 
+            # we can see if a certain error has ocurred.
+
+            if "FileNotFoundError: [Errno 2] No such file or directory:" in log_data:       
+                printWrite(f"{fmtDT()} - RULE {rule}{wc} - INFO - runCommand3 - --restart failed with FileNotFoundError. Removing job tmp dir and trying again without --restart.", logfile_stream);
+                shutil.rmtree(tmpdir, ignore_errors=True);
+
+                cmd = cmd[:-1] if cmd[-1] == "--restart" else cmd;
+                # Remove the --restart flag from the command if present (it should be at this point)
+
+                printWrite(f"{fmtDT()} - RULE {rule}{wc} - INFO - runCommand4 - Running command: {" ".join(cmd)}", logfile_stream);
+                writeFlush("-" * 20 + " COMMAND LOG BEGIN " + "-" * 20 + "\n", logfile_stream);
+                proc = subprocess.run(cmd, stdout=logfile_stream, stderr=logfile_stream);
+                writeFlush("-" * 20 + "  COMMAND LOG END  " + "-" * 20 + "\n", logfile_stream);
+            # If the error was a FileNotFoundError, remove the tmp dir and try the command again, without the --restart flag
+
+                if proc.returncode != 0:
+                    printWrite(f"{fmtDT()} - RULE {rule}{wc} - ERROR - runCommand5 - Command failed even without --restart: {" ".join(cmd)}. Removing job tmp dir and exiting.", logfile_stream);
+                    shutil.rmtree(tmpdir, ignore_errors=True);
+                    raise Exception(f"{fmtDT()} - RULE {rule}{wc} - ERROR - runCommand5 - Command failed: {" ".join(cmd)}");
+                # If the command failed again, raise an exception
+
+            else:
+                printWrite(f"{fmtDT()} - RULE {rule}{wc} - ERROR - runCommand6 - --restart failed with an error other than FileNotFoundError. Exiting.", logfile_stream);
+                raise Exception(f"{fmtDT()} - RULE {rule}{wc} - ERROR - runCommand6 - Command failed: {" ".join(cmd)}");
+            # If the error with a --restart, but not a FileNotFoundError, raise an exception
+
+#############################################################################
