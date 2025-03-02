@@ -19,7 +19,7 @@ input_file: yeastPangenome-local.txt
 # Same as input file for cactus-prepare, though a similar file with ancestor genomes should have been created in your output directory
 # when you ran cactus-prepare.
 
-output_dir: yeastPangenome-out-restarts-gpu/
+output_dir: yeastPangenome-out-new4/
 # The output directory for the snakemake pipeline. This should be the same as the outDir in cactus-prepare.
 # This directory will be created if it doesn't exist.
 
@@ -37,7 +37,7 @@ tmp_dir: /n/holylfs05/LABS/informatics/Users/gthomas/tmp/yeastPangenome/
 # A temporary directory for snakemake and cactus to use. 
 # Will be created if it doesn't exist, but it should be located somewhere with lots of space.
 
-use_gpu: True
+use_gpu: False
 # Whether or not to use the GPU version of cactus.
 # If you don't have a GPU partition, set this to False.
 # Either way, be sure to set the correct values for the partitions and GPUs below.

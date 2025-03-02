@@ -162,7 +162,10 @@ rule copy_input:
     input:
         cactus_input = INPUT_FILE_ORIG
     output:
-        cactus_input_copy = INPUT_FILE_COPY
+        ready_file = os.path.join(OUTPUT_DIR, "input_ready")
+    params:
+        cactus_input_copy = INPUT_FILE_COPY,
+        fasta = os.path.join(OUTPUT_DIR, f"{PREFIX}.sv.gfa.fa")
     run:
         import os
 
@@ -175,8 +178,11 @@ rule copy_input:
         with open(input.cactus_input, "r") as infile:
             lines = infile.readlines()
         
+        labels = [];
+        outlines = [];
+
         # Write to the output file
-        with open(output.cactus_input_copy, "w") as outfile:
+        with open(params.cactus_input_copy, "w") as outfile:
             for line in lines:
                 label, path = line.strip().split("\t")
                 
@@ -186,7 +192,21 @@ rule copy_input:
                     path = os.path.normpath(os.path.join(new_base_dir, path))
                 
                 # Write the updated line to the output file
-                outfile.write(f"{label}\t{path}\n")
+                labels.append(label);
+                outlines.append(f"{label}\t{path}\n");
+
+            star_tree = "(" + "".join([ f"{label}:1.0," for label in labels ]) + "_MINIGRAPH_:1);\n";
+
+            outfile.write(star_tree);
+
+            for outline in outlines:
+                outfile.write(outline);
+
+            outfile.write(f"_MINIGRAPH_\tfile://{params.fasta}\n");
+
+        # Write the ready file
+        with open(output.ready_file, "w") as readyfile:
+            readyfile.write("READY\n");
 # This is necessary because cactus-minigraph modifies the input file, which means if we used the original, snakemake would think 
 # it always needs to re-run the whole pipeline. This rule makes a copy of the input file and updates the paths to be absolute.
 
@@ -194,11 +214,12 @@ rule copy_input:
 
 rule minigraph:
     input:
-        cactus_input = INPUT_FILE_COPY
+        ready_file = os.path.join(OUTPUT_DIR, "input_ready")
     output:
         sv_gfa = os.path.join(OUTPUT_DIR, f"{PREFIX}.sv.gfa"),
     params:
         path = CACTUS_PATH,
+        cactus_input = INPUT_FILE_COPY,
         ref_genome = REF_GENOME,
         job_tmp_dir = os.path.join(TMPDIR, "minigraph"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
         rule_name = "minigraph"
@@ -213,7 +234,7 @@ rule minigraph:
         cmd = params.path + [
             "cactus-minigraph",
             params.job_tmp_dir,
-            input.cactus_input,
+            params.cactus_input,
             output.sv_gfa,
             "--reference",
             params.ref_genome
@@ -272,7 +293,6 @@ rule graphmap:
 
 checkpoint split:
     input:
-        cactus_input = INPUT_FILE_COPY,
         sv_gfa = os.path.join(OUTPUT_DIR, f"{PREFIX}.sv.gfa"),
         paf = os.path.join(OUTPUT_DIR, f"{PREFIX}.paf")
     output:
@@ -283,6 +303,7 @@ checkpoint split:
         minigraph_split_log = os.path.join(CHROMS_DIR, "minigraph.split.log")
     params:
         path = CACTUS_PATH,
+        cactus_input = INPUT_FILE_COPY,
         ref_genome = REF_GENOME,
         chroms_dir = CHROMS_DIR,
         job_tmp_dir = os.path.join(TMPDIR, "split"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
@@ -298,7 +319,7 @@ checkpoint split:
         cmd = params.path + [
             "cactus-graphmap-split",
             params.job_tmp_dir,
-            input.cactus_input,
+            params.cactus_input,
             input.sv_gfa,
             input.paf,
             "--outDir",
