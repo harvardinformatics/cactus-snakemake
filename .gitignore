@@ -7,6 +7,7 @@ tests/evolverMammals/evolverMammals-out-gpu/*
 !tests/evolverMammals/evolverMammals-out-gpu/evolverMammals.txt
 
 tests/yeast-minigraph/*
+!tests/yeast-minigraph/seq/
 !tests/yeast-minigraph/yeastPangenome.txt
 !tests/yeast-minigraph/yeastPangenome-local.txt
 !tests/yeast-minigraph/yeast-minigraph-cfg.yaml
