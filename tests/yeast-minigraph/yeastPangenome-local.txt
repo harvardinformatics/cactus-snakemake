@@ -1,0 +1,6 @@
+S288C	seq/S288C.fa.gz
+SK1	seq/SK1.fa.gz
+DBVPG6044	seq/DBVPG6044.fa.gz            
+UWOPS034614	seq/UWOPS034614.fa.gz
+Y12	seq/Y12.fa.gz
+YPS128	seq/YPS128.fa.gz

@@ -8,6 +8,7 @@ tests/evolverMammals/evolverMammals-out-gpu/*
 
 tests/yeast-minigraph/*
 !tests/yeast-minigraph/yeastPangenome.txt
+!tests/yeast-minigraph/yeastPangenome-local.txt
 !tests/yeast-minigraph/yeast-minigraph-cfg.yaml
 
 *.snakemake*
