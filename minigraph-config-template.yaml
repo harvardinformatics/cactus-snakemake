@@ -7,36 +7,42 @@
 
 #############################################################################
 #
-# Below are the parameters you need to set for the cactus snakemake pipeline.
-# YOU WILL NEED TO CHANGE THESE
+# Below are the parameters you need to set for the cactus-minigraph snakemake pipeline.
 #
 
-cactus_path: download
+cactus_path: 
+# File path or "download".
 # Provide the path to the cactus singularity container. 
 # If you don't have it, set this to "download" and the pipeline will download it for you.
 
-input_file: yeastPangenome-local.txt
+input_file: 
+# File path.
 # File containing a list of sample IDs and genome files.
 
-output_dir: yeastPangenome-out/
+output_dir: 
+# Directory path.
 # The desired output directory for the snakemake pipeline. This directory will be created if it doesn't exist.
 # This directory will be created if it doesn't exist.
 
-overwrite_output_dir: False
+overwrite_output_dir: 
+# True/False.
 # This is a safety feature. If the output directory already exists, the pipeline will not run.
 # If you are sure you want to overwrite the output directory, set this to True.
 
-reference: S288C
+reference: 
+# String
 # The reference genome for the pangenome. This should be the name of one of the genomes in the input_file.
 
-prefix: yeast
+prefix: 
+# String
 # A prefix for the output files.
 
-tmp_dir: /n/holylfs05/LABS/informatics/Users/gthomas/tmp/yeastPangenome/
+tmp_dir: 
 # A temporary directory for snakemake and cactus to use. 
 # Will be created if it doesn't exist, but it should be located somewhere with lots of space.
 
-use_gpu: False
+use_gpu: 
+# True/False.
 # Whether or not to use the GPU version of cactus.
 # If you don't have a GPU partition, set this to False.
 # Either way, be sure to set the correct values for the partitions and GPUs below.
@@ -47,42 +53,39 @@ use_gpu: False
 ## Notably, for align, if you use the GPU version of cactus, you will need to
 ## provide a partition with GPUs and set the gpu values to the number of GPUs you want to use.
 ## If you are not using the cactus GPU version, the gpu values will be ignored.
-##
-## The partitions are specific to the Harvard cluster. If you run this on a different cluster
-## you must change them.
 
-minigraph_partition: "shared"  # If use_gpu is True, this must be a partition with GPUs
-minigraph_cpu: 1
-minigraph_mem: 25000             # in MB
-minigraph_time: 30               # in minutes
+minigraph_partition: ""
+minigraph_cpu: 
+minigraph_mem:           # in MB
+minigraph_time:          # in minutes
 
 ##########################
 
-graphmap_partition: "shared" # If use_gpu is True, this must be a partition with GPUs
-graphmap_cpu: 1
-graphmap_mem: 50000            # in MB
-graphmap_time: 30             # in minutes
+graphmap_partition: ""
+graphmap_cpu: 
+graphmap_mem:             # in MB
+graphmap_time:            # in minutes
 
 ##########################
 
-split_partition: "shared" # If use_gpu is True, this must be a partition with GPUs
-split_cpu: 1
-split_mem: 50000            # in MB
-split_time: 30     
+split_partition: ""
+split_cpu: 
+split_mem:                # in MB
+split_time:               # in minutes
 
 ##########################
 
-align_partition: "shared" # If use_gpu is True, this must be a partition with GPUs
-align_gpu: 2                # If use_gpu is False, this will be ignored
-align_cpu: 1
-align_mem: 25000            # in MB
-align_time: 30             # in minutes
+align_partition: ""       # If use_gpu is True, this must be a partition with GPUs
+align_gpu:                # If use_gpu is False, this will be ignored
+align_cpu: 
+align_mem:                # in MB
+align_time:               # in minutes
 
 ##########################
 
-join_partition: "shared"
-join_cpu: 1
-join_mem: 8000           # in MB
-join_time: 30            # in minutes
+join_partition: ""
+join_cpu: 
+join_mem:                 # in MB
+join_time:                # in minutes
 
 ##########################
