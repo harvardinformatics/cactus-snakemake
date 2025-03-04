@@ -45,3 +45,29 @@ For each internal node, cactus runs 3 commands:
 
 BLAST test command:
 singularity exec --nv --cleanenv --bind /n/holylfs05/LABS/informatics/Users/gthomas/tmp/:/tmp /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/cactus_v2.9.3-gpu.sif cactus-blast /tmp/mr-blast /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/evolverMammals.txt /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals-out/mr.cigar --root mr --logInfo --retryCount 0 --lastzCores 64 --gpu 4 --restart
+
+
+
+
+another possible restart error:
+
+Traceback (most recent call last):
+  File "/home/cactus/cactus_env/bin/cactus-minigraph", line 8, in <module>
+    sys.exit(main())
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/cactus/refmap/cactus_minigraph.py", line 131, in main
+    toil.exportFile(gfa_id, makeURL(options.outputGFA))
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/lib/compatibility.py", line 12, in call
+    return func(*args, **kwargs)
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/common.py", line 1191, in exportFile
+    return self.export_file(jobStoreFileID, dstUrl)
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/common.py", line 1202, in export_file
+    self._jobStore.export_file(file_id, dst_uri)
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/jobStores/abstractJobStore.py", line 512, in export_file
+    self._export_file(otherCls, file_id, parseResult)
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/jobStores/fileJobStore.py", line 344, in _export_file
+    srcPath = self._get_file_path_from_id(file_id)
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/toil/jobStores/fileJobStore.py", line 903, in _get_file_path_from_id
+    absPath = os.path.join(self.jobStoreDir, unquote(jobStoreFileID))
+  File "/usr/lib/python3.10/urllib/parse.py", line 668, in unquote
+    string.split
+AttributeError: 'tuple' object has no attribute 'split'

@@ -1,15 +1,22 @@
 *.code-workspace
 
-tests/evolverMammals-out/*
-!tests/evolverMammals-out/evolverMammals.txt
+tests/evolverMammals/evolverMammals-out/*
+!tests/evolverMammals/evolverMammals-out/evolverMammals.txt
 
-tests/evolverMammals-out-gpu/*
-!tests/evolverMammals-out-gpu/evolverMammals.txt
+tests/evolverMammals/evolverMammals-out-gpu/*
+!tests/evolverMammals/evolverMammals-out-gpu/evolverMammals.txt
+
+tests/yeast-minigraph/*
+!tests/yeast-minigraph/yeastPangenome.txt
+!tests/yeast-minigraph/yeast-minigraph-cfg.yaml
 
 *.snakemake*
 *__pycache__*
 
+*.sif
+
 bin/
+cactus/
 
 tests/*.sif
 tests/gpu-test.log
