@@ -3,7 +3,7 @@
 # pipeline. It contains the parameters needed to run the pipeline.
 #############################################################################
 
-# time -p snakemake -p -s cactus_gpu.smk --configfile tests/evolverMammals-cfg.yaml --profile profiles/slurm_profile/ --dryrun
+# time -p snakemake -p -j 5 -e slurm -s ../../cactus.smk --configfile evolverMammals-cfg.yaml --dryrun
 
 #############################################################################
 #
@@ -19,14 +19,15 @@ input_file: evolverMammals.txt
 # Same as input file for cactus-prepare, though a similar file with ancestor genomes should have been created in your output directory
 # when you ran cactus-prepare.
 
-output_dir: evolverMammals-out-new/
+output_dir: evolverMammals-out/
 # The output directory for the snakemake pipeline. This should be the same as the outDir in cactus-prepare.
 # This directory will be created if it doesn't exist.
 
 overwrite_output_dir: False
-# If the output directory already exists and you don't care if the files within it might be overwritten, set this to True.
+# This is a safety feature. If the output directory already exists, the pipeline will not run.
+# If you are sure you want to overwrite the output directory, set this to True.
 
-final_hal: TEST.hal
+final_hal: evolverMammals.hal
 # The name you want for the final HAL file. This will be created within output_dir.
 
 tmp_dir: /n/holylfs05/LABS/informatics/Users/gthomas/tmp/evolverMammals/

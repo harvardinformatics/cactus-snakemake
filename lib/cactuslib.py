@@ -70,12 +70,39 @@ def configureLogging(log_filename: str, log_level : str, log_verbosity: str) -> 
 def fmtDT():
     return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
+def fmtDTLog():
+    return datetime.now().strftime('%Y%m%d%H%M%S')
+
 #############################################################################
 
 def turnOffLogger(log):
     for handler in log.handlers[:]:  # Handle a copy of handlers list
         log.removeHandler(handler)
         handler.close()
+
+#############################################################################
+
+def createOutputDirs(outdir, logdir, overwite_output_dir):
+    err_flag = False;
+
+    outdir_exists = os.path.exists(outdir)
+    if not outdir_exists:
+        os.makedirs(outdir);
+        msg = f"Created output directory: {outdir}";
+    elif outdir_exists and not overwite_output_dir:
+        msg = f"Output directory already exists: {outdir}. Set overwrite_output_dir to True in your config file to overwrite.";
+        err_flag = True;
+    else:
+        msg = f"Output directory {outdir} already exists. Continuing.";
+    # Logging for the output directory        
+    # Make the output directory if it doesn't exist
+
+    if not os.path.exists(logdir):
+        os.makedirs(logdir);
+    # Make the log directory if it doesn't exist. This has to be done before the rest
+    # so the logging works
+
+    return msg, err_flag;
 
 #############################################################################
 
@@ -87,7 +114,7 @@ def parseCactusVersion(tag):
 
 #############################################################################
 
-def fetchLatestCactusTag(get_gpu: bool) -> str:
+def fetchLatestCactusTag(get_gpu: bool, main: bool) -> str:
     url = 'https://quay.io/api/v1/repository/comparative-genomics-toolkit/cactus/tag/'
 
     try:
@@ -120,13 +147,14 @@ def fetchLatestCactusTag(get_gpu: bool) -> str:
     if not isinstance(latest_version_tag, str) or not pattern.match(latest_version_tag):
         raise RuntimeError(f"Latest tag '{latest_version_tag}' does not match expected format.")
 
-    cactuslib_logger.info(f"Latest {'GPU' if get_gpu else 'non-GPU'} version tag: {latest_version_tag}")
+    if main:
+        cactuslib_logger.info(f"Latest {'GPU' if get_gpu else 'non-GPU'} version tag: {latest_version_tag}")
     return latest_version_tag
 
 #############################################################################
 
-def downloadCactusImage(use_gpu: bool) -> None:
-    latest_tag = fetchLatestCactusTag(use_gpu)
+def downloadCactusImage(use_gpu: bool, main: bool) -> None:
+    latest_tag = fetchLatestCactusTag(use_gpu, main)
 
     # Ensure there is a valid tag returned
     # if not latest_tag:
@@ -139,8 +167,9 @@ def downloadCactusImage(use_gpu: bool) -> None:
     image_name = f"cactus_{latest_tag.replace('/', '_')}.sif"
 
     if os.path.exists(image_name):
-        cactuslib_logger.info(f"Image {image_name} already exists. This image will be used.")
-        cactuslib_logger.debug("=" * 87);
+        if main:
+            cactuslib_logger.info(f"Image {image_name} already exists. This image will be used.")
+            cactuslib_logger.debug("=" * 87);
         return os.path.abspath(image_name)
 
     else:
@@ -162,20 +191,8 @@ def downloadCactusImage(use_gpu: bool) -> None:
 
 #############################################################################
 
-def runCactusPrepare(input_file, cactus_path, output_dir, overwite_output_dir, output_hal, use_gpu):
+def runCactusPrepare(input_file, cactus_path, output_dir, output_hal, use_gpu, log_dir):
 # This function runs cactus-prepare on the input file and saves the output in the output directory
-
-    if not os.path.exists(output_dir):
-        cactuslib_logger.info(f"Creating output directory: {output_dir}")
-        os.makedirs(output_dir);
-    # elif os.path.exists(output_dir) and not overwite_output_dir:
-    #     cactuslib_logger.error(f"Output directory already exists: {output_dir}. Set overwrite_output_dir to True in your config file to overwrite.")
-    #     sys.exit(1);
-    else:
-        cactuslib_logger.info(f"Output directory {output_dir} already exists. Continuing.");
-    # Make the output directory if it doesn't exist
-
-    #cactus_path_list = cactus_path.split(" ");
 
     command = cactus_path + ["cactus-prepare", input_file, "--outDir", output_dir, "--outHal", output_hal];
     if use_gpu:
@@ -190,7 +207,7 @@ def runCactusPrepare(input_file, cactus_path, output_dir, overwite_output_dir, o
         logfile = "cactus-prepare-gpu.log";
     else:
         logfile = "cactus-prepare.log";
-    logpath = os.path.join(output_dir, logfile);
+    logpath = os.path.join(log_dir, logfile);
     # The log file name
 
     try:
@@ -207,7 +224,7 @@ def runCactusPrepare(input_file, cactus_path, output_dir, overwite_output_dir, o
 
 #############################################################################
 
-def readTips(input_file):
+def readTips(input_file, main):
 # This function reads the cactus input file and initializes the tips dictionary
     
     tips = {};
@@ -221,7 +238,8 @@ def readTips(input_file):
         # Skip any blank lines
 
         if first:
-            cactuslib_logger.info(f"USER INPUT TREE: {line.strip()}");
+            if main:
+                cactuslib_logger.info(f"USER INPUT TREE: {line.strip()}");
             first = False;
             continue;
         # The first line contains the input tree... skip
@@ -242,7 +260,7 @@ def readTips(input_file):
 
 #############################################################################
 
-def initializeInternals(cactus_file, tips):
+def initializeInternals(cactus_file, tips, main):
 # This function reads the cactus file generated by cactus-prepare and initializes the internals dictionary
 
     internals = {};
@@ -277,7 +295,8 @@ def initializeInternals(cactus_file, tips):
                                     'seq-file' : cur_base };
     ## Read the internal node labels and output file paths from the file generated by cactus-prepare
 
-    cactuslib_logger.info(f"CACTUS LABELED TREE: {anc_tree}");
+    if main:
+        cactuslib_logger.info(f"CACTUS LABELED TREE: {anc_tree}");
 
     return internals, anc_tree;
 
