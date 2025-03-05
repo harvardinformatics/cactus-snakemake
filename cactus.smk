@@ -38,10 +38,14 @@ LOG_DIR = os.path.join(OUTPUT_DIR, "logs");
 # The output directory where all the files and logs are stored
 
 if MAIN:
-    outdir_log_msg, outdir_err_flag = cactuslib.createOutputDirs(OUTPUT_DIR, LOG_DIR, config["overwrite_output_dir"]);
+    outdir_log_msg, outdir_err_flag = cactuslib.createOutputDirs(OUTPUT_DIR, LOG_DIR, config["overwrite_output_dir"], DRY_RUN);
 # Create the output directories if they don't exist
 
 log_verbosity = "both"; # "screen", "file", "both"
+if DRY_RUN:
+    log_verbosity = "screen";
+# Set the log verbosity based on the arguments
+
 log_filename = os.path.join(LOG_DIR, f"cactus-snakemake.{log_level}.log"); # Log file name if log_verbosity is "file" or "both"
 cactuslib.configureLogging(log_filename, log_level.upper(), log_verbosity.upper())
 cactuslib_logger = logging.getLogger('cactuslib')
@@ -117,8 +121,17 @@ else:
         cactuslib_logger.info(f"Input file found at {INPUT_FILE}");
 # The cactus input file used to generate the config file with cactus-prepare
 
-OUTPUT_HAL = os.path.join(OUTPUT_DIR, config["final_hal"]);
-#OUTPUT_MAF = os.path.join(OUTPUT_DIR, config["final_hal"].replace(".hal", ".maf"));
+MAF_REFERENCE = config["maf_reference"];
+
+OUTPUT_HAL = os.path.join(OUTPUT_DIR, f"{config["final_prefix"]}.hal");
+OUTPUT_MAF = os.path.join(OUTPUT_DIR, f"{config["final_prefix"]}.{MAF_REFERENCE}.maf.gz");
+OUTPUT_MAF_NODUPES = os.path.join(OUTPUT_DIR, f"{config["final_prefix"]}.{MAF_REFERENCE}.nodupes.maf.gz");
+
+if MAIN:
+    cactuslib_logger.info(f"Output HAL file will be at {OUTPUT_HAL}");
+    cactuslib_logger.info(f"Reference genome for MAF file will be {MAF_REFERENCE}");
+    cactuslib_logger.info(f"Output MAF file will be at {OUTPUT_MAF}");
+# The final output files for the pipeline
 
 #job_path = os.path.join(OUTPUT_DIR, "jobstore");
 # The temporary/job directory specified in cactus-prepare
@@ -127,8 +140,11 @@ OUTPUT_HAL = os.path.join(OUTPUT_DIR, config["final_hal"]);
 # cactus-prepare
 
 if MAIN:
-    cactuslib.runCactusPrepare(INPUT_FILE, CACTUS_PATH, OUTPUT_DIR, OUTPUT_HAL, USE_GPU, LOG_DIR);
-CACTUS_FILE = os.path.join(OUTPUT_DIR, os.path.basename(INPUT_FILE));
+    cactuslib.runCactusPrepare(INPUT_FILE, CACTUS_PATH, OUTPUT_DIR, OUTPUT_HAL, USE_GPU, LOG_DIR, DRY_RUN);
+if DRY_RUN:
+    CACTUS_FILE = os.path.join("/tmp/", "cactus-smk-dryrun", os.path.basename(INPUT_FILE));
+else:
+    CACTUS_FILE = os.path.join(OUTPUT_DIR, os.path.basename(INPUT_FILE));
 # Run cactus-prepare to generate the cactus input file with ancestral nodes and labeled tree
 
 #############################################################################
@@ -149,9 +165,14 @@ internals, anc_tree = cactuslib.initializeInternals(CACTUS_FILE, tips, MAIN);
 ####################
 
 tinfo, anc_tree, root = treelib.treeParse(anc_tree);
-root_name = tinfo[root][3];
+ROOT_NAME = tinfo[root][3];
 internals = cactuslib.parseInternals(internals, tips, tinfo, anc_tree);
 # The tree is parsed to get the root node and the internal nodes are updated with the correct names
+
+if DRY_RUN:
+    import shutil
+    shutil.rmtree("/tmp/cactus-smk-dryrun/", ignore_errors=True)
+# Remove the dryrun directory if it was created
 
 if log_level == "debug":
     cactuslib_logger.debug("EXITING BEFORE RULES. DEBUG MODE.");
@@ -166,17 +187,8 @@ localrules: all
 
 rule all:
     input:
-        os.path.join(OUTPUT_DIR, "hal-append-subtree.log"),
-        # The log file from the append rule (halAppendSubtree)  
-
-        #expand(os.path.join(OUTPUT_DIR, "{final_tip}"), final_tip=[tips[name]['output'] for name in tips]),
-        # The masked input files from rule preprocess
-
-        #expand(os.path.join(OUTPUT_DIR, "{internal_node}.fa"), internal_node=[node for node in internals]),
-        # The final FASTA sequences from each internal node after rules blast, align, and convert
-
-        #OUTPUT_MAF
-        #os.path.join(OUTPUT_DIR, root_name + ".maf")
+        final_maf = OUTPUT_MAF,
+        final_maf_nodupes = OUTPUT_MAF_NODUPES
         # The .maf file from rul maf
 ## Rule all specifies the final output files expected
 
@@ -238,7 +250,7 @@ rule blast:
     input:
         lambda wildcards: [ os.path.join(OUTPUT_DIR, input_file) for input_file in internals[wildcards.internal_node]['input-seqs'] ]
     output:
-        cigar_file = os.path.join(OUTPUT_DIR, "{internal_node}.cigar")
+        paf_file = os.path.join(OUTPUT_DIR, "{internal_node}.paf")
     params:
         path = CACTUS_PATH_TMP,
         cactus_file = os.path.join(OUTPUT_DIR, CACTUS_FILE),
@@ -260,9 +272,8 @@ rule blast:
             "cactus-blast",
             params.job_tmp_dir,
             params.cactus_file,
-            output.cigar_file,
-            "--root",
-            params.node,
+            output.paf_file,
+            "--root", params.node,
             "--logInfo",
             "--retryCount", "0",
             "--lastzCores", str(resources.cpus_per_task)
@@ -286,7 +297,7 @@ rule blast:
 
 rule align:
     input:
-        cigar_file = os.path.join(OUTPUT_DIR, "{internal_node}.cigar"),
+        cigar_file = os.path.join(OUTPUT_DIR, "{internal_node}.paf"),
         #seq_files = lambda wildcards: [ os.path.join(OUTPUT_DIR, input_file) for input_file in internals[wildcards.internal_node]['desc-seqs'] ]
     output:
         hal_file = os.path.join(OUTPUT_DIR, "{internal_node}.hal")
@@ -316,12 +327,10 @@ rule align:
             params.cactus_file,
             input.cigar_file,
             output.hal_file,
-            "--root",
-            params.node,
+            "--root", params.node,
             "--logInfo",
             "--retryCount", "0",
-            "--workDir",
-            params.work_dir,
+            "--workDir", params.work_dir,
             "--maxCores", str(resources.cpus_per_task),
             #"--defaultDisk", "450G"
         ];
@@ -342,22 +351,31 @@ rule align:
 
 rule convert:
     input:
-        os.path.join(OUTPUT_DIR, "{internal_node}.hal")
+        hal_file = os.path.join(OUTPUT_DIR, "{internal_node}.hal")
         #lambda wildcards: [ os.path.join(output_dir, input_file) for input_file in internals[wildcards.internal_node]['hal-inputs'] ][0]
     output:
-        os.path.join(OUTPUT_DIR, "{internal_node}.fa")
+        fa_file = os.path.join(OUTPUT_DIR, "{internal_node}.fa")
     params:
         path = CACTUS_PATH,
         node = lambda wildcards: wildcards.internal_node,
+        rule_name = "convert"
+    log:
+        job_log = os.path.join(LOG_DIR, "{internal_node}.convert.log")
     resources:
         slurm_partition = config["convert_partition"],
         cpus_per_task = config["convert_cpu"],
         mem_mb = config["convert_mem"],
         time = config["convert_time"]
-    shell:
-        """
-        {params.path} hal2fasta {input} {params.node} --hdf5InMemory > {output}
-        """
+    run:
+        cmd = params.path + [
+            "hal2fasta",
+            input.hal_file,
+            params.node,
+            "--outFaPath", output.fa_file,
+            "--hdf5InMemory"
+        ];
+
+        cactuslib.runCommand(cmd, None, log.job_log, params.rule_name, params.node)
 ## This rule runs hal2fasta to convert .hal files for each internal node to .fasta files
 ## Runtime for turtles is only about 30 seconds per node
 
@@ -366,18 +384,22 @@ rule convert:
 rule copy_hal:
     input:
         all_hals = expand(os.path.join(OUTPUT_DIR, "{internal_node}.fa"), internal_node=internals),
-        anc_hal = os.path.join(OUTPUT_DIR, root_name + ".hal")
+        anc_hal = os.path.join(OUTPUT_DIR, ROOT_NAME + ".hal")
     output:
-        OUTPUT_HAL
+        final_hal = OUTPUT_HAL
+    params:
+        rule_name = "copy_hal"
+    log:
+        job_log = os.path.join(LOG_DIR, "copy-hal.log")
     resources:
         slurm_partition = config["copy_partition"],
         cpus_per_task = config["copy_cpu"],
         mem_mb = config["copy_mem"],
         runtime = config["copy_time"]    
-    shell:
-        """
-        cp {input.anc_hal} {output}
-        """
+    run:
+        cmd = ["cp", input.anc_hal, output.final_hal];
+
+        cactuslib.runCommand(cmd, None, log.job_log, params.rule_name)
 ## Copying the root .hal file here, since failures in the subsequent rules
 ## would mean the blast/align steps have to be re-run for that node, but this means a little extra
 ## storage is required
@@ -386,72 +408,101 @@ rule copy_hal:
 
 rule append:
     input:
-        #expand(os.path.join(OUTPUT_DIR, "{internal_node}.fa"), internal_node=internals)
-        OUTPUT_HAL
+        final_hal = OUTPUT_HAL
     output:
-        touch(os.path.join(OUTPUT_DIR, "hal-append-subtree.log"))
+        append_done = touch(os.path.join(LOG_DIR, "hal-append-subtree.done"))
+    params:
+        path = CACTUS_PATH_TMP,
+        job_tmp_dir = os.path.join(TMPDIR, "append-hal"),
+        rule_name = "append"
+    log:
+        job_log = os.path.join(LOG_DIR, "hal-append-subtree.log")
     resources:
         slurm_partition = config["append_partition"],
         cpus_per_task = config["append_cpu"],
         mem_mb = config["append_mem"],
         runtime = config["append_time"]
     run:
-        with open(os.path.join(OUTPUT_DIR, "hal-append-subtree.log"), "w") as appendfile:
-            for node in internals:
-                appendfile.write(node + "\n");
-                if node == root_name:
-                    appendfile.write("Node is root node. Nothing to be done.\n");
-                    appendfile.write("----------" + "\n\n");
-                    appendfile.flush();
-                    continue;
-                # If the node is the root we don't want to append since that is the hal file we
-                # are appending to
+        node_count = 1;
+        for node in internals:
+            if node == ROOT_NAME:
+                continue;
+            # If the node is the root we don't want to append since that is the hal file we
+            # are appending to
 
-                #cmd = ["singularity", "exec", "--nv", "--cleanenv", "--bind", TMPDIR + ":/tmp", config["cactus_path"], "halAppendSubtree", os.path.join(OUTPUT_DIR, root_name + ".hal"), os.path.join(OUTPUT_DIR, node + ".hal"), node, node, "--merge", "--hdf5InMemory"];
-                cmd = ["singularity", "exec", "--nv", "--cleanenv", "--bind", TMPDIR + ":/tmp", config["cactus_path"], "halAppendSubtree", OUTPUT_HAL, os.path.join(OUTPUT_DIR, node + ".hal"), node, node, "--merge", "--hdf5InMemory"];
-                appendfile.write("RUNNING COMMAND:\n");
-                appendfile.write(" ".join(cmd) + "\n");
-                appendfile.flush();
-                # Generate the command for the current node
+            node_hal = os.path.join(OUTPUT_DIR, node + ".hal");
 
-                result = subprocess.run(cmd, capture_output=True, text=True);
-                # Run the command for the current node and capture the output
+            cmd = params.path + [
+                "halAppendSubtree",
+                OUTPUT_HAL,
+                node_hal,
+                node,
+                node,
+                "--merge",
+                "--hdf5InMemory"
+            ];
 
-                appendfile.write("COMMAND STDOUT:\n")
-                appendfile.write(result.stdout + "\n");
-                appendfile.write("COMMAND STDERR:\n")
-                appendfile.write(result.stderr + "\n");
-                appendfile.write("\nDONE!\n");
-                appendfile.write("----------" + "\n\n");
-                appendfile.flush();
-                # Print the output of the command to the log file
-                # TODO: Maybe check for errors in stderr and exit with non-zero if found? Not sure if that would work...
-                # Note that calling singularity with --nv will print text to stderr even though there is no error
+            if node_count == 1:
+                file_mode = "w+";
+            else:
+                file_mode = "a+";
+
+            cactuslib.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name, node, fmode=file_mode);
+            # Generate the command for the current node
+
+            node_count += 1;
+            # Increment the node count
         ## End node loop
     ## This rule runs halAppendSubtree on every internal node in the tree to combine alignments into a single file.
-    ## Because this command writes to the same file for every node, jobs must be run serially, so this command
-    ## is run in a run block with pyhton's subprocess.run() function.
-    ## Output is captured in the 'hal-append-subtree.log'
-
+    ## Because this command writes to the same file for every node, jobs must be run serially.
 ####################
 
-# rule maf:
-#     input:
-#         final_hal = OUTPUT_HAL,
-#         append_log = os.path.join(OUTPUT_DIR, "hal-append-subtree.log")
-#     output:
-#         OUTPUT_MAF
-#     params:
-#         path = CACTUS_PATH_TMP
-#     resources:
-#         slurm_partition = config["maf_partition"],
-#         cpus_per_task = config["maf_cpu"],
-#         mem_mb = config["maf_mem"],
-#         runtime = config["maf_time"]
-#         # {params.path} hal2mafMP.py --numProc {resources.cpus} {input.final_hal} {output}
-#     shell:
-#         """
-#         {params.path} hal2maf {input.final_hal} {output}
-#         """
+rule maf:
+    input:
+        final_hal = OUTPUT_HAL,
+        append_done = os.path.join(LOG_DIR, "hal-append-subtree.done")
+    output:
+        final_maf = OUTPUT_MAF,
+        final_maf_nodupes = OUTPUT_MAF_NODUPES
+    params:
+        path = CACTUS_PATH_TMP,
+        ref_genome = MAF_REFERENCE,
+        chunk_size = 500000, # 500kb
+        job_tmp_dir = os.path.join(TMPDIR, "maf"),
+        rule_name = "maf"
+    log:
+        job_log = os.path.join(LOG_DIR, "maf.log")
+    resources:
+        slurm_partition = config["maf_partition"],
+        cpus_per_task = config["maf_cpu"],
+        mem_mb = config["maf_mem"],
+        runtime = config["maf_time"]
+    run:
+        cmd = params.path + [
+            "cactus-hal2maf",
+            params.job_tmp_dir,
+            input.final_hal,
+            output.final_maf,
+            "--refGenome", params.ref_genome,
+            "--chunkSize", str(params.chunk_size),
+            "--batchCount", str(resources.cpus_per_task),
+            "--filterGapCausingDupes"
+        ];
+
+        cactuslib.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name);
+
+        cmd = params.path + [
+            "cactus-hal2maf",
+            params.job_tmp_dir,
+            input.final_hal,
+            output.final_maf_nodupes,
+            "--refGenome", params.ref_genome,
+            "--chunkSize", str(params.chunk_size),
+            "--batchCount", str(resources.cpus_per_task),
+            "--filterGapCausingDupes",
+            "--dupeMode", "single"
+        ];
+
+        cactuslib.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name, fmode="a+");
 
 #############################################################################

@@ -29,9 +29,13 @@ overwrite_output_dir:
 # This is a safety feature. If the output directory already exists, the pipeline will not run.
 # If you are sure you want to overwrite the output directory, set this to True.
 
-final_hal: 
-# File path.
-# The name you want for the final HAL file. This will be created within output_dir.
+final_prefix: evolverMammals
+# String.
+# The prefix for the final output files. This will be used to name the final HAL file and the final MAF files.
+
+maf_reference:
+# String.
+# The reference genome for the MAF files. This should be the name of the reference genome in the input_file.
 
 tmp_dir:
 # Directory path.

@@ -38,10 +38,14 @@ LOG_DIR = os.path.join(OUTPUT_DIR, "logs");
 # The output directory where all the files and logs are stored
 
 if MAIN:
-    outdir_log_msg, outdir_err_flag = cactuslib.createOutputDirs(OUTPUT_DIR, LOG_DIR, config["overwrite_output_dir"]);
+    outdir_log_msg, outdir_err_flag = cactuslib.createOutputDirs(OUTPUT_DIR, LOG_DIR, config["overwrite_output_dir"], DRY_RUN);
 # Create the output directories if they don't exist
 
 log_verbosity = "both"; # "screen", "file", "both"
+if DRY_RUN:
+    log_verbosity = "screen";
+# Set the log verbosity based on the arguments
+
 log_filename = os.path.join(LOG_DIR, f"cactus-minigraph-snakemake.{log_level}.log");
 cactuslib.configureLogging(log_filename, log_level.upper(), log_verbosity.upper());
 cactuslib_logger = logging.getLogger('cactuslib');

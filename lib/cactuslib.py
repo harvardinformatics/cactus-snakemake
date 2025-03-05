@@ -82,22 +82,25 @@ def turnOffLogger(log):
 
 #############################################################################
 
-def createOutputDirs(outdir, logdir, overwite_output_dir):
+def createOutputDirs(outdir, logdir, overwite_output_dir, dry_run):
     err_flag = False;
 
     outdir_exists = os.path.exists(outdir)
     if not outdir_exists:
-        os.makedirs(outdir);
-        msg = f"Created output directory: {outdir}";
+        if not dry_run:
+            os.makedirs(outdir);
+            msg = f"Created output directory: {outdir}";
+        else:
+            msg = f"Output directory {outdir} will be created.";
     elif outdir_exists and not overwite_output_dir:
-        msg = f"Output directory already exists: {outdir}. Set overwrite_output_dir to True in your config file to overwrite.";
+        msg = f"Output directory already exists: {outdir}. Remove the directory or set overwrite_output_dir to True in your config file to use it anyway and potentially overwrite files from previous runs.";
         err_flag = True;
     else:
         msg = f"Output directory {outdir} already exists. Continuing.";
     # Logging for the output directory        
     # Make the output directory if it doesn't exist
 
-    if not os.path.exists(logdir):
+    if not os.path.exists(logdir) and not dry_run:
         os.makedirs(logdir);
     # Make the log directory if it doesn't exist. This has to be done before the rest
     # so the logging works
@@ -191,8 +194,15 @@ def downloadCactusImage(use_gpu: bool, main: bool) -> None:
 
 #############################################################################
 
-def runCactusPrepare(input_file, cactus_path, output_dir, output_hal, use_gpu, log_dir):
+def runCactusPrepare(input_file, cactus_path, output_dir, output_hal, use_gpu, log_dir, dry_run):
 # This function runs cactus-prepare on the input file and saves the output in the output directory
+
+    log_prefix = "cactus-prepare";
+    if dry_run:
+        output_dir = "/tmp/cactus-smk-dryrun/";
+        os.makedirs(output_dir, exist_ok=True);
+        log_prefix = os.path.join(output_dir, "cactus-prepare");
+    # If this is a dry run, create a temporary output directory and log file
 
     command = cactus_path + ["cactus-prepare", input_file, "--outDir", output_dir, "--outHal", output_hal];
     if use_gpu:
@@ -204,11 +214,16 @@ def runCactusPrepare(input_file, cactus_path, output_dir, output_hal, use_gpu, l
     # Debug output
 
     if use_gpu:
-        logfile = "cactus-prepare-gpu.log";
+        logfile = log_prefix + "-gpu.log";
     else:
-        logfile = "cactus-prepare.log";
-    logpath = os.path.join(log_dir, logfile);
+        logfile = log_prefix + ".log";
     # The log file name
+
+    if dry_run:
+        logpath = logfile;
+    else:
+        logpath = os.path.join(log_dir, logfile);
+    # The log file path
 
     try:
         with open(logpath, "w") as log_file:
@@ -220,6 +235,9 @@ def runCactusPrepare(input_file, cactus_path, output_dir, output_hal, use_gpu, l
         cactuslib_logger.error(f"Error running cactus-prepare: {e}")
         sys.exit(1)
     # Run the command and check for errors
+
+    return os.path.join(output_dir, os.path.basename(input_file));
+    # Return the output file path
 
 
 #############################################################################
@@ -378,7 +396,7 @@ def writeFlush(string, stream):
 
 #############################################################################    
 
-def runCommand(cmd, tmpdir, logfile, rule, wc=""):
+def runCommand(cmd, tmpdir, logfile, rule, wc="", fmode="w+"):
 
     if wc:
         wc = "-" + wc;
@@ -387,8 +405,8 @@ def runCommand(cmd, tmpdir, logfile, rule, wc=""):
 
     restart = False;
 
-    with open(logfile, "w+") as logfile_stream:
-        if os.path.isdir(tmpdir):
+    with open(logfile, fmode) as logfile_stream:
+        if tmpdir and os.path.isdir(tmpdir):
             cmd = cmd + ["--restart"];
             restart = True;
         # If the tmp dir exists, add the --restart flag to the command
@@ -407,7 +425,7 @@ def runCommand(cmd, tmpdir, logfile, rule, wc=""):
             raise Exception(f"{fmtDT()} - RULE {rule}{wc} - ERROR - runCommand2 - Command failed: {" ".join(cmd)}");
         # If the command failed without a restart, raise an exception
 
-        elif rcode != 0:
+        elif restart and rcode != 0:
         # If the command failed with a restart, check the log file to see if the error was a FileNotFoundError
 
             logfile_stream.seek(0)
