@@ -24,3 +24,5 @@ tests/*.sif
 tests/gpu-test.log
 tests/gpu-usage.log
 turtles/
+
+utils/etc/
