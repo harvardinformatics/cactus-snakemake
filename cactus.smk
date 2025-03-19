@@ -330,7 +330,7 @@ rule align:
             "--root", params.node,
             "--logInfo",
             "--retryCount", "0",
-            "--workDir", params.work_dir,
+            #"--workDir", params.work_dir,
             "--maxCores", str(resources.cpus_per_task),
             #"--defaultDisk", "450G"
         ];

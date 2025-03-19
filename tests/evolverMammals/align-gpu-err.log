@@ -1,0 +1,27 @@
+2025-03-18 17:01:05 - RULE align-mr - INFO - runCommand1 - Running command: singularity exec --nv --cleanenv --bind /n/holylfs05/LABS/informatics/Users/gthomas/tmp/evolverMammals/:/tmp /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/cactus_v2.9.7-gpu.sif cactus-align /tmp/mr-align /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/evolverMammals-out-gpu2/evolverMammals.txt /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/evolverMammals-out-gpu2/mr.paf /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/evolverMammals-out-gpu2/mr.hal --root mr --logInfo --retryCount 0 --maxCores 24
+-------------------- COMMAND LOG BEGIN --------------------
+
+WARNING: Could not find any nv files on this host!
+[2025-03-18T21:01:07+0000] [MainThread] [I] [toil.statsAndLogging] Enabling realtime logging in Toil
+[2025-03-18T21:01:07+0000] [MainThread] [W] [toil.lib.humanize] Deprecated toil method.  Please use "toil.lib.conversions.human2bytes()" instead."
+[2025-03-18T21:01:07+0000] [MainThread] [W] [toil.lib.humanize] Deprecated toil method.  Please use "toil.lib.conversions.human2bytes()" instead."
+[2025-03-18T21:01:07+0000] [MainThread] [I] [toil.statsAndLogging] Cactus Command: /home/cactus/cactus_env/bin/cactus-align /tmp/mr-align /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/evolverMammals-out-gpu2/evolverMammals.txt /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/evolverMammals-out-gpu2/mr.paf /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/evolverMammals-out-gpu2/mr.hal --root mr --logInfo --retryCount 0 --maxCores 24
+[2025-03-18T21:01:07+0000] [MainThread] [I] [toil.statsAndLogging] Cactus Commit: 0ae82a5f223c7024c242beef1800732aa1afd567
+[2025-03-18T21:01:07+0000] [MainThread] [I] [toil.lib.history] Recording workflow creation of a56a3155-9e2b-4113-8061-9b4d9bfda663 in file:/tmp/mr-align
+[2025-03-18T21:01:07+0000] [MainThread] [I] [toil.lib.history] Workflow a56a3155-9e2b-4113-8061-9b4d9bfda663 stopped. Success: False
+Traceback (most recent call last):
+  File "/home/cactus/cactus_env/bin/cactus-align", line 8, in <module>
+    sys.exit(main())
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/cactus/setup/cactus_align.py", line 186, in main
+    align_jobs = make_batch_align_jobs(options, toil)
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/cactus/setup/cactus_align.py", line 252, in make_batch_align_jobs
+    result_dict[None] = make_align_job(options, toil)
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/cactus/setup/cactus_align.py", line 267, in make_align_job
+    config_wrapper.initGPU(options)
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/cactus/shared/configWrapper.py", line 285, in initGPU
+    lastz_gpu = get_gpu_count()
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/cactus/shared/configWrapper.py", line 272, in get_gpu_count
+    raise RuntimeError('Unable to automatically determine number of GPUs: Please set with --gpu N')
+RuntimeError: Unable to automatically determine number of GPUs: Please set with --gpu N
+--------------------  COMMAND LOG END  --------------------
+

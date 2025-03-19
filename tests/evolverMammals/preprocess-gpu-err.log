@@ -1,0 +1,19 @@
+2025-03-18 16:36:41 - RULE preprocess-simRat.chr6 - INFO - runCommand1 - Running command: singularity exec --nv --cleanenv /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/cactus_v2.9.7-gpu.sif cactus-preprocess /tmp/simRat_chr6-preprocess /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/evolverMammals.txt /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/evolverMammals-out-gpu2/evolverMammals.txt --inputNames simRat_chr6 --logInfo --retryCount 0 --maxCores 8
+-------------------- COMMAND LOG BEGIN --------------------
+
+WARNING: Could not find any nv files on this host!
+[2025-03-18T20:36:49+0000] [MainThread] [I] [toil.statsAndLogging] Enabling realtime logging in Toil
+[2025-03-18T20:36:49+0000] [MainThread] [W] [toil.lib.humanize] Deprecated toil method.  Please use "toil.lib.conversions.human2bytes()" instead."
+[2025-03-18T20:36:49+0000] [MainThread] [W] [toil.lib.humanize] Deprecated toil method.  Please use "toil.lib.conversions.human2bytes()" instead."
+Traceback (most recent call last):
+  File "/home/cactus/cactus_env/bin/cactus-preprocess", line 8, in <module>
+    sys.exit(main())
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/cactus/preprocessor/cactus_preprocessor.py", line 516, in main
+    config_wrapper.initGPU(options)
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/cactus/shared/configWrapper.py", line 285, in initGPU
+    lastz_gpu = get_gpu_count()
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/cactus/shared/configWrapper.py", line 272, in get_gpu_count
+    raise RuntimeError('Unable to automatically determine number of GPUs: Please set with --gpu N')
+RuntimeError: Unable to automatically determine number of GPUs: Please set with --gpu N
+--------------------  COMMAND LOG END  --------------------
+

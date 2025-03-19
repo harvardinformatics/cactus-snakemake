@@ -18,11 +18,11 @@ cactus_path: download
 input_file: evolverMammals.txt
 # File containing rooted Newick tree on the first line, and a list of genome files on the following lines.
 
-output_dir: evolverMammals-out-gpu/
+output_dir: evolverMammals-out-gpu2/
 # The output directory for the snakemake pipeline. This should be the same as the outDir in cactus-prepare.
 # This directory will be created if it doesn't exist.
 
-overwrite_output_dir: False
+overwrite_output_dir: True
 # This is a safety feature. If the output directory already exists, the pipeline will not run.
 # If you are sure you want to overwrite the output directory, set this to True.
 
@@ -59,7 +59,7 @@ preprocess_time: 30               # in minutes
 ##########################
 
 blast_partition: "gpu_test" # If use_gpu is True, this must be a partition with GPUs
-blast_gpu: 1                # If use_gpu is False, this will be ignored -- CURRENTLY ONLY WORKS WITH 1 GPU
+blast_gpu: 1                # If use_gpu is False, this will be ignored
 blast_cpu: 48
 blast_mem: 50000            # in MB
 blast_time: 120             # in minutes
