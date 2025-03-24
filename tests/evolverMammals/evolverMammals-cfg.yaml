@@ -11,14 +11,14 @@
 # YOU WILL NEED TO CHANGE THESE
 #
 
-cactus_path: download
+cactus_path: 
 # Provide the path to the cactus singularity container. 
 # If you don't have it, set this to "download" and the pipeline will download it for you.
 
 input_file: evolverMammals.txt
 # File containing rooted Newick tree on the first line, and a list of genome files on the following lines.
 
-output_dir: evolverMammals-out-gpu2/
+output_dir: evolverMammals-out/
 # The output directory for the snakemake pipeline. This should be the same as the outDir in cactus-prepare.
 # This directory will be created if it doesn't exist.
 
@@ -35,7 +35,7 @@ maf_reference: simHuman_chr6
 tmp_dir: /n/holylfs05/LABS/informatics/Users/gthomas/tmp/evolverMammals/
 # A temporary directory for snakemake and cactus to use. Should have lots of space.
 
-use_gpu: True
+use_gpu: False
 # Whether or not to use the GPU version of cactus.
 # If you don't have a GPU partition, set this to False.
 # Either way, be sure to set the correct values for the partitions and GPUs below.
