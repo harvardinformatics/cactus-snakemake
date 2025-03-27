@@ -12,7 +12,12 @@
 #
 
 cactus_path: 
-# Provide the path to the cactus singularity container. 
+# Provide the path to the cactus singularity container. This is needed whether use_gpu is True or False.
+# If you don't have it, set this to "download" and the pipeline will download it for you.
+
+cactus_gpu_path:
+# If using GPUs (i.e. if use_gpu: True), provide the path to the cactus GPU singularity container. 
+# If use_gpu is False, this will be ignored.
 # If you don't have it, set this to "download" and the pipeline will download it for you.
 
 input_file: evolverMammals.txt
@@ -43,15 +48,14 @@ use_gpu: False
 #############################################################################
 ## Below are the partitions and resources for each rule in the snakemake pipeline.
 ## Be sure to adjust them to meet your needs and the resources available on your cluster.
-## Notably, for preprocess, blast, and align, if you use the GPU version of cactus, you will need to
-## provide a partition with GPUs and set the gpu values to the number of GPUs you want to use.
-## If you are not using the cactus GPU version, the gpu values will be ignored.
+## Notably, for rule blast, if you use the GPU version of cactus you will need to
+## provide a partition with GPUs and set blast_gpu to the number of GPUs you want to use.
+## If you are not using the cactus GPU version, the blast_gpu value will be ignored.
 ##
 ## The partitions are specific to the Harvard cluster. If you run this on a different cluster
 ## you must change them.
 
-preprocess_partition: "gpu_test"  # If use_gpu is True, this must be a partition with GPUs
-preprocess_gpu: 4                 # If use_gpu is False, this will be ignored
+preprocess_partition: "shared" 
 preprocess_cpu: 8
 preprocess_mem: 25000             # in MB
 preprocess_time: 30               # in minutes
@@ -66,8 +70,7 @@ blast_time: 120             # in minutes
 
 ##########################
 
-align_partition: "gpu_test" # If use_gpu is True, this must be a partition with GPUs
-align_gpu: 2                # If use_gpu is False, this will be ignored
+align_partition: "shared"
 align_cpu: 24
 align_mem: 25000            # in MB
 align_time: 120             # in minutes

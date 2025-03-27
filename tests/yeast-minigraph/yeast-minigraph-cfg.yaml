@@ -51,21 +51,21 @@ use_gpu: False
 ## The partitions are specific to the Harvard cluster. If you run this on a different cluster
 ## you must change them.
 
-minigraph_partition: "shared"  # If use_gpu is True, this must be a partition with GPUs
+minigraph_partition: "shared" 
 minigraph_cpu: 1
 minigraph_mem: 25000             # in MB
 minigraph_time: 30               # in minutes
 
 ##########################
 
-graphmap_partition: "shared" # If use_gpu is True, this must be a partition with GPUs
+graphmap_partition: "shared"
 graphmap_cpu: 1
 graphmap_mem: 50000            # in MB
 graphmap_time: 30             # in minutes
 
 ##########################
 
-split_partition: "shared" # If use_gpu is True, this must be a partition with GPUs
+split_partition: "shared"
 split_cpu: 1
 split_mem: 50000            # in MB
 split_time: 30     
