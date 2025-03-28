@@ -82,7 +82,7 @@ else:
 # os.chdir(wd);
 # Switching to the working directory of the project so paths can be relative
 
-USE_GPU = config["use_gpu"]
+# USE_GPU = config["use_gpu"]
 # Whether to use GPU or CPU cactus
 
 TMPDIR = config["tmp_dir"];
@@ -98,7 +98,7 @@ if not os.path.exists(TMPDIR):
 #cactuslib_logger.info(f"Checking for job tmp dir at {JOB_TMP_DIR}: {os.path.exists(JOB_TMP_DIR)}");
 
 if config["cactus_path"].lower() in ["download", ""]:
-    cactus_image_path = cactuslib.downloadCactusImage(USE_GPU, MAIN);
+    cactus_image_path = cactuslib.downloadCactusImage(False, MAIN);
 else:
     cactus_image_path = config["cactus_path"];
     # The path to the cactus image, either downloaded or specified in the config file
@@ -383,7 +383,7 @@ rule align:
         path = CACTUS_PATH,
         ref_genome = REF_GENOME,
         job_tmp_dir = os.path.join(TMPDIR, "align-{chrom}"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
-        gpu_opt = "--gpu" if USE_GPU else "",
+        # gpu_opt = "--gpu" if USE_GPU else "",
         rule_name = "align"
     log:
         job_log = os.path.join(LOG_DIR, f"{PREFIX}.align.{{chrom}}.log")
@@ -392,7 +392,7 @@ rule align:
         cpus_per_task = config["align_cpu"],
         mem_mb = config["align_mem"],
         runtime = config["align_time"],
-        slurm_extra = f"'--gres=gpu:{config["align_gpu"]}'" if USE_GPU else ""
+        # slurm_extra = f"'--gres=gpu:{config["align_gpu"]}'" if USE_GPU else ""
     run:
         cmd = params.path + [
             "cactus-align",
@@ -406,8 +406,8 @@ rule align:
             "--outVG"
         ];
 
-        if params.gpu_opt:
-            cmd.append("--gpu");
+        # if params.gpu_opt:
+        #     cmd.append("--gpu");
 
         cactuslib.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name, wildcards.chrom);
     # shell:

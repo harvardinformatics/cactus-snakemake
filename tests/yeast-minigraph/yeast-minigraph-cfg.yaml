@@ -18,7 +18,7 @@ cactus_path: download
 input_file: yeastPangenome-local.txt
 # File containing a list of sample IDs and genome files.
 
-output_dir: yeastPangenome-out/
+output_dir: yeastPangenome-out2/
 # The desired output directory for the snakemake pipeline. This directory will be created if it doesn't exist.
 # This directory will be created if it doesn't exist.
 
@@ -36,17 +36,9 @@ tmp_dir: /n/holylfs05/LABS/informatics/Users/gthomas/tmp/yeastPangenome/
 # A temporary directory for snakemake and cactus to use. 
 # Will be created if it doesn't exist, but it should be located somewhere with lots of space.
 
-use_gpu: False
-# Whether or not to use the GPU version of cactus.
-# If you don't have a GPU partition, set this to False.
-# Either way, be sure to set the correct values for the partitions and GPUs below.
-
 #############################################################################
 ## Below are the partitions and resources for each rule in the snakemake pipeline.
 ## Be sure to adjust them to meet your needs and the resources available on your cluster.
-## Notably, for align, if you use the GPU version of cactus, you will need to
-## provide a partition with GPUs and set the gpu values to the number of GPUs you want to use.
-## If you are not using the cactus GPU version, the gpu values will be ignored.
 ##
 ## The partitions are specific to the Harvard cluster. If you run this on a different cluster
 ## you must change them.
@@ -60,7 +52,7 @@ minigraph_time: 30               # in minutes
 
 graphmap_partition: "shared"
 graphmap_cpu: 1
-graphmap_mem: 50000            # in MB
+graphmap_mem: 50000           # in MB
 graphmap_time: 30             # in minutes
 
 ##########################
@@ -72,10 +64,9 @@ split_time: 30
 
 ##########################
 
-align_partition: "shared" # If use_gpu is True, this must be a partition with GPUs
-align_gpu: 2                # If use_gpu is False, this will be ignored
+align_partition: "shared" 
 align_cpu: 1
-align_mem: 25000            # in MB
+align_mem: 25000           # in MB
 align_time: 30             # in minutes
 
 ##########################
