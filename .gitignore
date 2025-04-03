@@ -6,6 +6,10 @@ tests/evolverMammals/evolverMammals-out/*
 tests/evolverMammals/evolverMammals-out-gpu/*
 !tests/evolverMammals/evolverMammals-out-gpu/evolverMammals.txt
 
+tests/evolverMammals/evolverMammals-update-out/*
+!tests/evolverMammals/evolverMammals-update-out/seq_file.in
+!tests/evolverMammals/evolverMammals-update-out/seq_file.out
+
 tests/yeast-minigraph/*
 !tests/yeast-minigraph/seq/
 !tests/yeast-minigraph/yeastPangenome.txt

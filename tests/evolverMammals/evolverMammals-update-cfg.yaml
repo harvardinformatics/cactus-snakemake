@@ -3,7 +3,7 @@
 # pipeline. It contains the parameters needed to run the pipeline.
 #############################################################################
 
-# time -p snakemake -p -j 5 -e slurm -s ../../cactus.smk --configfile evolverMammals-cfg.yaml --dryrun
+# time -p snakemake -p -j 5 -e slurm -s ../../cactus_update.smk --configfile evolverMammals-update-cfg.yaml --dryrun
 
 #############################################################################
 #
@@ -20,14 +20,42 @@ cactus_gpu_path:
 # If use_gpu is False, this will be ignored.
 # If you don't have it, set this to "download" and the pipeline will download it for you.
 
-input_file: evolverMammals.txt
+input_file: evolverMammals-update.txt
 # File containing rooted Newick tree on the first line, and a list of genome files on the following lines.
 
-output_dir: evolverMammals-out3/
+input_hal: evolverMammals-out/evolverMammals.hal
+# The input HAL file. This is the output of a previous cactus run.
+
+output_dir: evolverMammals-update-out/
 # The output directory for the snakemake pipeline. This should be the same as the outDir in cactus-prepare.
 # This directory will be created if it doesn't exist.
 
-final_prefix: evolverMammals
+parent_node: Anc1
+# The node directly above the genome to be added in the tree.
+# This is the node directly above a new branch which will be added to the tree.
+# See: https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/updating-alignments.md
+
+child_node: mr
+# The node directly below the genome to be added in the tree.
+# This is the node directly below a new branch which will be added to the tree.
+# See: https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/updating-alignments.md
+
+anc_name: AncGorilla
+# The name of the new node that will be created in the tree.
+
+orig_branch_length: 0.271974
+# The original branch length connectiong child_node to parent_node.
+
+top_branch_length: 0.10
+# This specifies how the existing branch between child_node and parent_node will be split by the new node (anc_name).
+# This is the length of the branch that will connect the new node to the existing parent_node.
+
+overwrite_original_hal: False
+# Whether or not to overwrite the original HAL file (True) or make a copy and use it (False).
+# If a copy is made (False), you don't risk corrupting the original HAL file, but you will
+# use twice as much disk space.
+
+final_prefix: evolverMammals-update
 # The prefix for the final output files. This will be used to name the final HAL file and the final MAF files.
 
 maf_reference: simHuman_chr6
@@ -62,14 +90,14 @@ blast_partition: "shared" # If use_gpu is True, this must be a partition with GP
 blast_gpu: 1                # If use_gpu is False, this will be ignored
 blast_cpu: 48
 blast_mem: 50000            # in MB
-blast_time: 120             # in minutes
+blast_time: 30             # in minutes
 
 ##########################
 
 align_partition: "shared"
 align_cpu: 24
 align_mem: 25000            # in MB
-align_time: 120             # in minutes
+align_time: 30             # in minutes
 
 ##########################
 
@@ -80,23 +108,23 @@ convert_time: 30            # in minutes
 
 ##########################
 
-copy_partition: "shared"
-copy_cpu: 1
-copy_mem: 8000            # in MB
-copy_time: 30             # in minutes
+copy_or_get_hal_partition: "shared"
+copy_or_get_hal_cpu: 1
+copy_or_get_hal_mem: 8000            # in MB
+copy_or_get_hal_time: 30             # in minutes
 
 ##########################
 
-append_partition: "shared"
-append_cpu: 8
-append_mem: 8000          # in MB
-append_time: 30           # in minutes
+add_to_branch_partition: "shared"
+add_to_branch_cpu: 8
+add_to_branch_mem: 8000          # in MB
+add_to_branch_time: 30           # in minutes
 
 ##########################
 
 maf_partition: "shared"
 maf_cpu: 8
 maf_mem: 25000            # in MB
-maf_time: 60              # in minutes
+maf_time: 30              # in minutes
 
 ##########################

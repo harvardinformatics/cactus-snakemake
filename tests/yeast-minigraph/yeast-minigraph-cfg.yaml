@@ -5,6 +5,12 @@
 
 # time -p snakemake -p -j 5 -e slurm -s ../../cactus_minigraph.smk --configfile yeast-minigraph-cfg.yaml --dryrun
 
+# time -p snakemake -p split -j 5 -s ../../cactus_minigraph.smk --configfile yeast-minigraph-cfg.yaml --rulegraph | dot -Tpng -
+# time -p snakemake -p split -j 5 -s ../../cactus_minigraph.smk --configfile yeast-minigraph-cfg.yaml --dag | dot -Tpng -o
+
+# time -p snakemake -p -j 5 -s ../../cactus_minigraph.smk --configfile yeast-minigraph-cfg.yaml --rulegraph | dot -Tpng -o
+# time -p snakemake -p -j 5 -s ../../cactus_minigraph.smk --configfile yeast-minigraph-cfg.yaml --dag | dot -Tpng -o
+
 #############################################################################
 #
 # Below are the parameters you need to set for the cactus snakemake pipeline.
