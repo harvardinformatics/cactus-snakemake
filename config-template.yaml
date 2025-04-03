@@ -30,11 +30,6 @@ output_dir:
 # The desired output directory for the snakemake pipeline. This directory will be created if it doesn't exist.
 # This directory will be created if it doesn't exist.
 
-overwrite_output_dir: False
-# True/False.
-# This is a safety feature. If the output directory already exists, the pipeline will not run.
-# If you are sure you want to overwrite the output directory, set this to True.
-
 final_prefix:
 # String.
 # The prefix for the final output files. This will be used to name the final HAL file and the final MAF files.

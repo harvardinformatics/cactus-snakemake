@@ -24,11 +24,6 @@ output_dir:
 # The desired output directory for the snakemake pipeline. This directory will be created if it doesn't exist.
 # This directory will be created if it doesn't exist.
 
-overwrite_output_dir: 
-# True/False.
-# This is a safety feature. If the output directory already exists, the pipeline will not run.
-# If you are sure you want to overwrite the output directory, set this to True.
-
 reference: 
 # String
 # The reference genome for the pangenome. This should be the name of one of the genomes in the input_file.
