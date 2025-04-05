@@ -196,8 +196,7 @@ rule minigraph:
             params.job_tmp_dir,
             params.cactus_input,
             output.sv_gfa,
-            "--reference",
-            params.ref_genome
+            "--reference", params.ref_genome
         ];
         cactuslib.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name);
     # shell:
@@ -237,10 +236,8 @@ rule graphmap:
             params.cactus_input,
             input.sv_gfa,
             output.paf,
-            "--outputFasta",
-            output.fasta,
-            "--reference",
-            params.ref_genome
+            "--outputFasta", output.fasta,
+            "--reference", params.ref_genome
         ];
         cactuslib.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name);
     # shell:
@@ -282,10 +279,8 @@ checkpoint split:
             params.cactus_input,
             input.sv_gfa,
             input.paf,
-            "--outDir",
-            params.chroms_dir,
-            "--reference",
-            params.ref_genome
+            "--outDir", params.chroms_dir,
+            "--reference", params.ref_genome
         ];
         cactuslib.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name);
     # shell:
@@ -325,8 +320,7 @@ rule align:
             input.chrom_paf,
             output.chrom_hal,
             "--pangenome",
-            "--reference",
-            params.ref_genome,
+            "--reference", params.ref_genome,
             "--outVG"
         ];
 
@@ -406,15 +400,11 @@ rule join:
         ] + vg_files + [
             "--hal"
         ] + hal_files + [
-            "--outDir",
-            params.join_outdir,
-            "--outName",
-            params.prefix,
-            "--reference",
-            params.ref_genome,
+            "--outDir", params.join_outdir,
+            "--outName", params.prefix,
+            "--reference", params.ref_genome,
             "--vcf",
-            "--giraffe",
-            "clip"
+            "--giraffe", "clip"
         ];
         cactuslib.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name);
     # shell:

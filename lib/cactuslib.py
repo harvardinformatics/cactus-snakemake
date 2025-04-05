@@ -624,7 +624,7 @@ def runCommand(cmd, tmpdir, logfile, rule, wc="", fmode="w+"):
                 restart = True;
         # If the tmp dir exists, add the --restart flag to the command
 
-        printWrite(f"{fmtDT()} - RULE {rule}{wc} - INFO - runCommand1 - Running command: {" ".join(cmd)}", logfile_stream);
+        printWrite(f"{fmtDT()} - RULE {rule}{wc} - INFO - runCommand1 - Running command: {' '.join(cmd)}", logfile_stream);
         writeFlush("-" * 20 + " COMMAND LOG BEGIN " + "-" * 20 + "\n", logfile_stream);
         proc = subprocess.run(cmd, stdout=logfile_stream, stderr=logfile_stream);
         writeFlush("-" * 20 + "  COMMAND LOG END  " + "-" * 20 + "\n", logfile_stream);
@@ -635,7 +635,7 @@ def runCommand(cmd, tmpdir, logfile, rule, wc="", fmode="w+"):
         # Get the return code
 
         if not restart and rcode != 0:
-            raise Exception(f"{fmtDT()} - RULE {rule}{wc} - ERROR - runCommand2 - Command failed: {" ".join(cmd)}");
+            raise Exception(f"{fmtDT()} - RULE {rule}{wc} - ERROR - runCommand2 - Command failed: {' '.join(cmd)}");
         # If the command failed without a restart, raise an exception
 
         elif restart and rcode != 0:
@@ -653,21 +653,21 @@ def runCommand(cmd, tmpdir, logfile, rule, wc="", fmode="w+"):
                 cmd = cmd[:-1] if cmd[-1] == "--restart" else cmd;
                 # Remove the --restart flag from the command if present (it should be at this point)
 
-                printWrite(f"{fmtDT()} - RULE {rule}{wc} - INFO - runCommand4 - Running command: {" ".join(cmd)}", logfile_stream);
+                printWrite(f"{fmtDT()} - RULE {rule}{wc} - INFO - runCommand4 - Running command: {' '.join(cmd)}", logfile_stream);
                 writeFlush("-" * 20 + " COMMAND LOG BEGIN " + "-" * 20 + "\n", logfile_stream);
                 proc = subprocess.run(cmd, stdout=logfile_stream, stderr=logfile_stream);
                 writeFlush("-" * 20 + "  COMMAND LOG END  " + "-" * 20 + "\n", logfile_stream);
             # If the error was a FileNotFoundError, remove the tmp dir and try the command again, without the --restart flag
 
                 if proc.returncode != 0:
-                    printWrite(f"{fmtDT()} - RULE {rule}{wc} - ERROR - runCommand5 - Command failed even without --restart: {" ".join(cmd)}. Removing job tmp dir and exiting.", logfile_stream);
+                    printWrite(f"{fmtDT()} - RULE {rule}{wc} - ERROR - runCommand5 - Command failed even without --restart: {' '.join(cmd)}. Removing job tmp dir and exiting.", logfile_stream);
                     shutil.rmtree(tmpdir, ignore_errors=True);
-                    raise Exception(f"{fmtDT()} - RULE {rule}{wc} - ERROR - runCommand5 - Command failed: {" ".join(cmd)}");
+                    raise Exception(f"{fmtDT()} - RULE {rule}{wc} - ERROR - runCommand5 - Command failed: {' '.join(cmd)}");
                 # If the command failed again, raise an exception
 
             else:
                 printWrite(f"{fmtDT()} - RULE {rule}{wc} - ERROR - runCommand6 - --restart failed with an error other than FileNotFoundError. Exiting.", logfile_stream);
-                raise Exception(f"{fmtDT()} - RULE {rule}{wc} - ERROR - runCommand6 - Command failed: {" ".join(cmd)}");
+                raise Exception(f"{fmtDT()} - RULE {rule}{wc} - ERROR - runCommand6 - Command failed: {' '.join(cmd)}");
             # If the error with a --restart, but not a FileNotFoundError, raise an exception
 
 #############################################################################
