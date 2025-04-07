@@ -55,8 +55,8 @@ else:
     cactus_gpu_image_path = cactus_image_path;
 # If not using GPU, set the cactus GPU image path to the cactus image path
 
-CACTUS_PATH = ["singularity", "exec", "--nv", "--cleanenv", cactus_image_path]
-CACTUS_PATH_TMP = ["singularity", "exec", "--nv", "--cleanenv", "--bind", TMPDIR + ":/tmp", cactus_image_path]
+CACTUS_PATH = ["singularity", "exec", "--cleanenv", cactus_image_path]
+CACTUS_PATH_TMP = ["singularity", "exec", "--cleanenv", "--bind", TMPDIR + ":/tmp", cactus_image_path]
 
 CACTUS_GPU_PATH = ["singularity", "exec", "--nv", "--cleanenv", cactus_gpu_image_path]
 CACTUS_GPU_PATH_TMP = ["singularity", "exec", "--nv", "--cleanenv", "--bind", TMPDIR + ":/tmp", cactus_gpu_image_path]
@@ -99,8 +99,8 @@ UPDATE_TYPE = "branch";
 PARENT  = config["parent_node"];
 CHILD   = config["child_node"];
 ANCNAME = config["anc_name"];
-ORIG_BL = config["orig_branch_length"];
-TOP_BL  = config["top_branch_length"];
+ORIG_BL = str(config["orig_branch_length"]); # NOTE: Could read tree to get this
+TOP_BL  = str(config["top_branch_length"]);
 # The update type and the parent and child genomes for the update
 
 #############################################################################
@@ -163,22 +163,8 @@ localrules: all
 
 rule all:
     input:
-        OUTPUT_MAF,
-        OUTPUT_MAF_NODUPES
-        #os.path.join(LOG_DIR, "add_to_branch.stamp")
-        #stamp = os.path.join(LOG_DIR, "copy-hal.stamp")
-        #expand(os.path.join(OUTPUT_DIR, "{node}.fa"), node=rounds.keys()),
-        #os.path.join(LOG_DIR, "add_to_branch.stamp"),
-        
-        #HAL_TO_EDIT
-        #os.path.join(OUTPUT_DIR, PARENT + ".hal")
-        #os.path.join(OUTPUT_DIR, ANCNAME + ".hal")
-        #expand(os.path.join(OUTPUT_DIR, "{genome_name}.{genome_ext}"), genome_name=GENOME_NAMES, genome_ext=GENOME_EXTS, zip=True),
-
-        
-        #final_maf = OUTPUT_MAF,
-        #final_maf_nodupes = OUTPUT_MAF_NODUPES
-        # The .maf file from rul maf
+        final_maf = OUTPUT_MAF,
+        final_maf_nodupes = OUTPUT_MAF_NODUPES
 ## Rule all specifies the final output files expected
 
 # #############################################################################
@@ -239,7 +225,7 @@ rule blast:
         node = "{node}",
         job_tmp_dir = os.path.join("/tmp", "{node}-blast"), # This is the tmp dir in the container, which is bound to the host tmp dir
         host_tmp_dir = os.path.join(TMPDIR, "{node}-blast"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
-        gpu_opt = f"--gpu {config["blast_gpu"]}" if USE_GPU else "",
+        gpu_opt = f"--gpu {config['blast_gpu']}" if USE_GPU else "",
         gpu_num = config["blast_gpu"],
         rule_name = "blast"
     log:
@@ -249,7 +235,7 @@ rule blast:
         cpus_per_task = config["blast_cpu"],
         mem_mb = config["blast_mem"],
         runtime = config["blast_time"],
-        slurm_extra = f"'--gres=gpu:{config["blast_gpu"]}'" if USE_GPU else ""
+        slurm_extra = f"'--gres=gpu:{config['blast_gpu']}'" if USE_GPU else ""
     run:
         cmd = params.path + [
             "cactus-blast",
@@ -414,8 +400,8 @@ rule add_to_branch:
             params.anc_name,
             params.child,
             params.genome_name,
-            str(params.top_bl),
-            str(params.orig_bl),
+            params.top_bl,
+            params.orig_bl,
             "--hdf5InMemory"
         ];
 

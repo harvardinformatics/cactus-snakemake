@@ -55,8 +55,8 @@ else:
     cactus_gpu_image_path = cactus_image_path;
 # If not using GPU, set the cactus GPU image path to the cactus image path
 
-CACTUS_PATH = ["singularity", "exec", "--nv", "--cleanenv", cactus_image_path]
-CACTUS_PATH_TMP = ["singularity", "exec", "--nv", "--cleanenv", "--bind", TMPDIR + ":/tmp", cactus_image_path]
+CACTUS_PATH = ["singularity", "exec", "--cleanenv", cactus_image_path]
+CACTUS_PATH_TMP = ["singularity", "exec", "--cleanenv", "--bind", TMPDIR + ":/tmp", cactus_image_path]
 
 CACTUS_GPU_PATH = ["singularity", "exec", "--nv", "--cleanenv", cactus_gpu_image_path]
 CACTUS_GPU_PATH_TMP = ["singularity", "exec", "--nv", "--cleanenv", "--bind", TMPDIR + ":/tmp", cactus_gpu_image_path]
@@ -78,9 +78,9 @@ else:
 
 MAF_REFERENCE = config["maf_reference"];
 
-OUTPUT_HAL = os.path.join(OUTPUT_DIR, f"{config["final_prefix"]}.hal");
-OUTPUT_MAF = os.path.join(OUTPUT_DIR, f"{config["final_prefix"]}.{MAF_REFERENCE}.maf.gz");
-OUTPUT_MAF_NODUPES = os.path.join(OUTPUT_DIR, f"{config["final_prefix"]}.{MAF_REFERENCE}.nodupes.maf.gz");
+OUTPUT_HAL = os.path.join(OUTPUT_DIR, f"{config['final_prefix']}.hal");
+OUTPUT_MAF = os.path.join(OUTPUT_DIR, f"{config['final_prefix']}.{MAF_REFERENCE}.maf.gz");
+OUTPUT_MAF_NODUPES = os.path.join(OUTPUT_DIR, f"{config['final_prefix']}.{MAF_REFERENCE}.nodupes.maf.gz");
 
 if MAIN:
     cactuslib_logger.info(f"Output HAL file will be at {OUTPUT_HAL}");
@@ -207,7 +207,7 @@ rule blast:
         node = lambda wildcards: wildcards.internal_node,
         host_tmp_dir = lambda wildcards: os.path.join(TMPDIR, wildcards.internal_node + "-blast"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
         job_tmp_dir = lambda wildcards: os.path.join("/tmp", wildcards.internal_node + "-blast"), # This is the tmp dir in the container, which is bound to the host tmp dir
-        gpu_opt = f"--gpu {config["blast_gpu"]}" if USE_GPU else "",
+        gpu_opt = f"--gpu {config['blast_gpu']}" if USE_GPU else "",
         gpu_num = config["blast_gpu"],
         rule_name = "blast"
     log:
@@ -217,7 +217,7 @@ rule blast:
         cpus_per_task = config["blast_cpu"],
         mem_mb = config["blast_mem"],
         runtime = config["blast_time"],
-        slurm_extra = f"'--gres=gpu:{config["blast_gpu"]}'" if USE_GPU else ""
+        slurm_extra = f"'--gres=gpu:{config['blast_gpu']}'" if USE_GPU else ""
     run:
         cmd = params.path + [
             "cactus-blast",

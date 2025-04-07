@@ -354,7 +354,7 @@ def runCactusUpdatePrepare(input_hal, input_file, cactus_path, output_dir, updat
         command += ["--parentGenome", parent, 
                     "--childGenome", child,
                     "--ancestorName", new_anc_name,
-                    "--topBranchLength", str(new_top_bl),
+                    "--topBranchLength", new_top_bl,
                     ];
     # The command to run cactus-prepare
 
