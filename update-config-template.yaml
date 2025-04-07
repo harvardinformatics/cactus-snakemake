@@ -1,0 +1,141 @@
+#############################################################################
+# This config file is a necessary input file for the cactus GPU snakemake
+# pipeline. It contains the parameters needed to run the pipeline.
+#############################################################################
+
+# time -p snakemake -p -j 5 -e slurm -s cactus.smk --configfile config-template.yaml --dryrun
+
+#############################################################################
+#
+# Below are the parameters you need to set for the cactus snakemake pipeline.
+#
+
+cactus_path: 
+# File path or "download".
+# Provide the path to the cactus singularity container. This is needed whether use_gpu is True or False.
+# If you don't have it, set this to "download" and the pipeline will download it for you.
+
+cactus_gpu_path:
+# File path or "download".
+# If using GPUs (i.e. if use_gpu: True), provide the path to the cactus GPU singularity container. 
+# If use_gpu is False, this will be ignored.
+# If you don't have it, set this to "download" and the pipeline will download it for you.
+
+input_file: 
+# File path.
+# The file containing the path to the new genome fasta file and its branch length in the tree.
+# See: https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/cactus-update-prepare.md#adding-genomes-examples
+
+output_dir: 
+# Directory path.
+# The desired output directory for the snakemake pipeline. This directory will be created if it doesn't exist.
+# This directory will be created if it doesn't exist.
+
+parent_node: Anc1
+# String.
+# The node directly above the genome to be added in the tree.
+# This is the node directly above a new branch which will be added to the tree.
+# See: https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/updating-alignments.md
+
+child_node: mr
+# String.
+# The node directly below the genome to be added in the tree.
+# This is the node directly below a new branch which will be added to the tree.
+# See: https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/updating-alignments.md
+
+anc_name:
+# String.
+# The name of the new node that will be created in the tree.
+
+orig_branch_length:
+# Float.
+# The original branch length connectiong child_node to parent_node.
+
+top_branch_length:
+# Float.
+# This specifies how the existing branch between child_node and parent_node will be split by the new node (anc_name).
+# This is the length of the branch that will connect the new node to the existing parent_node.
+
+overwrite_original_hal:
+# True/False.
+# Whether or not to overwrite the original HAL file (True) or make a copy and use it (False).
+# If a copy is made (False), you don't risk corrupting the original HAL file, but you will
+# use twice as much disk space.
+
+final_prefix:
+# String.
+# The prefix for the final output files. This will be used to name the final HAL file and the final MAF files.
+
+maf_reference:
+# String.
+# The reference genome for the MAF files. This should be the name of the reference genome in the input_file.
+
+tmp_dir:
+# Directory path.
+# A temporary directory for snakemake and cactus to use. Should have lots of space.
+
+use_gpu:
+# True/False.
+# Whether or not to use the GPU version of cactus.
+# If you have GPU partitions and want to use them, set this to True.
+# If you don't have a GPU partition, set this to False.
+
+#############################################################################
+## Below are the partitions and resources for each rule in the snakemake pipeline.
+## Be sure to adjust them to meet your needs and the resources available on your cluster.
+## Notably, for rule blast, if you use the GPU version of cactus you will need to
+## provide a partition with GPUs and set blast_gpu to the number of GPUs you want to use.
+## If you are not using the cactus GPU version, the blast_gpu value will be ignored.
+##
+## The partitions are specific to the Harvard cluster. If you run this on a different cluster
+## you must change them.
+
+preprocess_partition: ""  
+preprocess_cpu: 
+preprocess_mem:           # in MB
+preprocess_time:          # in minutes
+
+##########################
+
+blast_partition: "" # If use_gpu is True, this must be a partition with GPUs
+blast_gpu:          # If use_gpu is False, this will be ignored
+blast_cpu: 
+blast_mem:          # in MB
+blast_time:         # in minutes
+
+##########################
+
+align_partition: "" 
+align_cpu: 
+align_mem:          # in MB
+align_time:         # in minutes
+
+##########################
+
+convert_partition: ""
+convert_cpu: 
+convert_mem:        # in MB
+convert_time:       # in minutes
+
+##########################
+
+copy_partition: ""
+copy_cpu: 
+copy_mem:           # in MB
+copy_time:          # in minutes
+
+##########################
+
+append_partition: ""
+append_cpu: 
+append_mem:         # in MB
+append_time:        # in minutes
+
+##########################
+
+maf_partition: ""
+maf_cpu: 
+maf_mem:            # in MB
+maf_time:           # in minutes
+
+##########################
