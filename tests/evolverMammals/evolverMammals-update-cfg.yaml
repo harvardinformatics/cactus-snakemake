@@ -11,17 +11,22 @@
 # YOU WILL NEED TO CHANGE THESE
 #
 
-cactus_path: 
+cactus_path:
 # Provide the path to the cactus singularity container. This is needed whether use_gpu is True or False.
 # If you don't have it, set this to "download" and the pipeline will download it for you.
+# If you want to download a specific version, provide the version tag, e.g. v2.9.7
 
 cactus_gpu_path:
 # If using GPUs (i.e. if use_gpu: True), provide the path to the cactus GPU singularity container. 
 # If use_gpu is False, this will be ignored.
 # If you don't have it, set this to "download" and the pipeline will download it for you.
+# If you want to download a specific version, provide the version tag, e.g. v2.9.7
 
 input_file: evolverMammals-update.txt
-# File containing rooted Newick tree on the first line, and a list of genome files on the following lines.
+# File containing the genome to be added to the hal file.
+# Tab delimited columns: genome name, genome file, branch length
+# Only the first line will be used.
+# See: https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/cactus-update-prepare.md#adding-genomes-examples
 
 input_hal: evolverMammals-out/evolverMammals.hal
 # The input HAL file. This is the output of a previous cactus run.

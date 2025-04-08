@@ -1,0 +1,4 @@
+(simHuman_chr6:0.144018,mr:0.271974)Anc1;
+simHuman_chr6 evolverMammals-seq/simHuman.chr6
+mr evolverMammals-replace-out/mr.fa
+Anc1 evolverMammals-replace-out/Anc1.fa

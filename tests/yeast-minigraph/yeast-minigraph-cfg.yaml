@@ -20,6 +20,7 @@
 cactus_path: download
 # Provide the path to the cactus singularity container. 
 # If you don't have it, set this to "download" and the pipeline will download it for you.
+# If you want to download a specific version, provide the version tag, e.g. v2.9.7
 
 input_file: yeastPangenome-local.txt
 # File containing a list of sample IDs and genome files.

@@ -14,8 +14,11 @@ import lib.treelib as treelib
 #############################################################################
 # System setup
 
+debug = config.get("debug", False);
 #debug = True;
-MAIN, DRY_RUN, OUTPUT_DIR, LOG_DIR, TMPDIR, LOG_LEVEL, LOG_VERBOSITY = cactuslib.pipelineSetup(config, sys.argv, globals().get("debug", False));
+# Whether to run in debug mode or not
+
+MAIN, DRY_RUN, OUTPUT_DIR, LOG_DIR, TMPDIR, LOG_LEVEL, LOG_VERBOSITY = cactuslib.pipelineSetup(config, sys.argv, debug);
 # Setup the pipeline, including the output directory, log directory, and tmp directory
 
 cactuslib_logger = logging.getLogger('cactuslib')
@@ -24,16 +27,8 @@ cactuslib_logger = logging.getLogger('cactuslib')
 #############################################################################
 # Cactus setup
 
-if config["cactus_path"].lower() in ["download", ""]:
-    cactus_image_path = cactuslib.downloadCactusImage(False, MAIN);
-else:
-    cactus_image_path = config["cactus_path"];
-    # The path to the cactus image, either downloaded or specified in the config file
-
-    if not os.path.exists(cactus_image_path):
-        cactuslib_logger.error(f"Could not find cactus image at {cactus_image_path}");
-        sys.exit(1);
-    # Check if the cactus image exists
+cactus_image_path, cactus_gpu_image_path = cactuslib.parseCactusPath(config["cactus_path"], False, MAIN);
+# Parse the cactus path from the config file
 
 CACTUS_PATH = ["singularity", "exec", "--nv", "--cleanenv", cactus_image_path]
 CACTUS_PATH_TMP = ["singularity", "exec", "--nv", "--cleanenv", "--bind", f"{TMPDIR}:/tmp", cactus_image_path]

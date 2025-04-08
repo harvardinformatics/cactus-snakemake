@@ -3,86 +3,61 @@
 # pipeline. It contains the parameters needed to run the pipeline.
 #############################################################################
 
-# time -p snakemake -p -j 5 -e slurm -s cactus.smk --configfile config-template.yaml --dryrun
+# time -p snakemake -p -j 5 -e slurm -s ../../cactus_replace.smk --configfile evolverMammals-replace-cfg.yaml --dryrun
 
 #############################################################################
 #
 # Below are the parameters you need to set for the cactus snakemake pipeline.
+# YOU WILL NEED TO CHANGE THESE
 #
 
 cactus_path: 
-# File path or "download".
 # Provide the path to the cactus singularity container. This is needed whether use_gpu is True or False.
 # If you don't have it, set this to "download" and the pipeline will download it for you.
 # If you want to download a specific version, provide the version tag, e.g. v2.9.7
 
 cactus_gpu_path:
-# File path or "download".
 # If using GPUs (i.e. if use_gpu: True), provide the path to the cactus GPU singularity container. 
 # If use_gpu is False, this will be ignored.
 # If you don't have it, set this to "download" and the pipeline will download it for you.
 # If you want to download a specific version, provide the version tag, e.g. v2.9.7
 
-input_file: 
-# File path.
+input_file: evolverMammals-replace.txt
 # File containing the genome to be added to the hal file.
 # Tab delimited columns: genome name, genome file, branch length
 # Only the first line will be used.
 # See: https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/cactus-update-prepare.md#adding-genomes-examples
 
-output_dir: 
-# Directory path.
-# The desired output directory for the snakemake pipeline. This directory will be created if it doesn't exist.
+input_hal: evolverMammals-out/evolverMammals.hal
+# The input HAL file. This is the output of a previous cactus run.
+
+output_dir: evolverMammals-replace-out3/
+# The output directory for the snakemake pipeline. This should be the same as the outDir in cactus-prepare.
 # This directory will be created if it doesn't exist.
 
-parent_node: Anc1
-# String.
-# The node directly above the genome to be added in the tree.
+replace: simHuman_chr6
+# The genome in the input hal file to be replaced
 # This is the node directly above a new branch which will be added to the tree.
 # See: https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/updating-alignments.md
 
-child_node: mr
-# String.
-# The node directly below the genome to be added in the tree.
-# This is the node directly below a new branch which will be added to the tree.
-# See: https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/updating-alignments.md
-
-anc_name:
-# String.
-# The name of the new node that will be created in the tree.
-
-orig_branch_length:
-# Float.
-# The original branch length connectiong child_node to parent_node.
-
-top_branch_length:
-# Float.
-# This specifies how the existing branch between child_node and parent_node will be split by the new node (anc_name).
-# This is the length of the branch that will connect the new node to the existing parent_node.
-
-overwrite_original_hal:
-# True/False.
+overwrite_original_hal: False
 # Whether or not to overwrite the original HAL file (True) or make a copy and use it (False).
 # If a copy is made (False), you don't risk corrupting the original HAL file, but you will
 # use twice as much disk space.
 
-final_prefix:
-# String.
+final_prefix: evolverMammals-replace
 # The prefix for the final output files. This will be used to name the final HAL file and the final MAF files.
 
-maf_reference:
-# String.
+maf_reference: simHuman_chr6
 # The reference genome for the MAF files. This should be the name of the reference genome in the input_file.
 
-tmp_dir:
-# Directory path.
+tmp_dir: /n/holylfs05/LABS/informatics/Users/gthomas/tmp/evolverMammals/
 # A temporary directory for snakemake and cactus to use. Should have lots of space.
 
-use_gpu:
-# True/False.
+use_gpu: False
 # Whether or not to use the GPU version of cactus.
-# If you have GPU partitions and want to use them, set this to True.
 # If you don't have a GPU partition, set this to False.
+# Either way, be sure to set the correct values for the partitions and GPUs below.
 
 #############################################################################
 ## Below are the partitions and resources for each rule in the snakemake pipeline.
@@ -94,52 +69,52 @@ use_gpu:
 ## The partitions are specific to the Harvard cluster. If you run this on a different cluster
 ## you must change them.
 
-preprocess_partition: ""  
-preprocess_cpu: 
-preprocess_mem:           # in MB
-preprocess_time:          # in minutes
+preprocess_partition: "shared" 
+preprocess_cpu: 8
+preprocess_mem: 25000             # in MB
+preprocess_time: 30               # in minutes
 
 ##########################
 
-blast_partition: "" # If use_gpu is True, this must be a partition with GPUs
-blast_gpu:          # If use_gpu is False, this will be ignored
-blast_cpu: 
-blast_mem:          # in MB
-blast_time:         # in minutes
+blast_partition: "shared" # If use_gpu is True, this must be a partition with GPUs
+blast_gpu: 1                # If use_gpu is False, this will be ignored
+blast_cpu: 48
+blast_mem: 50000            # in MB
+blast_time: 30             # in minutes
 
 ##########################
 
-align_partition: "" 
-align_cpu: 
-align_mem:          # in MB
-align_time:         # in minutes
+align_partition: "shared"
+align_cpu: 24
+align_mem: 25000            # in MB
+align_time: 30             # in minutes
 
 ##########################
 
-convert_partition: ""
-convert_cpu: 
-convert_mem:        # in MB
-convert_time:       # in minutes
+convert_partition: "shared"
+convert_cpu: 8
+convert_mem: 8000           # in MB
+convert_time: 30            # in minutes
 
 ##########################
 
-copy_partition: ""
-copy_cpu: 
-copy_mem:           # in MB
-copy_time:          # in minutes
+copy_or_get_hal_partition: "shared"
+copy_or_get_hal_cpu: 1
+copy_or_get_hal_mem: 8000            # in MB
+copy_or_get_hal_time: 30             # in minutes
 
 ##########################
 
-append_partition: ""
-append_cpu: 
-append_mem:         # in MB
-append_time:        # in minutes
+add_to_branch_partition: "shared"
+add_to_branch_cpu: 8
+add_to_branch_mem: 8000          # in MB
+add_to_branch_time: 30           # in minutes
 
 ##########################
 
-maf_partition: ""
-maf_cpu: 
-maf_mem:            # in MB
-maf_time:           # in minutes
+maf_partition: "shared"
+maf_cpu: 8
+maf_mem: 25000            # in MB
+maf_time: 30              # in minutes
 
 ##########################

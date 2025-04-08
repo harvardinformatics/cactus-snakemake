@@ -9,13 +9,15 @@ import logging
 import subprocess
 
 import lib.cactuslib as cactuslib
-import lib.treelib as treelib
 
 #############################################################################
 # System setup
 
+debug = config.get("debug", False);
 #debug = True;
-MAIN, DRY_RUN, OUTPUT_DIR, LOG_DIR, TMPDIR, LOG_LEVEL, LOG_VERBOSITY = cactuslib.pipelineSetup(config, sys.argv, globals().get("debug", False));
+# Whether to run in debug mode or not
+
+MAIN, DRY_RUN, OUTPUT_DIR, LOG_DIR, TMPDIR, LOG_LEVEL, LOG_VERBOSITY = cactuslib.pipelineSetup(config, sys.argv, debug);
 # Setup the pipeline, including the output directory, log directory, and tmp directory
 
 cactuslib_logger = logging.getLogger('cactuslib')
@@ -27,33 +29,8 @@ cactuslib_logger = logging.getLogger('cactuslib')
 USE_GPU = config["use_gpu"]
 # Whether to use GPU or CPU cactus
 
-if config["cactus_path"] == None or config["cactus_path"].lower() in ["download", ""]:
-    cactus_image_path = cactuslib.downloadCactusImage(False, MAIN);
-    # Download the cactus image if it is not specified in the config file
-else:
-    cactus_image_path = config["cactus_path"];
-    # The path to the cactus image, either downloaded or specified in the config file
-
-    if not os.path.exists(cactus_image_path):
-        cactuslib_logger.error(f"Could not find cactus image at {cactus_image_path}");
-        sys.exit(1);
-    # Check if the cactus image exists
-
-if USE_GPU:
-    if config["cactus_gpu_path"] == None or config["cactus_gpu_path"].lower() in ["download", ""]:
-        cactus_gpu_image_path = cactuslib.downloadCactusImage(True, MAIN);
-        # Download the cactus GPU image if it is not specified in the config file
-    else:
-        cactus_gpu_image_path = config["cactus_gpu_path"];
-        # The path to the cactus GPU image, either downloaded or specified in the config file
-
-        if not os.path.exists(cactus_gpu_image_path):
-            cactuslib_logger.error(f"Could not find cactus GPU image at {cactus_gpu_image_path}");
-            sys.exit(1);
-        # Check if the cactus GPU image exists
-else:
-    cactus_gpu_image_path = cactus_image_path;
-# If not using GPU, set the cactus GPU image path to the cactus image path
+cactus_image_path, cactus_gpu_image_path = cactuslib.parseCactusPath(config["cactus_path"], USE_GPU, MAIN);
+# Parse the cactus path from the config file
 
 CACTUS_PATH = ["singularity", "exec", "--cleanenv", cactus_image_path]
 CACTUS_PATH_TMP = ["singularity", "exec", "--cleanenv", "--bind", TMPDIR + ":/tmp", cactus_image_path]
@@ -107,7 +84,7 @@ TOP_BL  = str(config["top_branch_length"]);
 # cactus-prepare
 
 if MAIN:
-    SEQ_FILES = cactuslib.runCactusUpdatePrepare(INPUT_HAL, INPUT_FILE, CACTUS_PATH, OUTPUT_DIR, UPDATE_TYPE, USE_GPU, LOG_DIR, DRY_RUN, PARENT, CHILD, ANCNAME, TOP_BL);
+    SEQ_FILES = cactuslib.runCactusUpdatePrepare(INPUT_HAL, INPUT_FILE, CACTUS_GPU_PATH, OUTPUT_DIR, UPDATE_TYPE, USE_GPU, LOG_DIR, DRY_RUN, PARENT, CHILD, ANCNAME, TOP_BL);
 # if DRY_RUN:
 #     CACTUS_FILE = os.path.join("/tmp/", "cactus-update-smk-dryrun", os.path.basename(INPUT_FILE));
 # else:

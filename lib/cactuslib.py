@@ -94,6 +94,21 @@ def pipelineSetup(config, args, debug):
 
 #############################################################################
 
+class ColoredFormatter(logging.Formatter):
+    RESET = "\033[0m"
+    COLOR_MAP = {
+        logging.DEBUG: "\033[35m",      # Purple (Magenta) for DEBUG
+        logging.INFO: "\033[36m",     # Cyan for INFO
+        logging.WARNING: "\033[33m",   # Yellow for WARNING
+        logging.ERROR: "\033[31m",     # Red for ERROR
+        logging.CRITICAL: "\033[1;31m"   # Bold red for CRITICAL
+    }
+
+    def format(self, record):
+        color = self.COLOR_MAP.get(record.levelno, self.RESET)
+        message = super().format(record)
+        return f"{color}{message}{self.RESET}"
+
 def configureLogging(log_filename: str, log_level : str, log_verbosity: str) -> None:
 # Set up logging for debugging the helper libraries and code not directly in the pipeline rules
 
@@ -111,7 +126,7 @@ def configureLogging(log_filename: str, log_level : str, log_verbosity: str) -> 
 
         if log_verbosity in ["BOTH", "SCREEN"]:
             handler_stderr = logging.StreamHandler()
-            handler_stderr.setFormatter(logging.Formatter(fmt=log_format, datefmt=date_format))
+            handler_stderr.setFormatter(ColoredFormatter(fmt=log_format, datefmt=date_format))
             cactuslib_logger.addHandler(handler_stderr)
         # Add stream handler if specified
 
@@ -229,23 +244,30 @@ def fetchLatestCactusTag(get_gpu: bool, main: bool) -> str:
 
 #############################################################################
 
-def downloadCactusImage(use_gpu: bool, main: bool) -> None:
-    latest_tag = fetchLatestCactusTag(use_gpu, main)
+def downloadCactusImage(use_gpu: bool, main: bool, tag: str="") -> None:
+    if not tag:
+        tag = fetchLatestCactusTag(use_gpu, main);
+    else:
+        if tag[0] != "v":
+            tag = "v" + tag;
+        if use_gpu:
+            tag = tag + "-gpu";
+    #latest_tag = fetchLatestCactusTag(use_gpu, main)
 
     # Ensure there is a valid tag returned
     # if not latest_tag:
     #     print(f"No valid tag found for {'GPU' if use_gpu else 'non-GPU'} version.")
     #     return None
 
-    image_uri = f"docker://quay.io/comparative-genomics-toolkit/cactus:{latest_tag}"
+    image_uri = f"docker://quay.io/comparative-genomics-toolkit/cactus:{tag}"
 
     # Define the image file name
-    image_name = f"cactus_{latest_tag.replace('/', '_')}.sif"
+    image_name = f"cactus_{tag.replace('/', '_')}.sif"
 
     if os.path.exists(image_name):
         if main:
             cactuslib_logger.info(f"Image {image_name} already exists. This image will be used.")
-            cactuslib_logger.debug("=" * 87);
+            cactuslib_logger.debug("=" * 83);
         return os.path.abspath(image_name)
 
     else:
@@ -264,6 +286,50 @@ def downloadCactusImage(use_gpu: bool, main: bool) -> None:
             cactuslib_logger.error(f"Failed to pull the image: {e}")
             sys.exit(1)
 
+
+#############################################################################
+
+def parseCactusPath(cactus_cfg: str, use_gpu: bool, main: bool) -> None:
+    version_tag_pattern = r"^v?\d+(\.\d+)+$";
+
+    if cactus_cfg == None or cactus_cfg.lower() in ["download", ""]:
+        cactus_image_path = downloadCactusImage(False, main);
+        # Download the latest cactus image if it is not specified in the config file
+    elif re.match(version_tag_pattern, cactus_cfg) is not None:
+        cactus_image_path = downloadCactusImage(False, main, cactus_cfg);
+        # Pass a specific version tag to download
+    else:
+        cactus_image_path = cactus_cfg;
+        # The local path to the cactus image
+
+        if not os.path.exists(cactus_image_path):
+            cactuslib_logger.error(f"Could not find cactus image at {cactus_image_path}");
+            sys.exit(1);
+        # Check if the cactus image exists
+    ## Non-GPU image
+
+    if use_gpu:
+        if cactus_cfg == None or cactus_cfg.lower() in ["download", ""]:
+            cactus_gpu_image_path = downloadCactusImage(True, main);
+            # Download the latest cactus image if it is not specified in the config file
+        elif re.match(version_tag_pattern, cactus_cfg) is not None:
+            cactus_gpu_image_path = downloadCactusImage(True, main, cactus_cfg);
+            # Pass a specific version tag to download
+        else:
+            cactus_gpu_image_path = cactus_cfg;
+            # The local path to the cactus image
+
+            if not os.path.exists(cactus_gpu_image_path):
+                cactuslib_logger.error(f"Could not find cactus image at {cactus_gpu_image_path}");
+                sys.exit(1);
+            # Check if the cactus image exists
+    ## GPU image
+    else:
+        cactus_gpu_image_path = cactus_image_path;
+    # If not using GPU, set the cactus GPU image path to the cactus image path
+
+
+    return cactus_image_path, cactus_gpu_image_path;
 
 #############################################################################
 
@@ -324,8 +390,8 @@ def runCactusUpdatePrepare(input_hal, input_file, cactus_path, output_dir, updat
         # log_prefix = os.path.join(output_dir, "cactus-update-prepare");
     # If this is a dry run, create a temporary output directory and log file
 
-    if update_type not in ["node", "branch"]:
-        cactuslib_logger.error("Invalid update type. Must be 'node' or 'branch'.");
+    if update_type not in ["branch", "replace"]:
+        cactuslib_logger.error("Invalid update type. Must be 'branch' or 'replace'.");
         sys.exit(1);
     # Check the update type
 
@@ -335,41 +401,59 @@ def runCactusUpdatePrepare(input_hal, input_file, cactus_path, output_dir, updat
     # Check the input hal file
 
     if not parent:
-        cactuslib_logger.error("Parent genome not specified. Exiting.");
+        cactuslib_logger.error("Parent/replacement genome not specified. Exiting.");
         sys.exit(1);
     # Check the parent genome
 
-    command = cactus_path + ["cactus-update-prepare", "add", update_type, input_hal, input_file, "--outDir", output_dir];
+    if update_type == "branch":
+        command = cactus_path + ["cactus-update-prepare", 
+                                    "add", 
+                                    update_type, 
+                                    input_hal, 
+                                    input_file, 
+                                    "--outDir", output_dir
+                                    ];
 
-    if update_type == "node":
-        if child:
-            cactuslib_logger.warning("Child genome specified for node update. This will be ignored.");
-        # If a child genome is specified for a node update, ignore it
-        command += ["--genome", parent];
-    elif update_type == "branch":
-        if not child:
-            cactuslib_logger.error("Child genome not specified for branch update. Exiting.");
-            sys.exit(1);
-        # Check the child genome
-        command += ["--parentGenome", parent, 
-                    "--childGenome", child,
-                    "--ancestorName", new_anc_name,
-                    "--topBranchLength", new_top_bl,
-                    ];
-    # The command to run cactus-prepare
+        if update_type == "node":
+            if child:
+                cactuslib_logger.warning("Child genome specified for node update. This will be ignored.");
+            # If a child genome is specified for a node update, ignore it
+            command += ["--genome", parent];
+        elif update_type == "branch":
+            if not child:
+                cactuslib_logger.error("Child genome not specified for branch update. Exiting.");
+                sys.exit(1);
+            # Check the child genome
+            command += ["--parentGenome", parent, 
+                        "--childGenome", child,
+                        "--ancestorName", new_anc_name,
+                        "--topBranchLength", new_top_bl,
+                        ];
+        # The command to run cactus-prepare
+    # For branch updates, we need to specify the parent and child genomes as well as the new branch length above the new node
 
-    if use_gpu:
-        command.append("--gpu");
+    elif update_type == "replace":
+        command = cactus_path + ["cactus-update-prepare", 
+                                    "replace", 
+                                    input_hal, 
+                                    input_file, 
+                                    "--genome", parent, 
+                                    "--outDir", output_dir
+                                    ];
+    # For replace updates, we only need to specify the parent genome, which is the one being replaced
+
+    # if use_gpu:
+    #     command.append("--gpu");
     # The command to run cactus-prepare
 
     cactuslib_logger.info(f"Command to run cactus-update-prepare: {' '.join(command)}");
     cactuslib_logger.debug("===================================================================================");
     # Debug output
 
-    if use_gpu:
-        logfile = log_prefix + "-gpu.log";
-    else:
-        logfile = log_prefix + ".log";
+    # if use_gpu:
+    #     logfile = log_prefix + "-gpu.log";
+    # else:
+    logfile = log_prefix + ".log";
     # The log file name
 
     # if dry_run:
@@ -583,7 +667,6 @@ def getGenomesToAdd(input_file):
 
             break;
 
-
     cactuslib_logger.info(f"Genomes to add: {genome_name}");
     # if cactuslib_logger.isEnabledFor(logging.DEBUG):
     #     for g in range(len(genome_names)):
@@ -594,8 +677,38 @@ def getGenomesToAdd(input_file):
 
 #############################################################################
 
+def getGenomesToAddReplace(seq_out_file, replace_id):
+    with open(seq_out_file, "r") as f:
+        first = True;
+        for line in f:
+            line = line.strip();
+            if not line:
+                continue;
+            # Skip any blank lines
+
+            if first:
+                ancestor = re.findall(r'\)([^;]+);', line)[0];
+                first = False;
+
+            line = line.split("\t");
+            if line[0] == replace_id:
+                new_genome_file = line[1];
+
+    return new_genome_file, ancestor;
+
+
+#############################################################################
+
 def printWrite(string, stream):
-    print(string, flush=True);
+    if "- INFO -" in string:
+        color = "\033[36m"; # cyan
+    elif "- ERROR -" in string:
+        color = "\033[31m"; # red
+    reset_color = "\033[0m";
+    color_string = color + string + reset_color;
+    # Format the string with color codes
+
+    print(color_string, flush=True);
     stream.write(string + "\n");
     stream.flush();
 # For logging in runCommand(), print the string and write it to the file stream
@@ -635,6 +748,7 @@ def runCommand(cmd, tmpdir, logfile, rule, wc="", fmode="w+"):
         # Get the return code
 
         if not restart and rcode != 0:
+            printWrite(f"{fmtDT()} - RULE {rule}{wc} - ERROR - runCommand2 - Command failed: {' '.join(cmd)}", logfile_stream);
             raise Exception(f"{fmtDT()} - RULE {rule}{wc} - ERROR - runCommand2 - Command failed: {' '.join(cmd)}");
         # If the command failed without a restart, raise an exception
 

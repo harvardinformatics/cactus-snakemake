@@ -14,6 +14,7 @@ cactus_path:
 # File path or "download".
 # Provide the path to the cactus singularity container. 
 # If you don't have it, set this to "download" and the pipeline will download it for you.
+# If you want to download a specific version, provide the version tag, e.g. v2.9.7
 
 input_file: 
 # File path.

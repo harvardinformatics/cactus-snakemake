@@ -1,0 +1,1 @@
+simHuman_chr6	evolverMammals-seq/simHuman.chr6	0.10
