@@ -1,0 +1,21 @@
+#!/bin/sh
+# File: .git/hooks/pre-commit
+
+# Define the YAML file
+YAML_FILE="lib/info.yaml"
+
+# Check if the file exists
+if [ ! -f "$YAML_FILE" ]; then
+  echo "YAML file not found: $YAML_FILE"
+  exit 0
+fi
+
+# Get the current date in YYYY-MM-DD format
+CURRENT_DATE=$(date +"%Y-%m-%d")
+
+# Update the YAML file (example: update a "latest-commit-date" field)
+# Using GNU sed syntax; adjust for your system if needed.
+sed -i "s/^latest-commit-date:.*/latest-commit-date: ${CURRENT_DATE}/" "$YAML_FILE"
+
+# Stage the YAML file so the changes are included in the commit
+git add "$YAML_FILE"
