@@ -1,9 +1,13 @@
 #############################################################################
-# This config file is a necessary input file for the cactus GPU snakemake
-# pipeline. It contains the parameters needed to run the pipeline.
+# This config file is a necessary input file for the Minigraph-Cactus Snakemake
+# pipeline: cactus_minigraph.smk. It contains the parameters needed to run the pipeline.
+#
+# This pipeline uses the Minigraph-Cactus pipeline to create a pangenome graph and
+# align genomes.
+# https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/pangenome.md
 #############################################################################
 
-# time -p snakemake -p -j 5 -e slurm -s ../../cactus_minigraph.smk --configfile yeast-minigraph-cfg.yaml --dryrun
+# time -p snakemake -p -j 5 -e slurm -s cactus_minigraph.smk --configfile minigraph-config-template.yaml --dryrun
 
 #############################################################################
 #

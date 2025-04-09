@@ -8,17 +8,20 @@ import re
 import logging
 import subprocess
 
-import lib.cactuslib as cactuslib
-import lib.treelib as treelib
+import lib.cactuslib as CACTUSLIB
+import lib.updatelib as UPDATELIB
 
 #############################################################################
 # System setup
 
+version_flag = config.get("version", False);
+info_flag = config.get("info", False);
 debug = config.get("debug", False);
 #debug = True;
-# Whether to run in debug mode or not
+# A hacky way to get some custom command line arguments for the pipeline
+# These just control preprocessing flags that stop the pipeline early anyways
 
-MAIN, DRY_RUN, OUTPUT_DIR, LOG_DIR, TMPDIR, LOG_LEVEL, LOG_VERBOSITY = cactuslib.pipelineSetup(config, sys.argv, debug);
+MAIN, DRY_RUN, OUTPUT_DIR, LOG_DIR, TMPDIR, LOG_LEVEL, LOG_VERBOSITY = CACTUSLIB.pipelineSetup(config, sys.argv, version_flag, info_flag, debug);
 # Setup the pipeline, including the output directory, log directory, and tmp directory
 
 cactuslib_logger = logging.getLogger('cactuslib')
@@ -30,7 +33,7 @@ cactuslib_logger = logging.getLogger('cactuslib')
 USE_GPU = config["use_gpu"]
 # Whether to use GPU or CPU cactus
 
-cactus_image_path, cactus_gpu_image_path = cactuslib.parseCactusPath(config["cactus_path"], USE_GPU, MAIN);
+cactus_image_path, cactus_gpu_image_path = CACTUSLIB.parseCactusPath(config["cactus_path"], USE_GPU, MAIN);
 # Parse the cactus path from the config file
 
 CACTUS_PATH = ["singularity", "exec", "--cleanenv", cactus_image_path]
@@ -87,7 +90,7 @@ TOP_BL = "";
 # cactus-prepare
 
 if MAIN:
-    SEQ_FILES = cactuslib.runCactusUpdatePrepare(INPUT_HAL, INPUT_FILE, CACTUS_PATH, OUTPUT_DIR, UPDATE_TYPE, USE_GPU, LOG_DIR, DRY_RUN, REPLACE, CHILD, ANCNAME, TOP_BL);
+    SEQ_FILES = UPDATELIB.runCactusUpdatePrepare(INPUT_HAL, INPUT_FILE, CACTUS_PATH, OUTPUT_DIR, UPDATE_TYPE, USE_GPU, LOG_DIR, DRY_RUN, REPLACE, CHILD, ANCNAME, TOP_BL);
 # if DRY_RUN:
 #     CACTUS_FILE = os.path.join("/tmp/", "cactus-update-smk-dryrun", os.path.basename(INPUT_FILE));
 # else:
@@ -97,7 +100,7 @@ CACTUS_FILE = os.path.join(OUTPUT_DIR, os.path.basename(INPUT_FILE));
 #############################################################################
 # Reading files
 
-NEW_GENOME_FILE, ANCNAME = cactuslib.getGenomesToAddReplace(os.path.join(OUTPUT_DIR, "seq_file.out"), REPLACE);
+NEW_GENOME_FILE, ANCNAME = UPDATELIB.getGenomesToAddReplace(os.path.join(OUTPUT_DIR, "seq_file.out"), REPLACE);
 # Get the genomes to add from the input file
 
 #NEW_GENOME_FILE = os.path.join(OUTPUT_DIR, f"{GENOME_NAME}.{GENOME_EXT}");
@@ -192,7 +195,7 @@ rule preprocess:
         # if params.gpu_opt:
         #     cmd.append("--gpu");
 
-        cactuslib.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, params.replace_name)
+        CACTUSLIB.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, params.replace_name)
         # When not requesting all CPU on a node: toil.batchSystems.abstractBatchSystem.InsufficientSystemResources: The job LastzRepeatMaskJob is requesting 64.0 cores, more than the maximum of 32 cores that SingleMachineBatchSystem was configured with, or enforced by --maxCores.Scale is set to 1.0.
 ## This rule runs cactus-preprocess for every genome (tip in the tree), which does some masking
 ## Runtimes for turtles range from 8 to 15 minutes with the above resoureces
@@ -236,7 +239,7 @@ rule blast:
         if params.gpu_opt:
             cmd += ["--gpu", str(params.gpu_num)];
 
-        cactuslib.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, params.node)
+        CACTUSLIB.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, params.node)
 # This rule runs cactus-blast for every internal node
 # Runtimes for turtles range from 1 to 10 hours with the above resources
 
@@ -275,7 +278,7 @@ rule align:
             "--maxCores", str(resources.cpus_per_task),
         ];
 
-        cactuslib.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, params.node)
+        CACTUSLIB.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, params.node)
 ## This rule runs cactus-align for every internal node
 ## Runtimes for turtles range from 4 to 16 hours with the above resources
 
@@ -301,7 +304,7 @@ rule copy_or_get_hal:
         if not params.overwrite_original_hal:
             # If the hal file is not being overwritten, copy the input hal file to the output directory
             cmd = ["cp", input.input_hal, params.hal_to_edit];
-            cactuslib.runCommand(cmd, None, log.job_log, params.rule_name)
+            CACTUSLIB.runCommand(cmd, None, log.job_log, params.rule_name)
 
             with open(output.copy_or_get_hal_stamp, "w") as f:
                 f.write(f"original hal copied: {params.hal_to_edit}");
@@ -332,7 +335,7 @@ rule remove_genome:
             params.node,
         ];
 
-        cactuslib.runCommand(cmd, None, log.job_log, params.rule_name)
+        CACTUSLIB.runCommand(cmd, None, log.job_log, params.rule_name)
 
         with open(output.remove_genome_stamp, "w") as f:
             f.write("done");
@@ -363,7 +366,7 @@ rule replace_genome:
             "--hdf5InMemory "
         ];
 
-        cactuslib.runCommand(cmd, None, log.job_log, params.rule_name)
+        CACTUSLIB.runCommand(cmd, None, log.job_log, params.rule_name)
 
         with open(output.replace_genome_stamp, "w") as f:
             f.write("done");

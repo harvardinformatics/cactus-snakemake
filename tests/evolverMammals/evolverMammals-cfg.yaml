@@ -1,6 +1,7 @@
 #############################################################################
-# This config file is a necessary input file for the cactus GPU snakemake
-# pipeline. It contains the parameters needed to run the pipeline.
+# This config file is a necessary input file for the main Cactus Snakemake
+# pipeline: cactus.smk. It contains the parameters needed to run the pipeline.
+# See: https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/progressive.md#running-step-by-step
 #############################################################################
 
 # time -p snakemake -p -j 5 -e slurm -s ../../cactus.smk --configfile evolverMammals-cfg.yaml --dryrun

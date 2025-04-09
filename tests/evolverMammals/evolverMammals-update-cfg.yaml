@@ -1,6 +1,10 @@
 #############################################################################
-# This config file is a necessary input file for the cactus GPU snakemake
-# pipeline. It contains the parameters needed to run the pipeline.
+# This config file is a necessary input file for the Cactus update Snakemake
+# pipeline: cactus_update.smk. It contains the parameters needed to run the pipeline.
+#
+# This pipeline uses the add to branch method to add a new genome to an existing HAL file.
+# https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/updating-alignments.md
+# https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/cactus-update-prepare.md
 #############################################################################
 
 # time -p snakemake -p -j 5 -e slurm -s ../../cactus_update.smk --configfile evolverMammals-update-cfg.yaml --dryrun

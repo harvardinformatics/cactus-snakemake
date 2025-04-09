@@ -1,5 +1,9 @@
 #############################################################################
 # Pipeline for running cactus-minigraph for pangenome creation
+# See: https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/pangenome.md
+#
+# Created March 2025
+# Gregg Thomas
 #############################################################################
 
 import sys
@@ -8,17 +12,19 @@ import re
 import logging
 import subprocess
 
-import lib.cactuslib as cactuslib
-import lib.treelib as treelib
+import lib.cactuslib as CACTUSLIB
 
 #############################################################################
 # System setup
 
+version_flag = config.get("version", False);
+info_flag = config.get("info", False);
 debug = config.get("debug", False);
 #debug = True;
-# Whether to run in debug mode or not
+# A hacky way to get some custom command line arguments for the pipeline
+# These just control preprocessing flags that stop the pipeline early anyways
 
-MAIN, DRY_RUN, OUTPUT_DIR, LOG_DIR, TMPDIR, LOG_LEVEL, LOG_VERBOSITY = cactuslib.pipelineSetup(config, sys.argv, debug);
+MAIN, DRY_RUN, OUTPUT_DIR, LOG_DIR, TMPDIR, LOG_LEVEL, LOG_VERBOSITY = CACTUSLIB.pipelineSetup(config, sys.argv, version_flag, info_flag, debug);
 # Setup the pipeline, including the output directory, log directory, and tmp directory
 
 cactuslib_logger = logging.getLogger('cactuslib')
@@ -27,7 +33,7 @@ cactuslib_logger = logging.getLogger('cactuslib')
 #############################################################################
 # Cactus setup
 
-cactus_image_path, cactus_gpu_image_path = cactuslib.parseCactusPath(config["cactus_path"], False, MAIN);
+cactus_image_path, cactus_gpu_image_path = CACTUSLIB.parseCactusPath(config["cactus_path"], False, MAIN);
 # Parse the cactus path from the config file
 
 CACTUS_PATH = ["singularity", "exec", "--nv", "--cleanenv", cactus_image_path]
@@ -193,7 +199,7 @@ rule minigraph:
             output.sv_gfa,
             "--reference", params.ref_genome
         ];
-        cactuslib.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name);
+        CACTUSLIB.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name);
     # shell:
     #     """
     #     {params.path} cactus-minigraph {params.job_tmp_dir} {input.cactus_input} {output.sv_gfa} --reference {params.ref_genome} --restart
@@ -234,7 +240,7 @@ rule graphmap:
             "--outputFasta", output.fasta,
             "--reference", params.ref_genome
         ];
-        cactuslib.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name);
+        CACTUSLIB.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name);
     # shell:
     #     """
     #     {params.path} cactus-graphmap {params.job_tmp_dir} {input.cactus_input} {input.sv_gfa} {output.paf} --outputFasta {output.fasta} --reference {params.ref_genome}
@@ -277,7 +283,7 @@ checkpoint split:
             "--outDir", params.chroms_dir,
             "--reference", params.ref_genome
         ];
-        cactuslib.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name);
+        CACTUSLIB.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name);
     # shell:
     #     """
     #     {params.path} cactus-graphmap-split {params.job_tmp_dir} {input.cactus_input} {input.sv_gfa} {input.paf} --outDir {output.chroms_dir} --reference {params.ref_genome}
@@ -322,7 +328,7 @@ rule align:
         # if params.gpu_opt:
         #     cmd.append("--gpu");
 
-        cactuslib.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name, wildcards.chrom);
+        CACTUSLIB.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name, wildcards.chrom);
     # shell:
     #     """
     #     {params.path} cactus-align {params.job_tmp_dir} {input.chrom_seqfile} {input.chrom_paf} {output.chrom_hal} --pangenome --reference {params.ref_genome} --outVG {params.gpu_opt}
@@ -401,7 +407,7 @@ rule join:
             "--vcf",
             "--giraffe", "clip"
         ];
-        cactuslib.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name);
+        CACTUSLIB.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name);
     # shell:
     #     """
     #     {params.path} cactus-graphmap-join {params.job_tmp_dir} --vg {params.chrom_haldir}/*.vg --hal {params.chrom_haldir}/*.hal --outDir {output.join_outdir} --outName {params.prefix} --reference {params.ref_genome} --vcf --giraffe clip

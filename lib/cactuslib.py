@@ -4,29 +4,78 @@
 # Gregg Thomas, April 2022
 #############################################################################
 
-import sys, os
+import sys
+import os
 import shutil
 import re
 import requests
 import subprocess
 import logging
 from datetime import datetime
-import traceback
-import lib.treelib as treelib
+import yaml
 
 #############################################################################
 
 cactuslib_logger = logging.getLogger('cactuslib')
-# Create the logger
+# Get the logger for the cactuslib module
 
 #############################################################################
 
-def pipelineSetup(config, args, debug):
+def getInfo(version_flag, info_flag, args):
+    color = "\033[36m"; # cyan
+    reset_color = "\033[0m";
+    # Some color codes for printing
+
+    info_path = os.path.join(os.path.dirname(__file__), "info.yaml")
+    with open(info_path, "r") as file:
+        info = yaml.safe_load(file);
+    # Read the meta info from the info.yaml file
+
+    if version_flag:
+        print(f"\n{color}Snakemake cactus pipeline version {info['version']} released on {info['releasedate-patch']}{reset_color}");
+        sys.exit();
+    # If the version flag is set, print the version and exit
+
+    if info_flag:
+        snakefile = "";
+        if '-s' in args:
+            idx = args.index('-s');
+            if idx + 1 < len(args):
+                snakefile = args[idx + 1];
+        elif '--snakefile' in args:
+            idx = args.index('--snakefile');
+            if idx + 1 < len(args):
+                snakefile = args[idx + 1];
+        # Try to get the path to the snakefile
+
+        snakefile_path = os.path.abspath(snakefile);
+        mod_timestamp = os.path.getmtime(snakefile_path);
+        mod_datetime = datetime.fromtimestamp(mod_timestamp);
+        # Get the last modified date of the snakefile
+
+        print(f"\n{color}---Snakemake cactus pipeline---{reset_color}")
+        for key, value in info.items():
+            if value:
+                print(f"{color}{key}: {value}{reset_color}");
+
+                if key == "latest-commit-date" and snakefile:
+                    print(f"{color}{os.path.basename(snakefile)} last modified: {mod_datetime.date()}{reset_color}");
+                # Print the last modified date of the snakefile if it exists
+        sys.exit();
+    # If the info flag is set, print the meta info and exit
+
+#############################################################################
+
+def pipelineSetup(config, args, version_flag, info_flag, debug):
     main_flag = True;
     if "__main__.py" in args[0]:
         main_flag = False;
     # Whether the pipeline is being run as a main script or not 
-    
+
+    if main_flag and version_flag or info_flag:
+        info = getInfo(version_flag, info_flag, args);
+    # Print version or info if specified, which will terminate the program early
+
     dry_run_flag = False;
     if any([arg in args for arg in ["--dry-run", "--dryrun", "-n"]]):
         dry_run_flag = True;
@@ -48,7 +97,7 @@ def pipelineSetup(config, args, debug):
     log_dir = os.path.join(output_dir, "logs");
     # The output directory where all the files and logs are stored
 
-    if main_flag:
+    if main_flag and not version_flag or not info_flag:
         outdir_log_msg, outdir_err_flag = createOutputDirs(output_dir, log_dir, dry_run_flag);
     # Create the output directories if they don't exist
 
@@ -377,325 +426,6 @@ def runCactusPrepare(input_file, cactus_path, output_dir, output_hal, use_gpu, l
 
     return os.path.join(output_dir, os.path.basename(input_file));
     # Return the output file path
-
-#############################################################################
-
-def runCactusUpdatePrepare(input_hal, input_file, cactus_path, output_dir, update_type, use_gpu, log_dir, dry_run, parent, child, new_anc_name, new_top_bl):
-# This function runs cactus-update-prepare on the input file and saves the output in the output directory
-
-    log_prefix = "cactus-update-prepare";
-    # if dry_run:
-        # output_dir = "/tmp/cactus-update-smk-dryrun/";
-        # os.makedirs(output_dir, exist_ok=True);
-        # log_prefix = os.path.join(output_dir, "cactus-update-prepare");
-    # If this is a dry run, create a temporary output directory and log file
-
-    if update_type not in ["branch", "replace"]:
-        cactuslib_logger.error("Invalid update type. Must be 'branch' or 'replace'.");
-        sys.exit(1);
-    # Check the update type
-
-    if not os.path.exists(input_hal):
-        cactuslib_logger.error(f"Input hal file {input_hal} does not exist. Exiting.");
-        sys.exit(1);
-    # Check the input hal file
-
-    if not parent:
-        cactuslib_logger.error("Parent/replacement genome not specified. Exiting.");
-        sys.exit(1);
-    # Check the parent genome
-
-    if update_type == "branch":
-        command = cactus_path + ["cactus-update-prepare", 
-                                    "add", 
-                                    update_type, 
-                                    input_hal, 
-                                    input_file, 
-                                    "--outDir", output_dir
-                                    ];
-
-        if update_type == "node":
-            if child:
-                cactuslib_logger.warning("Child genome specified for node update. This will be ignored.");
-            # If a child genome is specified for a node update, ignore it
-            command += ["--genome", parent];
-        elif update_type == "branch":
-            if not child:
-                cactuslib_logger.error("Child genome not specified for branch update. Exiting.");
-                sys.exit(1);
-            # Check the child genome
-            command += ["--parentGenome", parent, 
-                        "--childGenome", child,
-                        "--ancestorName", new_anc_name,
-                        "--topBranchLength", new_top_bl,
-                        ];
-        # The command to run cactus-prepare
-    # For branch updates, we need to specify the parent and child genomes as well as the new branch length above the new node
-
-    elif update_type == "replace":
-        command = cactus_path + ["cactus-update-prepare", 
-                                    "replace", 
-                                    input_hal, 
-                                    input_file, 
-                                    "--genome", parent, 
-                                    "--outDir", output_dir
-                                    ];
-    # For replace updates, we only need to specify the parent genome, which is the one being replaced
-
-    # if use_gpu:
-    #     command.append("--gpu");
-    # The command to run cactus-prepare
-
-    cactuslib_logger.info(f"Command to run cactus-update-prepare: {' '.join(command)}");
-    cactuslib_logger.debug("===================================================================================");
-    # Debug output
-
-    # if use_gpu:
-    #     logfile = log_prefix + "-gpu.log";
-    # else:
-    logfile = log_prefix + ".log";
-    # The log file name
-
-    # if dry_run:
-    #     logpath = logfile;
-    # else:
-    logpath = os.path.join(log_dir, logfile);
-    # The log file path
-
-    try:
-        with open(logpath, "w") as log_file:
-            subprocess.run(command, check=True, stdout=log_file, stderr=subprocess.STDOUT)
-    except FileNotFoundError as e:
-        cactuslib_logger.error(f"File not found: {e}")
-        sys.exit(1)
-    except subprocess.CalledProcessError as e:
-        cactuslib_logger.error(f"Error running cactus-prepare: {e}");
-        cactuslib_logger.debug(f"Command: {' '.join(command)}");
-        cactuslib_logger.error(f"Check log file for more info: {logpath}");        
-        sys.exit(1)
-    # Run the command and check for errors
-
-    cactuslib_logger.info(f"Successfully ran cactus-update-prepare. Parsing file names form {output_dir}/seq_file.out");
-
-    with open(os.path.join(output_dir, "seq_file.out")) as f:
-        seq_files = [];
-        next(f)  # Skip the first line
-        for line in f:
-            if not line.strip():
-                continue;
-            # Skip any blank lines
-            
-            line = line.strip().split("\t");
-            if line[0] not in [parent, new_anc_name]:
-                seq_files.append(line[1]);
-            # Add the seq files to the list if they are not the parent or new ancestor
-
-    return seq_files;
-    # Return the preprocess file paths
-
-#############################################################################
-
-def readTips(input_file, main):
-# This function reads the cactus input file and initializes the tips dictionary
-    
-    tips = {};
-    # The main dictionary for storing information and file paths for tips in the tree:
-    # [output fasta file from mask step] : { 'input' : "original genome fasta file", 'name' : "genome name in tree", 'output' : "expected output from mask step (same as key)" }
-
-    first = True;
-    for line in open(input_file):
-        if not line.strip():
-            continue;
-        # Skip any blank lines
-
-        if first:
-            if main:
-                cactuslib_logger.info(f"USER INPUT TREE: {line.strip()}");
-            first = False;
-            continue;
-        # The first line contains the input tree... skip
-
-        line = line.strip().split("\t");
-        cur_base = os.path.basename(line[1]);
-        tips[line[0]] = { 'input' : [line[1]], 'name' : line[0], 'output' : "NA" };
-    ## Read the genome names and original genome fasta file paths from the same cactus input file used with cactus-prepare
-
-    if cactuslib_logger.isEnabledFor(logging.DEBUG):
-        cactuslib_logger.debug("TREE TIPS:");
-        for g in tips:
-            cactuslib_logger.debug(f"{g}: {tips[g]}")
-        cactuslib_logger.debug("===================================================================================");
-    ## Some output for debugging
-
-    return tips;
-
-#############################################################################
-
-def initializeInternals(cactus_file, tips, main):
-# This function reads the cactus file generated by cactus-prepare and initializes the internals dictionary
-
-    internals = {};
-    # The main dictionary for storing information and file paths for internal nodes in the tree:
-    # [node name] : { 'name' : "node name in tree", 'blast-inputs' : [the expected inputs for the blast step], 'align-inputs' : [the expected inputs for the align step],
-    #                   'hal-inputs' : [the expected inputs for the hal2fasta step], 'blast-output' : "the .cigar file output from the blast step",
-    #                   'align-output' : "the .hal file output from the align step", 'hal-output' : "the fasta file output from the hal2fasta step" }
-
-    first = True;
-    for line in open(cactus_file):
-        if not line.strip():
-            continue;
-        # Skip any blank lines
-
-        if first:
-            anc_tree = line.strip();
-            first = False;
-            continue;
-        # The first line contains the tree with internal nodes labeled... save this for later
-
-        line = line.strip().split("\t");
-        name = line[0];
-        cur_base = os.path.basename(line[1]);
-
-        if name in tips:
-            tips[name]['output'] = cur_base;
-        else:
-            internals[name] = {  'name' : name, 
-                                    'input-seqs' : "NA", 
-                                    'hal-file' : cur_base.replace(".fa", ".hal"), 
-                                    'cigar-file' : cur_base.replace(".fa", ".cigar"), 
-                                    'seq-file' : cur_base };
-    ## Read the internal node labels and output file paths from the file generated by cactus-prepare
-
-    if main:
-        cactuslib_logger.info(f"CACTUS LABELED TREE: {anc_tree}");
-
-    return internals, anc_tree;
-
-#############################################################################
-
-def parseInternals(internals, tips, tinfo, anc_tree):
-# This function parses the cactus tree with internal node labels and updates the internals dictionary 
-# with the round and input sequences for each internal node
-
-    internal_nodes = [ n for n in tinfo if tinfo[n][2] != 'tip' ];
-    # Parse the tree with the internal node labels
-
-    tip_list = list(tips.keys());
-
-    ####################
-
-    for node in internal_nodes:
-        name = tinfo[node][3];
-        # The cactus node label
-
-        internals[name]['round'] = treelib.maxDistToTip(node, tinfo);
-    ## One loop through the tree to get the round each node is in based on its maximum
-    ## distance to a tip
-
-    ####################
-
-    for node in internal_nodes:
-        name = tinfo[node][3];
-        # Get the name of the current node
-
-        expected_seq_inputs = [];
-        # We will construct a list of all sequences required as input for this node -- all those
-        # from nodes in the previous round
-
-        cur_desc = treelib.getDesc(node, tinfo);
-        # Get descendant nodes for the current node
-
-        for tip in tips:
-            expected_seq_inputs.append(tips[tip]['output']);
-
-        if not all(tinfo[desc][2] == "tip" for desc in cur_desc):
-            for node_check in internal_nodes:
-                name_check = tinfo[node_check][3];
-                #print(node, name, node_check, name_check)
-                if internals[name]['round']-1 != internals[name_check]['round']:
-                    continue;
-                expected_seq_inputs.append(internals[name_check]['seq-file']);
-                # Go through the internal nodes again and skip any that aren't in the previous round  
-
-        internals[name]['input-seqs'] = expected_seq_inputs;
-        # Add the expected input seqs to the main internals dict for this node       
-    ## Another loop through the tree to get the input sequences for each node
-
-    if cactuslib_logger.isEnabledFor(logging.DEBUG):
-        cactuslib_logger.debug("TREE INTERNAL NODES:");
-        for g in internals:
-            cactuslib_logger.debug(f"{g}: {internals[g]}");
-        cactuslib_logger.debug("===================================================================================");
-        cactuslib_logger.debug("TREE TIPS:");
-        for g in tips:
-            cactuslib_logger.debug(f"{g}: {tips[g]}")
-        cactuslib_logger.debug("===================================================================================");
-    ## Some output for debugging
-
-    return internals;
-
-#############################################################################
-
-def getGenomesToAdd(input_file):
-
-    #genome_names = [];
-    #genome_exts  = [];
-    # The list of genome names to add to the tree
-
-    with open(input_file) as f:
-        num_lines = sum(1 for line in open(input_file));
-        if num_lines > 1:
-            cactuslib_logger.warning(f"More than one genome specified in the input file. Only the genome on the first line will be used.");
-        # If there is more than one genome in the input file, warn the user and only use the first one
-
-        for line in open(input_file):
-            if not line.strip():
-                continue;
-            # Skip any blank lines
-
-            line = line.strip().split()
-            # Split the line into a list
-
-            #seq_file_ext = os.path.splitext(line[1])[1]
-
-            #genome_names.append(line[0]);
-            #genome_exts.append(seq_file_ext[1:]);
-            # Add the genome name and extension to the lists
-
-            genome_name = line[0];
-            genome_ext = os.path.splitext(line[1])[1][1:];
-
-            break;
-
-    cactuslib_logger.info(f"Genomes to add: {genome_name}");
-    # if cactuslib_logger.isEnabledFor(logging.DEBUG):
-    #     for g in range(len(genome_names)):
-    cactuslib_logger.debug(f"{genome_name}: {genome_ext}");
-    cactuslib_logger.debug("===================================================================================");
-
-    return genome_name, genome_ext;
-
-#############################################################################
-
-def getGenomesToAddReplace(seq_out_file, replace_id):
-    with open(seq_out_file, "r") as f:
-        first = True;
-        for line in f:
-            line = line.strip();
-            if not line:
-                continue;
-            # Skip any blank lines
-
-            if first:
-                ancestor = re.findall(r'\)([^;]+);', line)[0];
-                first = False;
-
-            line = line.split("\t");
-            if line[0] == replace_id:
-                new_genome_file = line[1];
-
-    return new_genome_file, ancestor;
-
 
 #############################################################################
 

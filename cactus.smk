@@ -1,5 +1,9 @@
 #############################################################################
 # Pipeline for running cactus for whole genome alignment
+# See: https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/progressive.md#running-step-by-step
+#
+# Created April 2022
+# Gregg Thomas
 #############################################################################
 
 import sys
@@ -8,17 +12,20 @@ import re
 import logging
 import subprocess
 
-import lib.cactuslib as cactuslib
-import lib.treelib as treelib
+import lib.cactuslib as CACTUSLIB
+import lib.treelib as TREELIB
 
 #############################################################################
 # System setup
 
+version_flag = config.get("version", False);
+info_flag = config.get("info", False);
 debug = config.get("debug", False);
 #debug = True;
-# Whether to run in debug mode or not
+# A hacky way to get some custom command line arguments for the pipeline
+# These just control preprocessing flags that stop the pipeline early anyways
 
-MAIN, DRY_RUN, OUTPUT_DIR, LOG_DIR, TMPDIR, LOG_LEVEL, LOG_VERBOSITY = cactuslib.pipelineSetup(config, sys.argv, debug);
+MAIN, DRY_RUN, OUTPUT_DIR, LOG_DIR, TMPDIR, LOG_LEVEL, LOG_VERBOSITY = CACTUSLIB.pipelineSetup(config, sys.argv, version_flag, info_flag, debug);
 # Setup the pipeline, including the output directory, log directory, and tmp directory
 
 cactuslib_logger = logging.getLogger('cactuslib')
@@ -30,7 +37,7 @@ cactuslib_logger = logging.getLogger('cactuslib')
 USE_GPU = config["use_gpu"]
 # Whether to use GPU or CPU cactus
 
-cactus_image_path, cactus_gpu_image_path = cactuslib.parseCactusPath(config["cactus_path"], USE_GPU, MAIN);
+cactus_image_path, cactus_gpu_image_path = CACTUSLIB.parseCactusPath(config["cactus_path"], USE_GPU, MAIN);
 # Parse the cactus path from the config file
 
 CACTUS_PATH = ["singularity", "exec", "--cleanenv", cactus_image_path]
@@ -73,7 +80,7 @@ if MAIN:
 # cactus-prepare
 
 if MAIN:
-    cactuslib.runCactusPrepare(INPUT_FILE, CACTUS_PATH, OUTPUT_DIR, OUTPUT_HAL, USE_GPU, LOG_DIR, DRY_RUN);
+    CACTUSLIB.runCactusPrepare(INPUT_FILE, CACTUS_PATH, OUTPUT_DIR, OUTPUT_HAL, USE_GPU, LOG_DIR, DRY_RUN);
 # if DRY_RUN:
 #     CACTUS_FILE = os.path.join("/tmp/", "cactus-smk-dryrun", os.path.basename(INPUT_FILE));
 #else:
@@ -83,13 +90,13 @@ CACTUS_FILE = os.path.join(OUTPUT_DIR, os.path.basename(INPUT_FILE));
 #############################################################################
 # Reading files
 
-tips = cactuslib.readTips(INPUT_FILE, MAIN);
+tips = TREELIB.readTips(INPUT_FILE, MAIN);
 # The main dictionary for storing information and file paths for tips in the tree:
 # [output fasta file from preprocess step] : { 'input' : "original genome fasta file", 'name' : "genome name in tree", 'output' : "expected output from preprocess step (same as key)" }
 
 ####################
 
-internals, anc_tree = cactuslib.initializeInternals(CACTUS_FILE, tips, MAIN);
+internals, anc_tree = TREELIB.initializeInternals(CACTUS_FILE, tips, MAIN);
 # The main dictionary for storing information and file paths for internal nodes in the tree:
 # [node name] : { 'name' : "node name in tree", 'blast-inputs' : [the expected inputs for the blast step], 'align-inputs' : [the expected inputs for the align step],
 #                   'hal-inputs' : [the expected inputs for the hal2fasta step], 'blast-output' : "the .paf file output from the blast step",
@@ -97,9 +104,9 @@ internals, anc_tree = cactuslib.initializeInternals(CACTUS_FILE, tips, MAIN);
 
 ####################
 
-tinfo, anc_tree, root = treelib.treeParse(anc_tree);
+tinfo, anc_tree, root = TREELIB.treeParse(anc_tree);
 ROOT_NAME = tinfo[root][3];
-internals = cactuslib.parseInternals(internals, tips, tinfo, anc_tree);
+internals = TREELIB.parseInternals(internals, tips, tinfo, anc_tree);
 # The tree is parsed to get the root node and the internal nodes are updated with the correct names
 
 if LOG_LEVEL == "debug":
@@ -161,7 +168,7 @@ rule preprocess:
         # if params.gpu_opt:
         #     cmd.append("--gpu");
 
-        cactuslib.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, wildcards.final_tip)
+        CACTUSLIB.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, wildcards.final_tip)
         # When not requesting all CPU on a node: toil.batchSystems.abstractBatchSystem.InsufficientSystemResources: The job LastzRepeatMaskJob is requesting 64.0 cores, more than the maximum of 32 cores that SingleMachineBatchSystem was configured with, or enforced by --maxCores.Scale is set to 1.0.
     # shell:
     #     """
@@ -214,7 +221,7 @@ rule blast:
             #cmd.append("1");
             # TODO: fix this
 
-        cactuslib.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, wildcards.internal_node)
+        CACTUSLIB.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, wildcards.internal_node)
     # shell:
     #     """
     #     {params.path} cactus-blast {params.job_tmp_dir} {params.cactus_file} {output} --root {params.node} --logInfo --retryCount 0 --lastzCores {resources.cpus_per_task} {params.gpu_opt}
@@ -268,7 +275,7 @@ rule align:
         # if params.gpu_opt:
         #     cmd.append("--gpu");
 
-        cactuslib.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, wildcards.internal_node)
+        CACTUSLIB.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, wildcards.internal_node)
     # shell:
     #     """   
     #     {params.path} cactus-align {params.job_tmp_dir} {params.cactus_file} {input.paf_file} {output} --root {params.node} --logInfo --retryCount 0 --workDir {params.work_dir} --maxCores {resources.cpus_per_task} --defaultDisk 450G {params.gpu_opt}
@@ -305,7 +312,7 @@ rule convert:
             "--hdf5InMemory"
         ];
 
-        cactuslib.runCommand(cmd, None, log.job_log, params.rule_name, params.node)
+        CACTUSLIB.runCommand(cmd, None, log.job_log, params.rule_name, params.node)
 ## This rule runs hal2fasta to convert .hal files for each internal node to .fasta files
 ## Runtime for turtles is only about 30 seconds per node
 
@@ -329,7 +336,7 @@ rule copy_hal:
     run:
         cmd = ["cp", input.anc_hal, output.final_hal];
 
-        cactuslib.runCommand(cmd, None, log.job_log, params.rule_name)
+        CACTUSLIB.runCommand(cmd, None, log.job_log, params.rule_name)
 ## Copying the root .hal file here, since failures in the subsequent rules
 ## would mean the blast/align steps have to be re-run for that node, but this means a little extra
 ## storage is required
@@ -377,7 +384,7 @@ rule append:
             else:
                 file_mode = "a+";
 
-            cactuslib.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name, node, fmode=file_mode);
+            CACTUSLIB.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name, node, fmode=file_mode);
             # Generate the command for the current node
 
             node_count += 1;
@@ -420,7 +427,7 @@ rule maf:
             "--filterGapCausingDupes"
         ];
 
-        cactuslib.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name);
+        CACTUSLIB.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name);
 
         cmd = params.path + [
             "cactus-hal2maf",
@@ -434,6 +441,6 @@ rule maf:
             "--dupeMode", "single"
         ];
 
-        cactuslib.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, fmode="a+");
+        CACTUSLIB.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, fmode="a+");
 
 #############################################################################

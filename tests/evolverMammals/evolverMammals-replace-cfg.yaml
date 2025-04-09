@@ -1,6 +1,9 @@
 #############################################################################
-# This config file is a necessary input file for the cactus GPU snakemake
-# pipeline. It contains the parameters needed to run the pipeline.
+# This config file is a necessary input file for the Cactus replace Snakemake
+# pipeline: cactus_replace.smk. It contains the parameters needed to run the pipeline.
+#
+# This pipeline uses the replace method to replace a genome in an existing HAL file.
+# https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/cactus-update-prepare.md#replacing-a-genome
 #############################################################################
 
 # time -p snakemake -p -j 5 -e slurm -s ../../cactus_replace.smk --configfile evolverMammals-replace-cfg.yaml --dryrun
@@ -31,7 +34,7 @@ input_file: evolverMammals-replace.txt
 input_hal: evolverMammals-out/evolverMammals.hal
 # The input HAL file. This is the output of a previous cactus run.
 
-output_dir: evolverMammals-replace-out3/
+output_dir: evolverMammals-replace-out/
 # The output directory for the snakemake pipeline. This should be the same as the outDir in cactus-prepare.
 # This directory will be created if it doesn't exist.
 
