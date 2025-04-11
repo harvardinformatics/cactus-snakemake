@@ -15,54 +15,64 @@
 #
 
 cactus_path: 
-# File path or "download".
+# File path or version string (e.g. 2.9.5) or "download".
 # Provide the path to the cactus singularity container. This is needed whether use_gpu is True or False.
 # If you don't have it, set this to "download" and the pipeline will download it for you.
 # If you want to download a specific version, provide the version tag, e.g. v2.9.7
 
 cactus_gpu_path:
-# File path or "download".
+# File path or version string (e.g. 2.9.5) or "download".
 # If using GPUs (i.e. if use_gpu: True), provide the path to the cactus GPU singularity container. 
 # If use_gpu is False, this will be ignored.
 # If you don't have it, set this to "download" and the pipeline will download it for you.
 # If you want to download a specific version, provide the version tag, e.g. v2.9.7
 
-input_file: 
+input_hal:
 # File path.
-# File containing the genome to be added to the hal file.
-# Tab delimited columns: genome name, genome file, branch length
-# Only the first line will be used.
-# See: https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/cactus-update-prepare.md#adding-genomes-examples
+# The input HAL file. This is the output of a previous cactus run.
+
+new_genome_name:
+# String.
+# The name of the new genome to be added to the HAL file.
+# This will also be the name in the tree.
+# E.g node 6 in https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/updating-alignments.md#adding-a-new-genome
+
+new_genome_fasta:
+# File path.
+# The path to the genome file to be added to the HAL file.
+
+new_anc_node:
+# String.
+# The name of the new node that will be created in the tree.
+# We will be creating a new branch in the tree connecting the new genome to this node.
+# E.g. the red circle in https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/updating-alignments.md#adding-a-new-genome
+
+new_branch_length:
+# Float or blank (defaults to 1.0).
+# The branch length of the new branch connecting the new genome to the new_anc_node.
+# E.g. the dashed branch between 6 and the red circle in https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/updating-alignments.md#adding-a-new-genome
+
+parent_node:
+# String.
+# The node directly above the new_anc_node to be added in the tree.
+# E.g. node 5 in https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/updating-alignments.md#adding-a-new-genome
+
+child_node:
+# String.
+# The node directly below the genome to be added in the tree.
+# This is the node directly below a new branch which will be added to the tree.
+# E.g. node 4 in https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/updating-alignments.md#adding-a-new-genome
+
+top_branch_length:
+# Float or blank (defaults to 1.0).
+# This specifies how the existing branch between child_node and parent_node will be split by the new_anc_node.
+# This is the length of the branch that will connect new_anc_node to the existing parent_node.
+# Leave blank if the original tree did not have branch lengths (or if the tree in the HAL file has all branch lengths set to 1.0)
 
 output_dir: 
 # Directory path.
 # The desired output directory for the snakemake pipeline. This directory will be created if it doesn't exist.
 # This directory will be created if it doesn't exist.
-
-parent_node: Anc1
-# String.
-# The node directly above the genome to be added in the tree.
-# This is the node directly above a new branch which will be added to the tree.
-# See: https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/updating-alignments.md
-
-child_node: mr
-# String.
-# The node directly below the genome to be added in the tree.
-# This is the node directly below a new branch which will be added to the tree.
-# See: https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/updating-alignments.md
-
-anc_name:
-# String.
-# The name of the new node that will be created in the tree.
-
-orig_branch_length:
-# Float.
-# The original branch length connectiong child_node to parent_node.
-
-top_branch_length:
-# Float.
-# This specifies how the existing branch between child_node and parent_node will be split by the new node (anc_name).
-# This is the length of the branch that will connect the new node to the existing parent_node.
 
 overwrite_original_hal:
 # True/False.

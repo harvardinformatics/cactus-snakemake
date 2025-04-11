@@ -8,4 +8,4 @@
 6. ~~Add a rule to convert the final HAL to MAF~~ Defunct 8.24.2022, this will be done with Comparative Augustus
 7. ~~Add a non-gpu option for the mask and blast rules~~ Completed 8.24.2022
 8. ~~Update to cactus 2.2.0~~ Completed 8.24.2022
-9. Add in a workflow to add a genome to an alignment (https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/cactus-update-prepare.md)
+9. ~~Add in a workflow to add a genome to an alignment (https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/cactus-update-prepare.md)~~

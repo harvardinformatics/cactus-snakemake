@@ -8,13 +8,67 @@
 
 import os
 import re
+import math
 import subprocess
 import logging
 
 #############################################################################
 
-cactuslib_logger = logging.getLogger('cactuslib')
+CLOG = logging.getLogger('cactuslib')
 # Get the logger for the cactuslib module
+
+#############################################################################
+
+def createUpdateInputFile(genome_name, genome_fasta, new_bl, output_dir):
+# This function creates the input file for cactus-update-prepare
+
+    if not os.path.isfile(genome_fasta):
+        CLOG.error(f"Genome fasta file {genome_fasta} does not exist. Exiting.");
+        sys.exit(1);
+    # Check the genome fasta file
+    genome_fasta = os.path.abspath(genome_fasta);
+
+    cactus_update_file = os.path.join(output_dir, "cactus-update-input.txt");
+
+    if new_bl:
+        new_bl = str(new_bl);
+    else:
+        new_bl = "1.0";
+    # If no branch length is specified, set it to an empty string
+
+    with open(cactus_update_file, "w") as f:
+        f.write(f"{genome_name}\t{genome_fasta}\t{new_bl}\n");
+        # Write the genome name and fasta file to the input file
+
+    CLOG.info(f"Created cactus-update-prepare input file....{cactus_update_file}");
+    # The input file for cactus-update-prepare
+
+    return cactus_update_file;
+
+#############################################################################
+
+def getOrigBranchLength(seq_out_file, child_node, new_anc_node, new_top_bl):
+
+    with open(seq_out_file, "r") as f:
+        tree = f.readline().strip();
+    # Get the tree from the first line of the seq_file.out file
+
+    pattern = r'(\w+):([\d.]+)';
+    matches = re.findall(pattern, tree);
+    node_lengths = {node: float(length) for node, length in matches};
+    # A minimal tree parser
+
+    orig_bl = node_lengths.get(child_node, 0) + node_lengths.get(new_anc_node, 0);
+    # Get the original branch length of the child node and the new ancestor node
+
+    new_bottom_bl = node_lengths.get(child_node, 0);
+
+    if not math.isclose(orig_bl - new_top_bl, new_bottom_bl, rel_tol=1e-9):
+        CLOG.error(f"Check branch lengths: orig {orig_bl}, top {new_top_bl}, bottom {new_bottom_bl}");
+        sys.exit(1);
+        # If the original branch length does not match the new branch length, exit
+
+    return orig_bl;
 
 #############################################################################
 
@@ -27,7 +81,7 @@ def getGenomesToAddUpdate(input_file):
     with open(input_file) as f:
         num_lines = sum(1 for line in open(input_file));
         if num_lines > 1:
-            cactuslib_logger.warning(f"More than one genome specified in the input file. Only the genome on the first line will be used.");
+            CLOG.warning(f"More than one genome specified in the input file. Only the genome on the first line will be used.");
         # If there is more than one genome in the input file, warn the user and only use the first one
 
         for line in open(input_file):
@@ -49,11 +103,11 @@ def getGenomesToAddUpdate(input_file):
 
             break;
 
-    cactuslib_logger.info(f"Genomes to add: {genome_name}");
-    # if cactuslib_logger.isEnabledFor(logging.DEBUG):
+    CLOG.info(f"Genomes to add: {genome_name}");
+    # if CLOG.isEnabledFor(logging.DEBUG):
     #     for g in range(len(genome_names)):
-    cactuslib_logger.debug(f"{genome_name}: {genome_ext}");
-    cactuslib_logger.debug("===================================================================================");
+    CLOG.debug(f"{genome_name}: {genome_ext}");
+    CLOG.debug("===================================================================================");
 
     return genome_name, genome_ext;
 
@@ -92,17 +146,17 @@ def runCactusUpdatePrepare(input_hal, input_file, cactus_path, output_dir, updat
     # If this is a dry run, create a temporary output directory and log file
 
     if update_type not in ["branch", "replace"]:
-        cactuslib_logger.error("Invalid update type. Must be 'branch' or 'replace'.");
+        CLOG.error("Invalid update type. Must be 'branch' or 'replace'.");
         sys.exit(1);
     # Check the update type
 
     if not os.path.exists(input_hal):
-        cactuslib_logger.error(f"Input hal file {input_hal} does not exist. Exiting.");
+        CLOG.error(f"Input hal file {input_hal} does not exist. Exiting.");
         sys.exit(1);
     # Check the input hal file
 
     if not parent:
-        cactuslib_logger.error("Parent/replacement genome not specified. Exiting.");
+        CLOG.error("Parent/replacement genome not specified. Exiting.");
         sys.exit(1);
     # Check the parent genome
 
@@ -117,19 +171,21 @@ def runCactusUpdatePrepare(input_hal, input_file, cactus_path, output_dir, updat
 
         if update_type == "node":
             if child:
-                cactuslib_logger.warning("Child genome specified for node update. This will be ignored.");
+                CLOG.warning("Child genome specified for node update. This will be ignored.");
             # If a child genome is specified for a node update, ignore it
             command += ["--genome", parent];
         elif update_type == "branch":
             if not child:
-                cactuslib_logger.error("Child genome not specified for branch update. Exiting.");
+                CLOG.error("Child genome not specified for branch update. Exiting.");
                 sys.exit(1);
             # Check the child genome
             command += ["--parentGenome", parent, 
                         "--childGenome", child,
-                        "--ancestorName", new_anc_name,
-                        "--topBranchLength", new_top_bl,
+                        "--ancestorName", new_anc_name
                         ];
+
+            if new_top_bl:
+                command += ["--topBranchLength", str(new_top_bl)];
         # The command to run cactus-prepare
     # For branch updates, we need to specify the parent and child genomes as well as the new branch length above the new node
 
@@ -147,8 +203,8 @@ def runCactusUpdatePrepare(input_hal, input_file, cactus_path, output_dir, updat
     #     command.append("--gpu");
     # The command to run cactus-prepare
 
-    cactuslib_logger.info(f"Command to run cactus-update-prepare: {' '.join(command)}");
-    cactuslib_logger.debug("===================================================================================");
+    CLOG.info(f"Command to run cactus-update-prepare: {' '.join(command)}");
+    CLOG.debug("===================================================================================");
     # Debug output
 
     # if use_gpu:
@@ -167,31 +223,32 @@ def runCactusUpdatePrepare(input_hal, input_file, cactus_path, output_dir, updat
         with open(logpath, "w") as log_file:
             subprocess.run(command, check=True, stdout=log_file, stderr=subprocess.STDOUT)
     except FileNotFoundError as e:
-        cactuslib_logger.error(f"File not found: {e}")
+        CLOG.error(f"File not found: {e}")
         sys.exit(1)
     except subprocess.CalledProcessError as e:
-        cactuslib_logger.error(f"Error running cactus-prepare: {e}");
-        cactuslib_logger.debug(f"Command: {' '.join(command)}");
-        cactuslib_logger.error(f"Check log file for more info: {logpath}");        
+        CLOG.error(f"Error running cactus-prepare: {e}");
+        CLOG.debug(f"Command: {' '.join(command)}");
+        CLOG.error(f"Check log file for more info: {logpath}");        
         sys.exit(1)
     # Run the command and check for errors
 
-    cactuslib_logger.info(f"Successfully ran cactus-update-prepare. Parsing file names form {output_dir}/seq_file.out");
+    CLOG.info(f"Successfully ran cactus-update-prepare.");# Parsing file names form {output_dir}/seq_file.out");
 
-    with open(os.path.join(output_dir, "seq_file.out")) as f:
-        seq_files = [];
-        next(f)  # Skip the first line
-        for line in f:
-            if not line.strip():
-                continue;
-            # Skip any blank lines
+    # with open(os.path.join(output_dir, "seq_file.out")) as f:
+    #     seq_files = [];
+    #     next(f)  # Skip the first line
+    #     for line in f:
+    #         if not line.strip():
+    #             continue;
+    #         # Skip any blank lines
             
-            line = line.strip().split("\t");
-            if line[0] not in [parent, new_anc_name]:
-                seq_files.append(line[1]);
+    #         line = line.strip().split("\t");
+    #         if line[0] not in [parent, new_anc_name]:
+    #             seq_files.append(line[1]);
+    #             CLOG.debug(f"Adding seq file {line[1]} to list");
             # Add the seq files to the list if they are not the parent or new ancestor
 
-    return seq_files;
+    #return seq_files;
     # Return the preprocess file paths
 
 #############################################################################

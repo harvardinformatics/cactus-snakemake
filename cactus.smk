@@ -68,9 +68,9 @@ OUTPUT_MAF = os.path.join(OUTPUT_DIR, f"{config['final_prefix']}.{MAF_REFERENCE}
 OUTPUT_MAF_NODUPES = os.path.join(OUTPUT_DIR, f"{config['final_prefix']}.{MAF_REFERENCE}.nodupes.maf.gz");
 
 if MAIN:
-    cactuslib_logger.info(f"Output HAL file will be at {OUTPUT_HAL}");
-    cactuslib_logger.info(f"Reference genome for MAF file will be {MAF_REFERENCE}");
-    cactuslib_logger.info(f"Output MAF file will be at {OUTPUT_MAF}");
+    cactuslib_logger.info(f"Output HAL file will be at...............{OUTPUT_HAL}");
+    cactuslib_logger.info(f"Reference genome for MAF file will be....{MAF_REFERENCE}");
+    cactuslib_logger.info(f"Output MAF file will be at...............{OUTPUT_MAF}");
 # The final output files for the pipeline
 
 #job_path = os.path.join(OUTPUT_DIR, "jobstore");
