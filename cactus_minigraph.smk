@@ -368,12 +368,13 @@ rule join:
         final_raw_vcf_index = os.path.join(FINAL_DIR, f"{PREFIX}.raw.vcf.gz.tbi"),
         final_stats = os.path.join(FINAL_DIR, f"{PREFIX}.stats.tgz")
     params:
-        path = CACTUS_PATH,
+        path = CACTUS_PATH_TMP,
         ref_genome = REF_GENOME,
         chrom_haldir = ALIGN_DIR,
         join_outdir = FINAL_DIR,
         prefix = PREFIX,
-        job_tmp_dir = os.path.join(TMPDIR, "join"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
+        host_tmp_dir = os.path.join(TMPDIR, "join"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
+        job_tmp_dir = os.path.join("/tmp/", "join"), # This is the tmp dir for the singularity container
         rule_name = "join"
     log:
         job_log = os.path.join(LOG_DIR, f"{PREFIX}.join.log")
@@ -407,7 +408,7 @@ rule join:
             "--vcf",
             "--giraffe", "clip"
         ];
-        CACTUSLIB.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name);
+        CACTUSLIB.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name);
     # shell:
     #     """
     #     {params.path} cactus-graphmap-join {params.job_tmp_dir} --vg {params.chrom_haldir}/*.vg --hal {params.chrom_haldir}/*.hal --outDir {output.join_outdir} --outName {params.prefix} --reference {params.ref_genome} --vcf --giraffe clip
