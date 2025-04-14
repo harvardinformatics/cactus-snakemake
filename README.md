@@ -4,4 +4,4 @@
 
 ### <[Pangenome inference with Minigraph-Cactus](https://informatics.fas.harvard.edu/resources/Tutorials/pangenome-cactus-minigraph/)>
 
-### <[Adding a genome to a whole genome alignment](https://informatics.fas.harvard.edu/resources/Tutorials/add-to-whole-genome-alignment-cactus/)
+### <[Adding a genome to a whole genome alignment](https://informatics.fas.harvard.edu/resources/Tutorials/add-to-whole-genome-alignment-cactus/)>
