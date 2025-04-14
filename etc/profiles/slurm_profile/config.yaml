@@ -1,0 +1,10 @@
+jobs: 40
+executor: slurm
+default-resources:
+  - slurm_partition='shared'
+  - cpus_per_task=8
+  - mem_mb=100000
+  - runtime=1440
+restart-times: 0
+latency-wait: 15
+verbose: true 

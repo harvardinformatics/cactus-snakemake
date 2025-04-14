@@ -14,7 +14,9 @@ tests/evolverMammals/evolverMammals-replace-out*/
 !tests/evolverMammals/evolverMammals-replace-out/seq_file.in
 !tests/evolverMammals/evolverMammals-replace-out/seq_file.out
 
-tests/yeast-minigraph*/
+tests/yeast-minigraph*/**
+!tests/yeast-minigraph/rulegraphs-dags/
+!tests/yeast-minigraph/rulegraphs-dags/**
 !tests/yeast-minigraph/seq/
 !tests/yeast-minigraph/yeastPangenome.txt
 !tests/yeast-minigraph/yeastPangenome-local.txt
