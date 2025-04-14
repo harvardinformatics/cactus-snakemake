@@ -71,3 +71,27 @@ Traceback (most recent call last):
   File "/usr/lib/python3.10/urllib/parse.py", line 668, in unquote
     string.split
 AttributeError: 'tuple' object has no attribute 'split'
+
+
+
+
+2025-04-14 13:45:13 - RULE preprocess-simRat.chr6 - INFO - runCommand0 - Checking for tmp dir: /n/holylfs05/LABS/informatics/Users/gthomas/tmp/evolverMammals/simRat_chr6-preprocess - False
+2025-04-14 13:45:13 - RULE preprocess-simRat.chr6 - INFO - runCommand1 - Running command: singularity exec --cleanenv /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/cactus_v2.9.7.sif cactus-preprocess /tmp/simRat_chr6-preprocess /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/evolverMammals.txt /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/evolverMammals-out7/evolverMammals.txt --inputNames simRat_chr6 --logInfo --retryCount 0 --maxCores 8
+-------------------- COMMAND LOG BEGIN --------------------
+
+[2025-04-14T17:45:15+0000] [MainThread] [I] [toil.statsAndLogging] Enabling realtime logging in Toil
+[2025-04-14T17:45:15+0000] [MainThread] [W] [toil.lib.humanize] Deprecated toil method.  Please use "toil.lib.conversions.human2bytes()" instead."
+[2025-04-14T17:45:15+0000] [MainThread] [W] [toil.lib.humanize] Deprecated toil method.  Please use "toil.lib.conversions.human2bytes()" instead."
+Traceback (most recent call last):
+  File "/home/cactus/cactus_env/bin/cactus-preprocess", line 8, in <module>
+    sys.exit(main())
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/cactus/preprocessor/cactus_preprocessor.py", line 531, in main
+    outSeqFile = SeqFile(options.outSeqFile, defaultBranchLen=config_wrapper.getDefaultBranchLen(options.pangenome))
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/cactus/progressive/seqFile.py", line 68, in __init__
+    self.parseFile(path, root_name)
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/cactus/progressive/seqFile.py", line 108, in parseFile
+    self.cleanTree(root_name)
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/cactus/progressive/seqFile.py", line 213, in cleanTree
+    raise RuntimeError("At least two valid leaf genomes required in"
+RuntimeError: At least two valid leaf genomes required in input tree
+--------------------  COMMAND LOG END  --------------------

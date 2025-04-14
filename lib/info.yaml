@@ -2,7 +2,7 @@ version: 2.1.0
 releasedate-major: March 4, 2025
 releasedate-minor: April 9, 2025
 releasedate-patch: April 9, 2025
-latest-commit-date: 2025-04-11
+latest-commit-date: 2025-04-14
 doi:
 link: https://github.com/harvardinformatics/cactus-snakemake
 #github: https://github.com/harvardinformatics/cactus-snakemake

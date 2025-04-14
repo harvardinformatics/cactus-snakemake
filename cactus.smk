@@ -92,7 +92,7 @@ CACTUS_FILE = os.path.join(OUTPUT_DIR, os.path.basename(INPUT_FILE));
 
 tips = TREELIB.readTips(INPUT_FILE, MAIN);
 # The main dictionary for storing information and file paths for tips in the tree:
-# [output fasta file from preprocess step] : { 'input' : "original genome fasta file", 'name' : "genome name in tree", 'output' : "expected output from preprocess step (same as key)" }
+# [genome name] : { 'input' : "original genome fasta file", 'name' : "genome name in tree (same as key)", 'output' : "expected output from preprocess step" }
 
 ####################
 
@@ -106,8 +106,16 @@ internals, anc_tree = TREELIB.initializeInternals(CACTUS_FILE, tips, MAIN);
 
 tinfo, anc_tree, root = TREELIB.treeParse(anc_tree);
 ROOT_NAME = tinfo[root][3];
-internals = TREELIB.parseInternals(internals, tips, tinfo, anc_tree);
+tips, internals = TREELIB.parseInternals(internals, tips, tinfo, anc_tree);
 # The tree is parsed to get the root node and the internal nodes are updated with the correct names
+
+# for name in tips:
+#     print(name);
+#     print(tips[name]);
+
+preprocess_out = [ tips[name]['output'] for name in tips ];
+cactuslib_logger.debug(f"Preprocess output files: {preprocess_out}");
+# The expected output from the preprocess step for each genome
 
 if LOG_LEVEL == "debug":
     cactuslib_logger.debug("EXITING BEFORE RULES. DEBUG MODE.");
@@ -130,13 +138,22 @@ rule all:
 # #############################################################################
 # # Pipeline rules
 
+def getPreprocessInputs(wildcards, key):
+    preprocess_input = [ tips[name][key] for name in tips if tips[name]['output'] == wildcards.final_tip ];
+    if not preprocess_input:
+        return "dryrun_input";
+    return preprocess_input[0];
+# This function gets the input for the preprocess step for a given genome
+# Avoids the IndexErrors with dummy wildcards that snakmake apparently uses sometimes??
+
 rule preprocess:
     input:
-        lambda wildcards: [ tips[name]['input'] for name in tips if tips[name]['output'] == wildcards.final_tip ][0]
+        lambda wildcards: getPreprocessInputs(wildcards, 'input')
+        #lambda wildcards: [ tips[name]['input'] for name in tips if tips[name]['output'] == wildcards.final_tip ][0]
     output:
         os.path.join(OUTPUT_DIR, "{final_tip}")    
     params:
-        path = CACTUS_PATH,
+        path = CACTUS_PATH_TMP,
         input_file = INPUT_FILE,
         cactus_file = os.path.join(OUTPUT_DIR, CACTUS_FILE),
         genome_name = lambda wildcards: [ name for name in tips if tips[name]['output'] == wildcards.final_tip ][0],

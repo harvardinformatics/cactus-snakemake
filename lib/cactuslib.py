@@ -21,14 +21,15 @@ cactuslib_logger = logging.getLogger('cactuslib')
 
 #############################################################################
 
+# Example of your ColoredFormatter
 class ColoredFormatter(logging.Formatter):
     RESET = "\033[0m"
     COLOR_MAP = {
         logging.DEBUG: "\033[35m",      # Purple (Magenta) for DEBUG
-        logging.INFO: "\033[36m",     # Cyan for INFO
-        logging.WARNING: "\033[33m",   # Yellow for WARNING
-        logging.ERROR: "\033[31m",     # Red for ERROR
-        logging.CRITICAL: "\033[1;31m"   # Bold red for CRITICAL
+        logging.INFO: "\033[36m",       # Cyan for INFO
+        logging.WARNING: "\033[33m",    # Yellow for WARNING
+        logging.ERROR: "\033[31m",      # Red for ERROR
+        logging.CRITICAL: "\033[1;31m"    # Bold red for CRITICAL
     }
 
     def format(self, record):
@@ -36,15 +37,19 @@ class ColoredFormatter(logging.Formatter):
         message = super().format(record)
         return f"{color}{message}{self.RESET}"
 
-def configureLogging(log_filename: str, log_level : str, log_verbosity: str) -> None:
-# Set up logging for debugging the helper libraries and code not directly in the pipeline rules
+# Define the filter that will block records flagged as file_only.
+def no_file_only(record):
+    return not getattr(record, 'file_only', False)
 
+# Assume cactuslib_logger is created earlier:
+cactuslib_logger = logging.getLogger('cactuslib')
+
+def configureLogging(log_filename: str, log_level: str, log_verbosity: str) -> None:
     log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    date_format = '%Y-%m-%d %H:%M:%S';
-    # Format the log messages
-
+    date_format = '%Y-%m-%d %H:%M:%S'
+    
+    # Check if logger has handlers already to avoid duplicate handlers
     if not cactuslib_logger.hasHandlers():
-    # Check if logger has handlers already (necessary to prevent duplicate handlers in some cases)        
         if log_verbosity in ["BOTH", "FILE"]:
             handler_file = logging.FileHandler(log_filename)
             handler_file.setFormatter(logging.Formatter(fmt=log_format, datefmt=date_format))
@@ -52,15 +57,28 @@ def configureLogging(log_filename: str, log_level : str, log_verbosity: str) -> 
         # Add file handler if specified
 
         if log_verbosity in ["BOTH", "SCREEN"]:
-            handler_stderr = logging.StreamHandler()
+            # Create a handler for DEBUG and INFO messages that prints to stdout
+            handler_stdout = logging.StreamHandler(sys.stdout)
+            handler_stdout.setFormatter(ColoredFormatter(fmt=log_format, datefmt=date_format))
+            # Only allow messages with level less than WARNING (DEBUG, INFO)
+            handler_stdout.addFilter(lambda record: record.levelno < logging.WARNING)
+            # And add our extra filter to skip file-only records
+            handler_stdout.addFilter(no_file_only)
+            cactuslib_logger.addHandler(handler_stdout)
+
+            # Create a separate handler for WARNING and above that prints to stderr
+            handler_stderr = logging.StreamHandler(sys.stderr)
             handler_stderr.setFormatter(ColoredFormatter(fmt=log_format, datefmt=date_format))
+            # Only allow messages with level WARNING or higher
+            handler_stderr.addFilter(lambda record: record.levelno >= logging.WARNING)
+            # Also add our filter here to skip file-only records
+            handler_stderr.addFilter(no_file_only)
             cactuslib_logger.addHandler(handler_stderr)
-        # Add stream handler if specified
 
         if log_verbosity not in ["BOTH", "FILE", "SCREEN"]:
-            raise ValueError("Invalid log verbosity: " + log_verbosity + ". Choose from BOTH, FILE, SCREEN.");
-        # Set the logging level          
-
+            raise ValueError("Invalid log verbosity: " + log_verbosity + ". Choose from BOTH, FILE, SCREEN.")
+    
+    # Set the logging level
     log_level = log_level.upper()
     level_map = {
         'CRITICAL': logging.CRITICAL,
@@ -70,14 +88,11 @@ def configureLogging(log_filename: str, log_level : str, log_verbosity: str) -> 
         'DEBUG': logging.DEBUG,
         'NOTSET': logging.NOTSET
     }
-    # Map of string levels to logging module constants
-    
     try:
         cactuslib_logger.setLevel(level_map[log_level])
         cactuslib_logger.debug(f"Logging level set to {log_level}")
     except KeyError:
         raise ValueError(f"Invalid logging level: {log_level}. Choose from {list(level_map.keys())}")
-    # Set the logging level and handle invalid levels
 
 
 #############################################################################
@@ -190,7 +205,7 @@ def pipelineSetup(config, args, version_flag, info_flag, debug):
                 target_jobs = args[target_jobs_index + 1];
                 if target_jobs[-1] == ":":
                     target_jobs = target_jobs[:-1];
-        cactuslib_logger.info(f"RULE {target_jobs} call: {' '.join(args)}");
+        cactuslib_logger.info(f"RULE {target_jobs} call: {' '.join(args)}", extra={'file_only': True});
         # Log the command that was run for a rule
 
     tmp_dir = config["tmp_dir"];

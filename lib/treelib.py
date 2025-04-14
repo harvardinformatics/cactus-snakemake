@@ -440,6 +440,6 @@ def parseInternals(internals, tips, tinfo, anc_tree):
         cactuslib_logger.debug("===================================================================================");
     ## Some output for debugging
 
-    return internals;
+    return tips, internals;
 
 #############################################################################
