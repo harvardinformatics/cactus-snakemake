@@ -7,13 +7,13 @@
 # https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/pangenome.md
 #############################################################################
 
-# time -p snakemake -p -j 5 -e slurm -s ../../cactus_minigraph.smk --configfile yeast-minigraph-cfg.yaml --dryrun
+# time -p snakemake -j 5 -e slurm -s ../../cactus_minigraph.smk --configfile yeast-minigraph-cfg.yaml --dryrun
 
 # time -p snakemake -p split -j 5 -s ../../cactus_minigraph.smk --configfile yeast-minigraph-cfg.yaml --rulegraph | dot -Tpng -
 # time -p snakemake -p split -j 5 -s ../../cactus_minigraph.smk --configfile yeast-minigraph-cfg.yaml --dag | dot -Tpng -o
 
-# time -p snakemake -p -j 5 -s ../../cactus_minigraph.smk --configfile yeast-minigraph-cfg.yaml --rulegraph | dot -Tpng -o
-# time -p snakemake -p -j 5 -s ../../cactus_minigraph.smk --configfile yeast-minigraph-cfg.yaml --dag | dot -Tpng -o
+# time -p snakemake -j 5 -s ../../cactus_minigraph.smk --configfile yeast-minigraph-cfg.yaml --rulegraph | dot -Tpng -o
+# time -p snakemake -j 5 -s ../../cactus_minigraph.smk --configfile yeast-minigraph-cfg.yaml --dag | dot -Tpng -o
 
 #############################################################################
 #
@@ -49,38 +49,49 @@ tmp_dir: /n/holylfs05/LABS/informatics/Users/gthomas/tmp/yeastPangenome/
 ##
 ## The partitions are specific to the Harvard cluster. If you run this on a different cluster
 ## you must change them.
+##
+## mem_mb is in MB
+## time is in minutes
 
-minigraph_partition: "shared" 
-minigraph_cpu: 1
-minigraph_mem: 25000             # in MB
-minigraph_time: 30               # in minutes
+rule_resources:
+  default:
+    partition: shared
+    mem_mb: 25000
+    cpus: 1
+    time: 60  
 
-##########################
+  copy_input:
+    partition: shared
+    mem_mb: 25000
+    cpus: 1
+    time: 30
 
-graphmap_partition: "shared"
-graphmap_cpu: 1
-graphmap_mem: 50000           # in MB
-graphmap_time: 30             # in minutes
+  minigraph:
+    partition: shared
+    mem_mb: 25000
+    cpus: 8
+    time: 30
 
-##########################
+  graphmap:
+    partition: shared
+    mem_mb: 50000
+    cpus: 1
+    time: 30
 
-split_partition: "shared"
-split_cpu: 1
-split_mem: 50000            # in MB
-split_time: 30     
+  split:
+    partition: shared
+    mem_mb: 50000
+    cpus: 1
+    time: 30
 
-##########################
+  align:  
+    partition: shared
+    mem_mb: 25000
+    cpus: 1
+    time: 30
 
-align_partition: "shared" 
-align_cpu: 1
-align_mem: 25000           # in MB
-align_time: 30             # in minutes
-
-##########################
-
-join_partition: "shared"
-join_cpu: 1
-join_mem: 8000           # in MB
-join_time: 30            # in minutes
-
-##########################
+  join:
+    partition: shared
+    mem_mb: 8000
+    cpus: 1
+    time: 30

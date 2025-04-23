@@ -102,58 +102,61 @@ use_gpu:
 ## Below are the partitions and resources for each rule in the snakemake pipeline.
 ## Be sure to adjust them to meet your needs and the resources available on your cluster.
 ## Notably, for rule blast, if you use the GPU version of cactus you will need to
-## provide a partition with GPUs and set blast_gpu to the number of GPUs you want to use.
-## If you are not using the cactus GPU version, the blast_gpu value will be ignored.
+## provide a partition with GPUs and set gpus to the number of GPUs you want to use.
+## If you are not using the cactus GPU version, the gpus value will be ignored.
 ##
 ## The partitions are specific to the Harvard cluster. If you run this on a different cluster
 ## you must change them.
+##
+## mem_mb is in MB
+## time is in minutes
 
-preprocess_partition: ""  
-preprocess_cpu: 
-preprocess_mem:           # in MB
-preprocess_time:          # in minutes
+rule_resources:
+  default:
+    partition: 
+    mem_mb: 
+    cpus: 
+    time:  
 
-##########################
+  preprocess:
+    partition: 
+    mem_mb: 
+    cpus: 
+    time: 
 
-blast_partition: "" # If use_gpu is True, this must be a partition with GPUs
-blast_gpu:          # If use_gpu is False, this will be ignored
-blast_cpu: 
-blast_mem:          # in MB
-blast_time:         # in minutes
+  blast:
+    partition: # If use_gpu is True, this must be a partition with GPUs
+    mem_mb: 
+    cpus: 
+    gpus: # If use_gpu is False, this will be ignored
+    time: 
 
-##########################
+  align:
+    partition: 
+    mem_mb: 
+    cpus: 
+    time: 
 
-align_partition: "" 
-align_cpu: 
-align_mem:          # in MB
-align_time:         # in minutes
+  convert:
+    partition: 
+    mem_mb: 
+    cpus: 
+    time: 
 
-##########################
+  copy_or_get_hal:
+    partition: 
+    mem_mb: 
+    cpus: 
+    time: 
 
-convert_partition: ""
-convert_cpu: 
-convert_mem:        # in MB
-convert_time:       # in minutes
+  add_to_branch:
+    partition: 
+    mem_mb: 
+    cpus: 
+    time: 
 
-##########################
-
-copy_partition: ""
-copy_cpu: 
-copy_mem:           # in MB
-copy_time:          # in minutes
-
-##########################
-
-append_partition: ""
-append_cpu: 
-append_mem:         # in MB
-append_time:        # in minutes
-
-##########################
-
-maf_partition: ""
-maf_cpu: 
-maf_mem:            # in MB
-maf_time:           # in minutes
-
-##########################
+  maf:
+    partition: 
+    mem_mb: 
+    cpus: 
+    time: 

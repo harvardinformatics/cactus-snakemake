@@ -18,9 +18,12 @@ import lib.cactuslib as CACTUSLIB
 from lib.cactuslib import spacedOut as SO
 import lib.updatelib as UPDATELIB
 
+from functools import partial
+
 #############################################################################
 # System setup
 
+config_flag = config.get("display", False);
 version_flag = config.get("version", False);
 info_flag = config.get("info", False);
 debug = config.get("debug", False);
@@ -28,11 +31,15 @@ debug = config.get("debug", False);
 # A hacky way to get some custom command line arguments for the pipeline
 # These just control preprocessing flags that stop the pipeline early anyways
 
-MAIN, DRY_RUN, OUTPUT_DIR, LOG_DIR, TMPDIR, LOG_LEVEL, LOG_VERBOSITY = CACTUSLIB.pipelineSetup(config, sys.argv, version_flag, info_flag, debug);
+MAIN, DRY_RUN, OUTPUT_DIR, LOG_DIR, TMPDIR, LOG_LEVEL, LOG_VERBOSITY = CACTUSLIB.pipelineSetup(config, sys.argv, version_flag, info_flag, config_flag, debug, workflow);
 # Setup the pipeline, including the output directory, log directory, and tmp directory
 
 CLOG = logging.getLogger('cactuslib')
 # Setup logging if debugging
+
+getRuleResources = partial(CACTUSLIB.getResources, config)
+# This maps the function to get rule resources from the config file
+# so we don't have to pass config each time we call it
 
 #############################################################################
 # Cactus setup
@@ -199,11 +206,7 @@ rule preprocess:
     log:
         job_log = os.path.join(LOG_DIR, f"{GENOME_NAME}.{GENOME_EXT}.preprocess.log")
     resources:
-        slurm_partition = config["preprocess_partition"],
-        cpus_per_task = config["preprocess_cpu"],
-        mem_mb = config["preprocess_mem"],
-        runtime = config["preprocess_time"],
-        # slurm_extra = f"'--gres=gpu:{config["preprocess_gpu"]}'" if USE_GPU else ""
+        **getRuleResources("preprocess")
     run:
         cmd = params.path + [
             "cactus-preprocess",
@@ -239,17 +242,14 @@ rule blast:
         node = "{node}",
         job_tmp_dir = os.path.join("/tmp", "{node}-blast"), # This is the tmp dir in the container, which is bound to the host tmp dir
         host_tmp_dir = os.path.join(TMPDIR, "{node}-blast"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
-        gpu_opt = f"--gpu {config['blast_gpu']}" if USE_GPU else "",
-        gpu_num = config["blast_gpu"],
+        gpu_opt = USE_GPU,
+        gpu_num = config['rule_resources']['blast']['gpus'],
         rule_name = "blast"
     log:
         job_log = os.path.join(LOG_DIR, "{node}.blast.log")
     resources:
-        slurm_partition = config["blast_partition"],
-        cpus_per_task = config["blast_cpu"],
-        mem_mb = config["blast_mem"],
-        runtime = config["blast_time"],
-        slurm_extra = f"'--gres=gpu:{config['blast_gpu']}'" if USE_GPU else ""
+        **getRuleResources("blast"),
+        slurm_extra = f"'--gres=gpu:{config['rule_resources']['blast']['gpus']}'" if USE_GPU else ""
     run:
         cmd = params.path + [
             "cactus-blast",
@@ -290,10 +290,7 @@ rule align:
     log:
         job_log = os.path.join(LOG_DIR, "{node}.align.log")
     resources:
-        slurm_partition = config["align_partition"],
-        cpus_per_task = config["align_cpu"],
-        mem_mb = config["align_mem"],
-        runtime = config["align_time"],
+        **getRuleResources("align")
     run:
         cmd = params.path + [
             "cactus-align",
@@ -326,10 +323,7 @@ rule convert:
     log:
         job_log = os.path.join(LOG_DIR, "{node}.convert.log")
     resources:
-        slurm_partition = config["convert_partition"],
-        cpus_per_task = config["convert_cpu"],
-        mem_mb = config["convert_mem"],
-        time = config["convert_time"]
+        **getRuleResources("convert")
     run:
         cmd = params.path + [
             "hal2fasta",
@@ -357,10 +351,7 @@ rule copy_or_get_hal:
     log:
         job_log = os.path.join(LOG_DIR, "copy-hal.log")
     resources:
-        slurm_partition = config["copy_or_get_hal_partition"],
-        cpus_per_task = config["copy_or_get_hal_cpu"],
-        mem_mb = config["copy_or_get_hal_mem"],
-        runtime = config["copy_or_get_hal_time"]    
+        **getRuleResources("copy_or_get_hal")    
     run:
         if not params.overwrite_original_hal:
             # If the hal file is not being overwritten, copy the input hal file to the output directory
@@ -400,10 +391,7 @@ rule add_to_branch:
     log:
         job_log = os.path.join(LOG_DIR, "hal-add-to-branch.log")
     resources:
-        slurm_partition = config["add_to_branch_partition"],
-        cpus_per_task = config["add_to_branch_cpu"],
-        mem_mb = config["add_to_branch_mem"],
-        runtime = config["add_to_branch_time"]
+        **getRuleResources("add_to_branch")
     run:
         cmd = params.path + [
             "halAddToBranch",
@@ -453,10 +441,7 @@ rule maf:
     log:
         job_log = os.path.join(LOG_DIR, "maf.log")
     resources:
-        slurm_partition = config["maf_partition"],
-        cpus_per_task = config["maf_cpu"],
-        mem_mb = config["maf_mem"],
-        runtime = config["maf_time"]
+        **getRuleResources("maf")
     run:
         cmd = params.path + [
             "cactus-hal2maf",

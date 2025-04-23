@@ -143,7 +143,7 @@ def getInfo(version_flag, info_flag, args):
 
 #############################################################################
 
-def pipelineSetup(config, args, version_flag, info_flag, debug):
+def pipelineSetup(config, args, version_flag, info_flag, config_flag, debug, workflow):
     main_flag = True;
     if "__main__.py" in args[0]:
         main_flag = False;
@@ -161,7 +161,7 @@ def pipelineSetup(config, args, version_flag, info_flag, debug):
     log_level = "info";
     if any([arg in args for arg in ["--rulegraph", "--dag"]]):
         log_level = "notset";
-    if debug:
+    if debug or config_flag:
         log_level = "debug";
     # Set the log level based on the arguments
 
@@ -185,7 +185,18 @@ def pipelineSetup(config, args, version_flag, info_flag, debug):
 
     log_filename = os.path.join(log_dir, f"cactus-snakemake.{log_level}.log"); # Log file name if log_verbosity is "file" or "both"
     configureLogging(log_filename, log_level.upper(), log_verbosity.upper());
+    cactuslib_logger = logging.getLogger('cactuslib')
     # Set up the logger
+
+    if config_flag or debug:
+        pad = 30;
+        cactuslib_logger.debug(spacedOut("Config file", pad) + os.path.abspath(workflow.configfiles[0])); 
+        cactuslib_logger.debug("---");   
+        for key, value in config.items():
+            cactuslib_logger.debug(spacedOut(key, pad) + str(value));
+        cactuslib_logger.debug("=" * 80);
+        if config_flag:
+            sys.exit();
 
     if main_flag:
         cactuslib_logger.info(f"MAIN call: {' '.join(args)}");

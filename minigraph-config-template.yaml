@@ -44,38 +44,49 @@ tmp_dir:
 #############################################################################
 ## Below are the partitions and resources for each rule in the snakemake pipeline.
 ## Be sure to adjust them to meet your needs and the resources available on your cluster.
+##
+## mem_mb is in MB
+## time is in minutes
 
-minigraph_partition: ""
-minigraph_cpu: 
-minigraph_mem:           # in MB
-minigraph_time:          # in minutes
+rule_resources:
+  default:
+    partition: 
+    mem_mb: 
+    cpus: 
+    time:  
 
-##########################
+  copy_input:
+    partition: 
+    mem_mb: 
+    cpus: 
+    time: 
 
-graphmap_partition: ""
-graphmap_cpu: 
-graphmap_mem:             # in MB
-graphmap_time:            # in minutes
+  minigraph:
+    partition: 
+    mem_mb: 
+    cpus: 
+    time: 
 
-##########################
+  graphmap:
+    partition: 
+    mem_mb: 
+    cpus: 
+    time: 
 
-split_partition: ""
-split_cpu: 
-split_mem:                # in MB
-split_time:               # in minutes
+  split:
+    partition: 
+    mem_mb: 
+    cpus: 
+    time: 
 
-##########################
+  align:  
+    partition: 
+    mem_mb: 
+    cpus: 
+    time: 
 
-align_partition: ""
-align_cpu: 
-align_mem:                # in MB
-align_time:               # in minutes
-
-##########################
-
-join_partition: ""
-join_cpu: 
-join_mem:                 # in MB
-join_time:                # in minutes
-
-##########################
+  join:
+    partition: 
+    mem_mb: 
+    cpus: 
+    time: 

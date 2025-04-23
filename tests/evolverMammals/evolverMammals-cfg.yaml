@@ -26,7 +26,7 @@ cactus_gpu_path:
 input_file: evolverMammals.txt
 # File containing rooted Newick tree on the first line, and a list of genome files on the following lines.
 
-output_dir: evolverMammals-out2/
+output_dir: evolverMammals-out/
 # The output directory for the snakemake pipeline. This should be the same as the outDir in cactus-prepare.
 # This directory will be created if it doesn't exist.
 
@@ -39,7 +39,7 @@ maf_reference: simHuman_chr6
 tmp_dir: /n/holylfs05/LABS/informatics/Users/gthomas/tmp/evolverMammals/
 # A temporary directory for snakemake and cactus to use. Should have lots of space.
 
-use_gpu: True
+use_gpu: False
 # Whether or not to use the GPU version of cactus.
 # If you don't have a GPU partition, set this to False.
 # Either way, be sure to set the correct values for the partitions and GPUs below.
@@ -48,58 +48,61 @@ use_gpu: True
 ## Below are the partitions and resources for each rule in the snakemake pipeline.
 ## Be sure to adjust them to meet your needs and the resources available on your cluster.
 ## Notably, for rule blast, if you use the GPU version of cactus you will need to
-## provide a partition with GPUs and set blast_gpu to the number of GPUs you want to use.
-## If you are not using the cactus GPU version, the blast_gpu value will be ignored.
+## provide a partition with GPUs and set gpus to the number of GPUs you want to use.
+## If you are not using the cactus GPU version, the gpus value will be ignored.
 ##
 ## The partitions are specific to the Harvard cluster. If you run this on a different cluster
 ## you must change them.
+##
+## mem_mb is in MB
+## time is in minutes
 
-preprocess_partition: "shared" 
-preprocess_cpu: 8
-preprocess_mem: 25000             # in MB
-preprocess_time: 30               # in minutes
+rule_resources:
+  default:
+    partition: shared
+    mem_mb: 25000
+    cpus: 8
+    time: 60  
 
-##########################
+  preprocess:
+    partition: shared
+    mem_mb: 25000
+    cpus: 8
+    time: 30
 
-blast_partition: "gpu_test" # If use_gpu is True, this must be a partition with GPUs
-blast_gpu: 1                # If use_gpu is False, this will be ignored
-blast_cpu: 48
-blast_mem: 50000            # in MB
-blast_time: 120             # in minutes
+  blast:
+    partition: shared  # If use_gpu is True, this must be a partition with GPUs
+    mem_mb: 50000
+    cpus: 48
+    gpus: 2         # If use_gpu is False, this will be ignored
+    time: 120
 
-##########################
+  align:
+    partition: shared
+    mem_mb: 25000
+    cpus: 24
+    time: 120
 
-align_partition: "shared"
-align_cpu: 24
-align_mem: 25000            # in MB
-align_time: 120             # in minutes
+  convert:
+    partition: shared
+    mem_mb: 8000
+    cpus: 8
+    time: 30
 
-##########################
+  copy_hal:
+    partition: shared
+    mem_mb: 8000
+    cpus: 1
+    time: 30
 
-convert_partition: "shared"
-convert_cpu: 8
-convert_mem: 8000           # in MB
-convert_time: 30            # in minutes
+  append:
+    partition: shared
+    mem_mb: 8000
+    cpus: 8
+    time: 30
 
-##########################
-
-copy_partition: "shared"
-copy_cpu: 1
-copy_mem: 8000            # in MB
-copy_time: 30             # in minutes
-
-##########################
-
-append_partition: "shared"
-append_cpu: 8
-append_mem: 8000          # in MB
-append_time: 30           # in minutes
-
-##########################
-
-maf_partition: "shared"
-maf_cpu: 8
-maf_mem: 25000            # in MB
-maf_time: 60              # in minutes
-
-##########################
+  maf:
+    partition: shared
+    mem_mb: 25000
+    cpus: 8
+    time: 60

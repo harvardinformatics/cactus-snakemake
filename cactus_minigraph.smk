@@ -14,9 +14,12 @@ import subprocess
 
 import lib.cactuslib as CACTUSLIB
 
+from functools import partial
+
 #############################################################################
 # System setup
 
+config_flag = config.get("display", False);
 version_flag = config.get("version", False);
 info_flag = config.get("info", False);
 debug = config.get("debug", False);
@@ -24,11 +27,15 @@ debug = config.get("debug", False);
 # A hacky way to get some custom command line arguments for the pipeline
 # These just control preprocessing flags that stop the pipeline early anyways
 
-MAIN, DRY_RUN, OUTPUT_DIR, LOG_DIR, TMPDIR, LOG_LEVEL, LOG_VERBOSITY = CACTUSLIB.pipelineSetup(config, sys.argv, version_flag, info_flag, debug);
+MAIN, DRY_RUN, OUTPUT_DIR, LOG_DIR, TMPDIR, LOG_LEVEL, LOG_VERBOSITY = CACTUSLIB.pipelineSetup(config, sys.argv, version_flag, info_flag, config_flag, debug, workflow);
 # Setup the pipeline, including the output directory, log directory, and tmp directory
 
 cactuslib_logger = logging.getLogger('cactuslib')
 # Setup logging if debugging
+
+getRuleResources = partial(CACTUSLIB.getResources, config)
+# This maps the function to get rule resources from the config file
+# so we don't have to pass config each time we call it
 
 #############################################################################
 # Cactus setup
@@ -131,10 +138,7 @@ rule copy_input:
         cactus_input_copy = INPUT_FILE_COPY,
         fasta = os.path.join(OUTPUT_DIR, f"{PREFIX}.sv.gfa.fa")
     resources:
-        # slurm_partition = config["copy_input_partition"],
-        # cpus_per_task = config["copy_input_cpu"],
-        # mem_mb = config["copy_input_mem"],
-        # runtime = config["copy_input_time"],
+        **getRuleResources("copy_input")
     run:
         # Define the new base directory
         new_base_dir = os.path.dirname(input.cactus_input);
@@ -187,10 +191,7 @@ rule minigraph:
     log:
         job_log = os.path.join(LOG_DIR, f"{PREFIX}.minigraph.log")
     resources:
-        slurm_partition = config["minigraph_partition"],
-        cpus_per_task = config["minigraph_cpu"],
-        mem_mb = config["minigraph_mem"],
-        runtime = config["minigraph_time"]
+        **getRuleResources("minigraph")
     run:
         cmd = params.path + [
             "cactus-minigraph",
@@ -226,10 +227,7 @@ rule graphmap:
     log:
         job_log = os.path.join(LOG_DIR, f"{PREFIX}.graphmap.log")
     resources:
-        slurm_partition = config["graphmap_partition"],
-        cpus_per_task = config["graphmap_cpu"],
-        mem_mb = config["graphmap_mem"],
-        runtime = config["graphmap_time"]
+        **getRuleResources("graphmap")
     run:
         cmd = params.path + [
             "cactus-graphmap",
@@ -269,10 +267,7 @@ checkpoint split:
     log:
         job_log = os.path.join(LOG_DIR, f"{PREFIX}.split.log")
     resources:
-        slurm_partition = config["split_partition"],
-        cpus_per_task = config["split_cpu"],
-        mem_mb = config["split_mem"],
-        runtime = config["split_time"]
+        **getRuleResources("split")
     run:
         cmd = params.path + [
             "cactus-graphmap-split",
@@ -303,16 +298,11 @@ rule align:
         path = CACTUS_PATH,
         ref_genome = REF_GENOME,
         job_tmp_dir = os.path.join(TMPDIR, "align-{chrom}"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
-        # gpu_opt = "--gpu" if USE_GPU else "",
         rule_name = "align"
     log:
         job_log = os.path.join(LOG_DIR, f"{PREFIX}.align.{{chrom}}.log")
     resources:
-        slurm_partition = config["align_partition"],
-        cpus_per_task = config["align_cpu"],
-        mem_mb = config["align_mem"],
-        runtime = config["align_time"],
-        # slurm_extra = f"'--gres=gpu:{config["align_gpu"]}'" if USE_GPU else ""
+        **getRuleResources("align")
     run:
         cmd = params.path + [
             "cactus-align",
@@ -379,10 +369,7 @@ rule join:
     log:
         job_log = os.path.join(LOG_DIR, f"{PREFIX}.join.log")
     resources:
-        slurm_partition = config["align_partition"],
-        cpus_per_task = config["align_cpu"],
-        mem_mb = config["align_mem"],
-        runtime = config["align_time"]
+        **getRuleResources("join")
     run:
         vg_files = [
             os.path.join(params.chrom_haldir, f) for f in os.listdir(params.chrom_haldir)

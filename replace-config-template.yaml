@@ -82,6 +82,7 @@ use_gpu:
 ##
 ## The partitions are specific to the Harvard cluster. If you run this on a different cluster
 ## you must change them.
+##
 ## mem_mb is in MB
 ## time is in minutes
 
@@ -99,10 +100,10 @@ rule_resources:
     time:
 
   blast:
-    partition:
+    partition:      # If use_gpu is True, this must be a partition with GPUs
     mem_mb:
     cpus:
-    gpus:
+    gpus:           # If use_gpu is False, this will be ignored
     time:
 
   align:
