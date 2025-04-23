@@ -233,7 +233,7 @@ rule blast:
         ];
 
         if params.gpu_opt:
-            cmd.append["--gpu", params.gpu_num];
+            cmd += ["--gpu", str(params.gpu_num)];
             #cmd.append("--gpu");
             #cmd.append("1");
             # TODO: fix this

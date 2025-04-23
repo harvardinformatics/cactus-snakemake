@@ -4,7 +4,7 @@
 # See: https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/progressive.md#running-step-by-step
 #############################################################################
 
-# time -p snakemake -p -j 5 -e slurm -s ../../cactus.smk --configfile evolverMammals-cfg.yaml --dryrun
+# time -p snakemake -j 5 -e slurm -s ../../cactus.smk --configfile evolverMammals-cfg.yaml --dryrun
 
 #############################################################################
 #
@@ -26,7 +26,7 @@ cactus_gpu_path:
 input_file: evolverMammals.txt
 # File containing rooted Newick tree on the first line, and a list of genome files on the following lines.
 
-output_dir: evolverMammals-out/
+output_dir: evolverMammals-out2/
 # The output directory for the snakemake pipeline. This should be the same as the outDir in cactus-prepare.
 # This directory will be created if it doesn't exist.
 
@@ -39,7 +39,7 @@ maf_reference: simHuman_chr6
 tmp_dir: /n/holylfs05/LABS/informatics/Users/gthomas/tmp/evolverMammals/
 # A temporary directory for snakemake and cactus to use. Should have lots of space.
 
-use_gpu: False
+use_gpu: True
 # Whether or not to use the GPU version of cactus.
 # If you don't have a GPU partition, set this to False.
 # Either way, be sure to set the correct values for the partitions and GPUs below.
@@ -61,7 +61,7 @@ preprocess_time: 30               # in minutes
 
 ##########################
 
-blast_partition: "shared" # If use_gpu is True, this must be a partition with GPUs
+blast_partition: "gpu_test" # If use_gpu is True, this must be a partition with GPUs
 blast_gpu: 1                # If use_gpu is False, this will be ignored
 blast_cpu: 48
 blast_mem: 50000            # in MB

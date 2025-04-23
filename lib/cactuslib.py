@@ -13,6 +13,7 @@ import subprocess
 import logging
 from datetime import datetime
 import yaml
+import traceback
 
 #############################################################################
 
@@ -471,6 +472,39 @@ def writeFlush(string, stream):
     stream.flush();
 # For logging in runCommand(), write the string to the file stream
 
+#############################################################################
+
+def getResources(config, rule_name, keys=("partition", "mem_mb", "cpus", "time")):
+# Return dict of all requested resource keys for a rule (with fallback to defaults).
+    
+    slurm_resource_map = { "partition" : "slurm_partition", "mem_mb" : "mem_mb", 
+                            "cpus" : "cpus_per_task", "time" : "runtime" };
+    # Because I use slightly different resource names from what snakemake does for slurm
+
+    rule_resources = {
+        slurm_resource_map[resource] : getResource(config, rule_name, resource)
+        for resource in keys
+    }
+
+    # for key, value in rule_resources.items():
+    #     meta_logger.info(f"Rule {rule_name} resource '{key}' set to {value}");
+
+    return rule_resources
+
+def getResource(config, rule_name, resource):
+    # Get a specific resource value from the Snakemake config.yaml.
+    rule_val = config.get("rule_resources", {}).get(rule_name, {}).get(resource)
+    default_val = config.get("rule_resources", {}).get("default", {}).get(resource)
+
+    if rule_val is not None:
+        return rule_val
+    elif default_val is not None:
+        return default_val
+    else:
+        meta_logger.error(f"Missing resource '{resource}' for rule '{rule_name}' and no default set.");
+        raise ValueError();
+
+
 #############################################################################    
 
 def runCommand(cmd, tmpdir, logfile, rule, wc="", fmode="w+"):
@@ -501,8 +535,10 @@ def runCommand(cmd, tmpdir, logfile, rule, wc="", fmode="w+"):
         # Get the return code
 
         if not restart and rcode != 0:
+            tb = traceback.format_exc()
             printWrite(f"{fmtDT()} - RULE {rule}{wc} - ERROR - runCommand2 - Command failed: {' '.join(cmd)}", logfile_stream);
-            raise Exception(f"{fmtDT()} - RULE {rule}{wc} - ERROR - runCommand2 - Command failed: {' '.join(cmd)}");
+            printWrite(f"{fmtDT()} - RULE {rule}{wc} - ERROR - Traceback:\n{tb}", logfile_stream);
+            raise;            
         # If the command failed without a restart, raise an exception
 
         elif restart and rcode != 0:
@@ -527,14 +563,18 @@ def runCommand(cmd, tmpdir, logfile, rule, wc="", fmode="w+"):
             # If the error was a FileNotFoundError, remove the tmp dir and try the command again, without the --restart flag
 
                 if proc.returncode != 0:
+                    tb = traceback.format_exc()
                     printWrite(f"{fmtDT()} - RULE {rule}{wc} - ERROR - runCommand5 - Command failed even without --restart: {' '.join(cmd)}. Removing job tmp dir and exiting.", logfile_stream);
+                    printWrite(f"{fmtDT()} - RULE {rule}{wc} - ERROR - Traceback:\n{tb}", logfile_stream);
                     shutil.rmtree(tmpdir, ignore_errors=True);
-                    raise Exception(f"{fmtDT()} - RULE {rule}{wc} - ERROR - runCommand5 - Command failed: {' '.join(cmd)}");
+                    raise;
                 # If the command failed again, raise an exception
 
             else:
+                tb = traceback.format_exc()
                 printWrite(f"{fmtDT()} - RULE {rule}{wc} - ERROR - runCommand6 - --restart failed with an error other than FileNotFoundError. Exiting.", logfile_stream);
-                raise Exception(f"{fmtDT()} - RULE {rule}{wc} - ERROR - runCommand6 - Command failed: {' '.join(cmd)}");
+                printWrite(f"{fmtDT()} - RULE {rule}{wc} - ERROR - Traceback:\n{tb}", logfile_stream);
+                raise;
             # If the error with a --restart, but not a FileNotFoundError, raise an exception
 
 #############################################################################

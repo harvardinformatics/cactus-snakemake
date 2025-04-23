@@ -7,7 +7,7 @@
 # https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/cactus-update-prepare.md
 #############################################################################
 
-# time -p snakemake -p -j 5 -e slurm -s cactus_update.smk --configfile update-config-template.yaml --dryrun
+# time -p snakemake -j 5 -e slurm -s cactus_update.smk --configfile update-config-template.yaml --dryrun
 
 #############################################################################
 #
