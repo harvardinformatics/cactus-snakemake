@@ -57,13 +57,13 @@ CACTUS_GPU_PATH_TMP = ["singularity", "exec", "--nv", "--cleanenv", "--bind", TM
 #############################################################################
 # Input files and output paths
 
-INPUT_FILE = os.path.abspath(config["input_file"]);
-if not os.path.isfile(INPUT_FILE):
-    CLOG.error(f"Could not find input file at {INPUT_FILE}");
-    sys.exit(1);
-else:
-    if MAIN:
-        CLOG.info(f"Input file found at {INPUT_FILE}");
+UPDATE_TYPE = "replace";
+REPLACE_NAME  = config["replace"];
+GENOME_FASTA = config["new_genome_fasta"];
+# The update type and genome to replace
+
+INPUT_FILE = UPDATELIB.createReplaceInputFile(REPLACE_NAME, GENOME_FASTA, OUTPUT_DIR);
+# The cactus input file used by cactus-update-prepare
 # The cactus input file used to generate the config file with cactus-prepare
 
 INPUT_HAL = config["input_hal"];
@@ -87,10 +87,6 @@ if MAIN:
     CLOG.info(f"Output MAF file will be at {OUTPUT_MAF}");
 # The final output files for the pipeline
 
-UPDATE_TYPE = "replace";
-REPLACE  = config["replace"];
-# The update type and genome to replace
-
 CHILD = "";
 ANCNAME = "";
 TOP_BL = "";
@@ -101,7 +97,7 @@ TOP_BL = "";
 # cactus-prepare
 
 if MAIN:
-    SEQ_FILES = UPDATELIB.runCactusUpdatePrepare(INPUT_HAL, INPUT_FILE, CACTUS_PATH, OUTPUT_DIR, UPDATE_TYPE, USE_GPU, LOG_DIR, DRY_RUN, REPLACE, CHILD, ANCNAME, TOP_BL);
+    SEQ_FILES = UPDATELIB.runCactusUpdatePrepare(INPUT_HAL, INPUT_FILE, CACTUS_PATH, OUTPUT_DIR, UPDATE_TYPE, USE_GPU, LOG_DIR, DRY_RUN, REPLACE_NAME, CHILD, ANCNAME, TOP_BL);
 # if DRY_RUN:
 #     CACTUS_FILE = os.path.join("/tmp/", "cactus-update-smk-dryrun", os.path.basename(INPUT_FILE));
 # else:
@@ -111,7 +107,7 @@ CACTUS_FILE = os.path.join(OUTPUT_DIR, os.path.basename(INPUT_FILE));
 #############################################################################
 # Reading files
 
-NEW_GENOME_FILE, ANCNAME = UPDATELIB.getGenomesToAddReplace(os.path.join(OUTPUT_DIR, "seq_file.out"), REPLACE);
+NEW_GENOME_FILE, ANCNAME = UPDATELIB.getGenomesToAddReplace(os.path.join(OUTPUT_DIR, "seq_file.out"), REPLACE_NAME);
 # Get the genomes to add from the input file
 
 CLOG.debug(f"New genome file will be at : {NEW_GENOME_FILE}");
@@ -148,9 +144,9 @@ rule preprocess:
         replacement_fa = NEW_GENOME_FILE
     params:
         path = CACTUS_PATH_TMP,
-        replace_name = REPLACE,
-        job_tmp_dir = os.path.join("/tmp", f"{REPLACE}-preprocess"), # This is the tmp dir in the container, which is bound to the host tmp dir
-        host_tmp_dir = os.path.join(TMPDIR, f"{REPLACE}-preprocess"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
+        replace_name = REPLACE_NAME,
+        job_tmp_dir = os.path.join("/tmp", f"{REPLACE_NAME}-preprocess"), # This is the tmp dir in the container, which is bound to the host tmp dir
+        host_tmp_dir = os.path.join(TMPDIR, f"{REPLACE_NAME}-preprocess"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
         rule_name = "preprocess"
     log:
         job_log = os.path.join(LOG_DIR, f"{os.path.basename(NEW_GENOME_FILE)}.preprocess.log")
@@ -295,7 +291,7 @@ rule remove_genome:
     params:
         path = CACTUS_PATH,
         hal_to_edit = HAL_TO_EDIT,
-        node = REPLACE,
+        node = REPLACE_NAME,
         rule_name = "remove_genome"
     log:
         job_log = os.path.join(LOG_DIR, "remove-genome.log")

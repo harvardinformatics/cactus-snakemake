@@ -25,23 +25,18 @@ cactus_gpu_path:
 # If you don't have it, set this to "download" and the pipeline will download it for you.
 # If you want to download a specific version, provide the version tag, e.g. v2.9.7
 
-input_file: evolverMammals-replace.txt
-# File containing the genome to be added to the hal file.
-# Tab delimited columns: genome name, genome file, branch length
-# Only the first line will be used.
-# See: https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/cactus-update-prepare.md#adding-genomes-examples
-
 input_hal: evolverMammals-out/evolverMammals.hal
 # The input HAL file. This is the output of a previous cactus run.
+
+replace: simHuman_chr6
+# The genome in the input hal file to be replaced
+
+new_genome_fasta: evolverMammals-seq/simGorilla.chr6
+# The path to the genome file to be added to the HAL file.
 
 output_dir: evolverMammals-replace-out/
 # The output directory for the snakemake pipeline. This should be the same as the outDir in cactus-prepare.
 # This directory will be created if it doesn't exist.
-
-replace: simHuman_chr6
-# The genome in the input hal file to be replaced
-# This is the node directly above a new branch which will be added to the tree.
-# See: https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/updating-alignments.md
 
 overwrite_original_hal: False
 # Whether or not to overwrite the original HAL file (True) or make a copy and use it (False).

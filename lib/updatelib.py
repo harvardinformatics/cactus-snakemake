@@ -47,6 +47,28 @@ def createUpdateInputFile(genome_name, genome_fasta, new_bl, output_dir):
 
 #############################################################################
 
+def createReplaceInputFile(genome_name, genome_fasta, output_dir):
+# This function creates the input file for cactus-update-prepare
+
+    if not os.path.isfile(genome_fasta):
+        CLOG.error(f"Genome fasta file {genome_fasta} does not exist. Exiting.");
+        sys.exit(1);
+    # Check the genome fasta file
+    genome_fasta = os.path.abspath(genome_fasta);
+
+    cactus_replace_file = os.path.join(output_dir, "cactus-replace-input.txt");
+
+    with open(cactus_replace_file, "w") as f:
+        f.write(f"{genome_name}\t{genome_fasta}\n");
+        # Write the genome name and fasta file to the input file
+
+    CLOG.info(f"Created cactus-update-prepare input file....{cactus_replace_file}");
+    # The input file for cactus-update-prepare
+
+    return cactus_replace_file;
+
+#############################################################################
+
 def getOrigBranchLength(seq_out_file, child_node, new_anc_node, new_top_bl):
 
     with open(seq_out_file, "r") as f:
