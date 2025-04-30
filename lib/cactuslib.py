@@ -132,6 +132,8 @@ def getInfo(version_flag, info_flag, args):
 
         print(f"\n{color}---Snakemake cactus pipeline---{reset_color}")
         for key, value in info.items():
+            if key == "latest-commit-msg":
+                continue;
             if value:
                 print(f"{color}{key}: {value}{reset_color}");
 
