@@ -12,6 +12,8 @@ import math
 import subprocess
 import logging
 
+from lib.cactuslib import spacedOut as SO
+
 #############################################################################
 
 CLOG = logging.getLogger('cactuslib')
@@ -40,7 +42,7 @@ def createUpdateInputFile(genome_name, genome_fasta, new_bl, output_dir):
         f.write(f"{genome_name}\t{genome_fasta}\t{new_bl}\n");
         # Write the genome name and fasta file to the input file
 
-    CLOG.info(f"Created cactus-update-prepare input file....{cactus_update_file}");
+    CLOG.info(f"Created cactus-update-prepare input file.... {cactus_update_file}");
     # The input file for cactus-update-prepare
 
     return cactus_update_file;
@@ -62,10 +64,60 @@ def createReplaceInputFile(genome_name, genome_fasta, output_dir):
         f.write(f"{genome_name}\t{genome_fasta}\n");
         # Write the genome name and fasta file to the input file
 
-    CLOG.info(f"Created cactus-update-prepare input file....{cactus_replace_file}");
+    CLOG.info(f"Created cactus-update-prepare input file.... {cactus_replace_file}");
     # The input file for cactus-update-prepare
 
     return cactus_replace_file;
+
+#############################################################################
+
+def createAddOutgroupInputFiles(file_dict, pre_file, post_file, output_dir, pad):
+# This function creates the input file for cactus-update-prepare
+
+    if not os.path.isfile(file_dict["new-genome"]["fasta-orig"]):
+        CLOG.error(f"Genome fasta file {file_dict['new-genome']['fasta-orig']} does not exist. Exiting.");
+        sys.exit(1);
+    # Check the genome fasta file
+    
+    genome_name = file_dict["new-genome"]["name"];
+    genome_bl = file_dict["new-genome"]["branch-length"];
+    old_root_name = file_dict["old-root"]["name"];
+    old_root_bl = file_dict["old-root"]["branch-length"];
+    new_root_name = file_dict["new-root"]["name"];
+    # Unpack the file_dict dictionary
+
+    with open(pre_file, "w") as f:
+        pre_tree = f"({old_root_name}:{old_root_bl},{genome_name}:{genome_bl});"
+        f.write(f"{pre_tree}\n");
+        # Write the pre-update tree to the input file
+
+        for node in file_dict:
+            if node == "new-root":
+                continue;
+            # Skip the new genome
+
+            if node == "new-genome":
+                file_dict[node]["fasta"] = file_dict["new-genome"]["fasta-orig"];
+            # If the node is the new genome, use the original fasta file
+
+            f.write(f"{file_dict[node]['name']}\t{file_dict[node]['fasta']}\n");
+            # Write the genome name and fasta file to the input file
+    CLOG.info(SO(f"Created pre-input file", pad) + f"{pre_file}");
+    # Write the pre-update tree and the genome names and fasta files to the input file
+
+    with open(post_file, "w") as f:
+        post_tree = f"({old_root_name}:{old_root_bl},{genome_name}:{genome_bl}){new_root_name};"
+        f.write(f"{post_tree}\n");
+        # Write the post-update tree to the input file
+
+        for node in file_dict:
+            if node == "new-genome":
+                file_dict[node]["fasta"] = file_dict["new-genome"]["fasta-preprocess"];
+            # If the node is the new genome, set the expected preprocessed fasta file
+
+            f.write(f"{file_dict[node]['name']}\t{file_dict[node]['fasta']}\n");
+            # Write the genome name and fasta file to the input file
+    CLOG.info(SO(f"Created post-input file", pad) + f"{post_file}");
 
 #############################################################################
 

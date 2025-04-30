@@ -1,0 +1,96 @@
+#!/bin/sh
+# File: .githooks/commit-msg
+
+YAML_FILE="lib/info.yaml"
+COMMIT_MSG_FILE="$1"
+CURRENT_DATE=$(date +"%Y-%m-%d")
+
+# Exit if YAML file is missing
+if [ ! -f "$YAML_FILE" ]; then
+    echo "YAML file not found: $YAML_FILE"
+    exit 0
+fi
+
+# Read the full commit message
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+# Exit the hook if this is the auto-generated info.yaml commit
+if grep -q '\[info\]' "$COMMIT_MSG_FILE"; then
+    exit 0
+fi
+
+# Escape embedded double quotes for YAML
+ESCAPED_COMMIT_MSG=$(printf '%s' "$COMMIT_MSG" | sed 's/"/\\"/g')
+
+# Update latest-commit-msg field
+if grep -q "^latest-commit-msg:" "$YAML_FILE"; then
+    sed -i "s/^latest-commit-msg:.*/latest-commit-msg: \"$ESCAPED_COMMIT_MSG\"/" "$YAML_FILE"
+else
+    echo "latest-commit-msg: \"$ESCAPED_COMMIT_MSG\"" >> "$YAML_FILE"
+fi
+
+# Check for [no v] tag
+if echo "$COMMIT_MSG" | grep -q '\[no v\]'; then
+    sed -i "s/^latest-commit-date:.*/latest-commit-date: ${CURRENT_DATE}/" "$YAML_FILE"
+    git add "$YAML_FILE"
+    exit 0
+fi
+
+# Check for version tag [vX.Y.Z]
+VERSION_OVERRIDE=$(echo "$COMMIT_MSG" | grep -o '\[v[0-9]\+\.[0-9]\+\.[0-9]\+\]' | tr -d '[]v')
+
+if [ -n "$VERSION_OVERRIDE" ]; then
+    # Validate format
+    if ! echo "$VERSION_OVERRIDE" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+        echo "Error: Invalid version string: [v$VERSION_OVERRIDE]"
+        echo "Expected format: [vX.Y.Z] (e.g., [v2.3.1])"
+        exit 1
+    fi
+
+    # Read old version
+    CURRENT_VERSION=$(grep '^version:' "$YAML_FILE" | awk '{print $2}')
+    IFS='.' read -r OLD_MAJOR OLD_MINOR OLD_PATCH <<< "$CURRENT_VERSION"
+    IFS='.' read -r NEW_MAJOR NEW_MINOR NEW_PATCH <<< "$VERSION_OVERRIDE"
+
+    # Reject same version unless [allow same version] is present
+    if [ "$NEW_MAJOR" -eq "$OLD_MAJOR" ] && \
+        [ "$NEW_MINOR" -eq "$OLD_MINOR" ] && \
+        [ "$NEW_PATCH" -eq "$OLD_PATCH" ]; then
+        if echo "$COMMIT_MSG" | grep -q '\[allow same version\]'; then
+            echo "Warning: Same version used again [$VERSION_OVERRIDE] (allowed by tag)."
+        else
+            echo "Error: Version $VERSION_OVERRIDE is already current. You must bump the version for a new release, or use [allow same version] to bypass."
+            exit 1
+        fi
+    fi
+
+    # Prevent version downgrades
+    if [ "$NEW_MAJOR" -lt "$OLD_MAJOR" ] || \
+        { [ "$NEW_MAJOR" -eq "$OLD_MAJOR" ] && [ "$NEW_MINOR" -lt "$OLD_MINOR" ]; } || \
+        { [ "$NEW_MAJOR" -eq "$OLD_MAJOR" ] && [ "$NEW_MINOR" -eq "$OLD_MINOR" ] && [ "$NEW_PATCH" -lt "$OLD_PATCH" ]; }; then
+        echo "Error: Version downgrade is not allowed."
+        echo "Old version: $CURRENT_VERSION"
+        echo "New version: $VERSION_OVERRIDE"
+        exit 1
+    fi
+
+    # Apply version update
+    sed -i "s/^version:.*/version: ${VERSION_OVERRIDE}/" "$YAML_FILE"
+
+    # Update release dates
+    if [ "$NEW_MAJOR" -ne "$OLD_MAJOR" ]; then
+        sed -i "s/^releasedate-major:.*/releasedate-major: ${CURRENT_DATE}/" "$YAML_FILE"
+    fi
+
+    if [ "$NEW_MINOR" -ne "$OLD_MINOR" ]; then
+        sed -i "s/^releasedate-minor:.*/releasedate-minor: ${CURRENT_DATE}/" "$YAML_FILE"
+    fi
+
+    if [ "$NEW_PATCH" -ne "$OLD_PATCH" ]; then
+        sed -i "s/^releasedate-patch:.*/releasedate-patch: ${CURRENT_DATE}/" "$YAML_FILE"
+    fi
+fi
+
+# If no version given, just update latest-commit-date
+sed -i "s/^latest-commit-date:.*/latest-commit-date: ${CURRENT_DATE}/" "$YAML_FILE"
+exit 0

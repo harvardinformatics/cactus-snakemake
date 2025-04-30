@@ -178,8 +178,7 @@ rule preprocess:
             params.job_tmp_dir,
             params.input_file,
             params.cactus_file,
-            "--inputNames",
-            params.genome_name,
+            "--inputNames", params.genome_name,
             "--logInfo",
             "--retryCount", "0",
             "--maxCores", str(resources.cpus_per_task)

@@ -14,6 +14,10 @@ tests/evolverMammals/evolverMammals-replace-out*/
 !tests/evolverMammals/evolverMammals-replace-out/seq_file.in
 !tests/evolverMammals/evolverMammals-replace-out/seq_file.out
 
+tests/evolverMammals/evolverMammals-add-out*/**
+!tests/evolverMammals/evolverMammals-add-out/add-outgroup-pre.txt
+!tests/evolverMammals/evolverMammals-add-out/add-outgroup-post.txt
+
 tests/yeast-minigraph*/**
 !tests/yeast-minigraph/rulegraphs-dags/
 !tests/yeast-minigraph/rulegraphs-dags/**

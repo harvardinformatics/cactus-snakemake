@@ -1,0 +1,21 @@
+#!/bin/sh
+# .githooks/post-commit
+
+YAML_FILE="lib/info.yaml"
+
+# Exit if the last commit was the [info] commit
+COMMIT_MSG=$(git log -1 --pretty=%B)
+if echo "$COMMIT_MSG" | grep -q '^\[info\]$'; then
+    exit 0
+fi
+
+# Exit if info.yaml is not modified
+if [ -z "$(git status --porcelain "$YAML_FILE")" ]; then
+    exit 0
+fi
+
+# Stage info.yaml
+git add "$YAML_FILE"
+
+# Commit automatically
+git commit -m "[info]"

@@ -1,5 +1,5 @@
 #!/bin/sh
-# File: .git/hooks/pre-commit
+# File: .githooks/pre-commit
 
 # Define the YAML file
 YAML_FILE="lib/info.yaml"

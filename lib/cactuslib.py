@@ -143,7 +143,7 @@ def getInfo(version_flag, info_flag, args):
 
 #############################################################################
 
-def pipelineSetup(config, args, version_flag, info_flag, config_flag, debug, workflow):
+def pipelineSetup(config, args, version_flag, info_flag, config_flag, debug, workflow, pad=50):
     main_flag = True;
     if "__main__.py" in args[0]:
         main_flag = False;
@@ -189,11 +189,11 @@ def pipelineSetup(config, args, version_flag, info_flag, config_flag, debug, wor
     # Set up the logger
 
     if config_flag or debug:
-        pad = 30;
-        cactuslib_logger.debug(spacedOut("Config file", pad) + os.path.abspath(workflow.configfiles[0])); 
+        debug_pad = pad - 1;
+        cactuslib_logger.debug(spacedOut("Config file", debug_pad) + os.path.abspath(workflow.configfiles[0])); 
         cactuslib_logger.debug("---");   
         for key, value in config.items():
-            cactuslib_logger.debug(spacedOut(key, pad) + str(value));
+            cactuslib_logger.debug(spacedOut(key, debug_pad) + str(value));
         cactuslib_logger.debug("=" * 80);
         if config_flag:
             sys.exit();
@@ -462,7 +462,7 @@ def spacedOut(string, totlen, sep="."):
     spaces = sep * (totlen - len(string));
     if len(string) > totlen:
         spaces += sep * 4;
-    return string + spaces;
+    return string + spaces + " ";
 
 def printWrite(string, stream):
     if "- INFO -" in string:

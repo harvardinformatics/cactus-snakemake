@@ -95,3 +95,20 @@ Traceback (most recent call last):
     raise RuntimeError("At least two valid leaf genomes required in"
 RuntimeError: At least two valid leaf genomes required in input tree
 --------------------  COMMAND LOG END  --------------------
+
+
+
+singularity exec --cleanenv cactus_v2.9.8.sif cactus-update-prepare replace evolverMammals-out/evolverMammals.hal /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/evolverMammals-replace-out22/cactus-replace-input.txt --genome simHuman_chr6 --outDir /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/evolverMammals-replace-out22
+[2025-04-24T18:41:29+0000] [MainThread] [W] [toil.lib.humanize] Deprecated toil method.  Please use "toil.lib.conversions.bytes2human()" instead."
+[2025-04-24T18:41:31+0000] [MainThread] [W] [toil.lib.humanize] Deprecated toil method.  Please use "toil.lib.conversions.bytes2human()" instead."
+[2025-04-24T18:41:31+0000] [MainThread] [W] [toil.lib.humanize] Deprecated toil method.  Please use "toil.lib.conversions.bytes2human()" instead."
+Traceback (most recent call last):
+  File "/home/cactus/cactus_env/bin/cactus-update-prepare", line 8, in <module>
+    sys.exit(main())
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/cactus/update/cactus_update_prepare.py", line 1219, in main
+    options = sanity_checks(options)
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/cactus/update/cactus_update_prepare.py", line 1053, in sanity_checks
+    replace_action_sanity_check()
+  File "/home/cactus/cactus_env/lib/python3.10/site-packages/cactus/update/cactus_update_prepare.py", line 1000, in replace_action_sanity_check
+    raise RuntimeError(
+RuntimeError: Genome asked for replacement 'simHuman_chr6' does not match with the one mentioned in the input file /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/evolverMammals-replace-out22/cactus-replace-input.txt: ['simGorilla_chr6']
