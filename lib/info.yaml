@@ -3,7 +3,7 @@ releasedate-major: March 4, 2025
 releasedate-minor: 2025-04-30
 releasedate-patch: 2025-04-30
 latest-commit-date: 2025-04-30
-latest-commit-msg: "fixed input functions to run only during main call; fixed log padding throughout [bump]"
+latest-commit-msg: "adjust info printout"
 doi:
 link: https://github.com/harvardinformatics/cactus-snakemake
 #github: https://github.com/harvardinformatics/cactus-snakemake
