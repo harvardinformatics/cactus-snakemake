@@ -1,9 +1,9 @@
-version: 2.3.0
+version: 2.3.1
 releasedate-major: March 4, 2025
 releasedate-minor: 2025-04-30
 releasedate-patch: 2025-04-30
 latest-commit-date: 2025-04-30
-latest-commit-msg: "added contributing.md"
+latest-commit-msg: "fixed input functions to run only during main call; fixed log padding throughout [bump]"
 doi:
 link: https://github.com/harvardinformatics/cactus-snakemake
 #github: https://github.com/harvardinformatics/cactus-snakemake
