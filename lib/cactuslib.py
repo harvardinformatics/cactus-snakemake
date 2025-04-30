@@ -282,7 +282,7 @@ def parseCactusVersion(tag):
 
 #############################################################################
 
-def fetchLatestCactusTag(get_gpu: bool, main: bool) -> str:
+def fetchLatestCactusTag(get_gpu: bool, main: bool, pad: int) -> str:
     url = 'https://quay.io/api/v1/repository/comparative-genomics-toolkit/cactus/tag/'
 
     try:
@@ -316,14 +316,14 @@ def fetchLatestCactusTag(get_gpu: bool, main: bool) -> str:
         raise RuntimeError(f"Latest tag '{latest_version_tag}' does not match expected format.")
 
     if main:
-        cactuslib_logger.info(f"Latest {'GPU' if get_gpu else 'non-GPU'} version tag: {latest_version_tag}")
+        cactuslib_logger.info(spacedOut(f"Latest {'GPU' if get_gpu else 'non-GPU'} version tag", pad) + f"{latest_version_tag}")
     return latest_version_tag
 
 #############################################################################
 
-def downloadCactusImage(use_gpu: bool, main: bool, tag: str="") -> None:
+def downloadCactusImage(use_gpu: bool, main: bool, pad: int, tag: str="") -> None:
     if not tag:
-        tag = fetchLatestCactusTag(use_gpu, main);
+        tag = fetchLatestCactusTag(use_gpu, main, pad);
     else:
         if tag[0] != "v":
             tag = "v" + tag;
@@ -366,14 +366,14 @@ def downloadCactusImage(use_gpu: bool, main: bool, tag: str="") -> None:
 
 #############################################################################
 
-def parseCactusPath(cactus_cfg: str, use_gpu: bool, main: bool) -> None:
+def parseCactusPath(cactus_cfg: str, use_gpu: bool, main: bool, pad: int) -> None:
     version_tag_pattern = r"^v?\d+(\.\d+)+$";
 
     if cactus_cfg == None or cactus_cfg.lower() in ["download", ""]:
-        cactus_image_path = downloadCactusImage(False, main);
+        cactus_image_path = downloadCactusImage(False, main, pad);
         # Download the latest cactus image if it is not specified in the config file
     elif re.match(version_tag_pattern, cactus_cfg) is not None:
-        cactus_image_path = downloadCactusImage(False, main, cactus_cfg);
+        cactus_image_path = downloadCactusImage(False, main, pad, cactus_cfg);
         # Pass a specific version tag to download
     else:
         cactus_image_path = cactus_cfg;
@@ -387,10 +387,10 @@ def parseCactusPath(cactus_cfg: str, use_gpu: bool, main: bool) -> None:
 
     if use_gpu:
         if cactus_cfg == None or cactus_cfg.lower() in ["download", ""]:
-            cactus_gpu_image_path = downloadCactusImage(True, main);
+            cactus_gpu_image_path = downloadCactusImage(True, main, pad);
             # Download the latest cactus image if it is not specified in the config file
         elif re.match(version_tag_pattern, cactus_cfg) is not None:
-            cactus_gpu_image_path = downloadCactusImage(True, main, cactus_cfg);
+            cactus_gpu_image_path = downloadCactusImage(True, main, pad, cactus_cfg);
             # Pass a specific version tag to download
         else:
             cactus_gpu_image_path = cactus_cfg;

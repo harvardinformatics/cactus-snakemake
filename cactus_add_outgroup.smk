@@ -50,7 +50,7 @@ getRuleResources = partial(CACTUSLIB.getResources, config)
 USE_GPU = config["use_gpu"]
 # Whether to use GPU or CPU cactus
 
-cactus_image_path, cactus_gpu_image_path = CACTUSLIB.parseCactusPath(config["cactus_path"], USE_GPU, MAIN);
+cactus_image_path, cactus_gpu_image_path = CACTUSLIB.parseCactusPath(config["cactus_path"], USE_GPU, MAIN, pad);
 # Parse the cactus path from the config file
 
 CACTUS_PATH = ["singularity", "exec", "--cleanenv", cactus_image_path]

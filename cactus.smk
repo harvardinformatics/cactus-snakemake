@@ -13,6 +13,7 @@ import logging
 import subprocess
 
 import lib.cactuslib as CACTUSLIB
+from lib.cactuslib import spacedOut as SO
 import lib.treelib as TREELIB
 
 from functools import partial
@@ -24,11 +25,16 @@ config_flag = config.get("display", False);
 version_flag = config.get("version", False);
 info_flag = config.get("info", False);
 debug = config.get("debug", False);
+prep_only = config.get("prep", False);
 #debug = True;
 # A hacky way to get some custom command line arguments for the pipeline
 # These just control preprocessing flags that stop the pipeline early anyways
 
-MAIN, DRY_RUN, OUTPUT_DIR, LOG_DIR, TMPDIR, LOG_LEVEL, LOG_VERBOSITY = CACTUSLIB.pipelineSetup(config, sys.argv, version_flag, info_flag, config_flag, debug, workflow);
+pad = config.get("pad", 50);
+debug_pad = pad - 1;
+# The padding for some of the log messages
+
+MAIN, DRY_RUN, OUTPUT_DIR, LOG_DIR, TMPDIR, LOG_LEVEL, LOG_VERBOSITY = CACTUSLIB.pipelineSetup(config, sys.argv, version_flag, info_flag, config_flag, debug, workflow, pad);
 # Setup the pipeline, including the output directory, log directory, and tmp directory
 
 CLOG = logging.getLogger('cactuslib')
@@ -44,7 +50,7 @@ getRuleResources = partial(CACTUSLIB.getResources, config)
 USE_GPU = config["use_gpu"]
 # Whether to use GPU or CPU cactus
 
-cactus_image_path, cactus_gpu_image_path = CACTUSLIB.parseCactusPath(config["cactus_path"], USE_GPU, MAIN);
+cactus_image_path, cactus_gpu_image_path = CACTUSLIB.parseCactusPath(config["cactus_path"], USE_GPU, MAIN, pad);
 # Parse the cactus path from the config file
 
 CACTUS_PATH = ["singularity", "exec", "--cleanenv", cactus_image_path]
@@ -75,9 +81,9 @@ OUTPUT_MAF = os.path.join(OUTPUT_DIR, f"{config['final_prefix']}.{MAF_REFERENCE}
 OUTPUT_MAF_NODUPES = os.path.join(OUTPUT_DIR, f"{config['final_prefix']}.{MAF_REFERENCE}.nodupes.maf.gz");
 
 if MAIN:
-    CLOG.info(f"Output HAL file will be at...............{OUTPUT_HAL}");
-    CLOG.info(f"Reference genome for MAF file will be....{MAF_REFERENCE}");
-    CLOG.info(f"Output MAF file will be at...............{OUTPUT_MAF}");
+    CLOG.info(SO(f"Output HAL file will be at", pad) + f"{OUTPUT_HAL}");
+    CLOG.info(SO(f"Reference genome for MAF file will be", pad) + f"{MAF_REFERENCE}");
+    CLOG.info(SO(f"Output MAF file will be at", pad) + f"{OUTPUT_MAF}");
 # The final output files for the pipeline
 
 #job_path = os.path.join(OUTPUT_DIR, "jobstore");
@@ -97,13 +103,13 @@ CACTUS_FILE = os.path.join(OUTPUT_DIR, os.path.basename(INPUT_FILE));
 #############################################################################
 # Reading files
 
-tips = TREELIB.readTips(INPUT_FILE, MAIN);
+tips = TREELIB.readTips(INPUT_FILE, MAIN, pad);
 # The main dictionary for storing information and file paths for tips in the tree:
 # [genome name] : { 'input' : "original genome fasta file", 'name' : "genome name in tree (same as key)", 'output' : "expected output from preprocess step" }
 
 ####################
 
-internals, anc_tree = TREELIB.initializeInternals(CACTUS_FILE, tips, MAIN);
+internals, anc_tree = TREELIB.initializeInternals(CACTUS_FILE, tips, MAIN, pad);
 # The main dictionary for storing information and file paths for internal nodes in the tree:
 # [node name] : { 'name' : "node name in tree", 'blast-inputs' : [the expected inputs for the blast step], 'align-inputs' : [the expected inputs for the align step],
 #                   'hal-inputs' : [the expected inputs for the hal2fasta step], 'blast-output' : "the .paf file output from the blast step",
@@ -128,6 +134,11 @@ if LOG_LEVEL == "debug":
     CLOG.debug("EXITING BEFORE RULES. DEBUG MODE.");
     sys.exit(0);
 # Exit before running rules if in debug mode
+
+if prep_only:
+    CLOG.info("PREP ONLY FLAG SET. EXITING.");
+    sys.exit(0);
+# Exit before running rules if prep only flag is set
 
 #############################################################################
 # Final rule - rule that depends on final expected output file and initiates all

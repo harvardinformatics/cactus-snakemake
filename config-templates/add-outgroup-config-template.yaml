@@ -3,7 +3,7 @@
 # pipeline: cactus_add_outgroup.smk. It contains the parameters needed to run the pipeline.
 #############################################################################
 
-# time -p snakemake -j 5 -e slurm -s ../../cactus_add_outgroup.smk --configfile evolverMammals-add-outgroup-cfg.yaml --dryrun
+# time -p snakemake -j 5 -e slurm -s cactus_add_outgroup.smk --configfile config-templates/add-outgroup-config-template.yaml --dryrun
 
 #############################################################################
 #
@@ -12,52 +12,66 @@
 #
 
 cactus_path:
+# File path or version string (e.g. 2.9.5) or "download".
 # Provide the path to the cactus singularity container. This is needed whether use_gpu is True or False.
 # If you don't have it, set this to "download" and the pipeline will download it for you.
 # If you want to download a specific version, provide the version tag, e.g. v2.9.7
 
 cactus_gpu_path:
+# File path or version string (e.g. 2.9.5) or "download".
 # If using GPUs (i.e. if use_gpu: True), provide the path to the cactus GPU singularity container. 
 # If use_gpu is False, this will be ignored.
 # If you don't have it, set this to "download" and the pipeline will download it for you.
 # If you want to download a specific version, provide the version tag, e.g. v2.9.7
 
-input_hal: evolverMammals-out/evolverMammals.hal
+input_hal:
+# File path.
 # The input HAL file. This is the output of a previous cactus run.
 
-old_root_name: Anc0
+old_root_name:
+# String.
 # The name of the root node in the input HAL file.
 
-new_genome_name: simGorilla
-# The name of the new genome to be added to the HAL file.
+new_genome_name:
+# String
+# The name of the new genome to be added to the HAL file as an outgroup.
 # This will also be the name in the tree.
 
-new_genome_fasta: evolverMammals-seq/simGorilla.chr6
+new_genome_fasta:
+# File path.
 # The path to the genome file to be added to the HAL file.
 
-new_root_name: newRoot
+new_root_name:
+# String.
 # The name of the new root node that will be created in the tree.
 
-branch_length_from_new_genome: 0.075
+branch_length_from_new_genome:
+# Float or blank (defaults to 1.0).
 # The branch length of the new branch connecting the new genome to new_root_name.
 
-branch_length_from_old_root: 0.10
+branch_length_from_old_root:
+# Float or blank (defaults to 1.0).
 # The branch length of the new branch connecting the old_root_name to new_root_name.
 
-output_dir: evolverMammals-add-out/
+output_dir:
+# Directory path.
 # The output directory for the snakemake pipeline. This should be the same as the outDir in cactus-prepare.
 # This directory will be created if it doesn't exist.
 
-final_prefix: evolverMammals-add-out
+final_prefix:
+# String.
 # The prefix for the final output files. This will be used to name the final HAL file and the final MAF files.
 
-maf_reference: simHuman_chr6
+maf_reference:
+# String.
 # The reference genome for the MAF files. This should be the name of the reference genome in the input_file.
 
-tmp_dir: /n/holylfs05/LABS/informatics/Users/gthomas/tmp/evolverMammals/
+tmp_dir:
+# Directory path.
 # A temporary directory for snakemake and cactus to use. Should have lots of space.
 
-use_gpu: False
+use_gpu:
+# True/False.
 # Whether or not to use the GPU version of cactus.
 # If you don't have a GPU partition, set this to False.
 # Either way, be sure to set the correct values for the partitions and GPUs below.
@@ -77,44 +91,44 @@ use_gpu: False
 
 rule_resources:
   default:
-    partition: shared
-    mem_mb: 4000
-    cpus: 1
-    time: 60  
+    partition: 
+    mem_mb: 
+    cpus: 
+    time:   
 
   get_root_fasta:
-    partition: shared
-    mem_mb: 8000
-    cpus: 1
-    time: 30
+    partition: 
+    mem_mb: 
+    cpus: 
+    time: 
 
   preprocess:
-    partition: shared
-    mem_mb: 25000
-    cpus: 8
-    time: 30
+    partition: 
+    mem_mb: 
+    cpus: 
+    time: 
 
   blast:
-    partition: gpu # If use_gpu is True, this must be a partition with GPUs
-    mem_mb: 50000
-    cpus: 48
-    gpus: 1           # If use_gpu is False, this will be ignored
-    time: 30
+    partition:  # If use_gpu is True, this must be a partition with GPUs
+    mem_mb: 
+    cpus: 
+    gpus:            # If use_gpu is False, this will be ignored
+    time: 
 
   align:
-    partition: shared
-    mem_mb: 25000
-    cpus: 24
-    time: 30
+    partition: 
+    mem_mb: 
+    cpus: 
+    time: 
 
   combine_hals:
-    partition: shared
-    mem_mb: 8000
-    cpus: 8
-    time: 30
+    partition: 
+    mem_mb: 
+    cpus: 
+    time: 
 
   maf:
-    partition: shared
-    mem_mb: 25000
-    cpus: 8
-    time: 30
+    partition: 
+    mem_mb: 
+    cpus: 
+    time: 

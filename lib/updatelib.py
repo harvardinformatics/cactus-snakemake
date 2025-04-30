@@ -21,7 +21,7 @@ CLOG = logging.getLogger('cactuslib')
 
 #############################################################################
 
-def createUpdateInputFile(genome_name, genome_fasta, new_bl, output_dir):
+def createUpdateInputFile(cactus_update_file, genome_name, genome_fasta, new_bl, output_dir, pad):
 # This function creates the input file for cactus-update-prepare
 
     if not os.path.isfile(genome_fasta):
@@ -29,8 +29,7 @@ def createUpdateInputFile(genome_name, genome_fasta, new_bl, output_dir):
         sys.exit(1);
     # Check the genome fasta file
     genome_fasta = os.path.abspath(genome_fasta);
-
-    cactus_update_file = os.path.join(output_dir, "cactus-update-input.txt");
+    # Get the absolute path of the genome fasta file
 
     if new_bl:
         new_bl = str(new_bl);
@@ -42,14 +41,12 @@ def createUpdateInputFile(genome_name, genome_fasta, new_bl, output_dir):
         f.write(f"{genome_name}\t{genome_fasta}\t{new_bl}\n");
         # Write the genome name and fasta file to the input file
 
-    CLOG.info(f"Created cactus-update-prepare input file.... {cactus_update_file}");
+    CLOG.info(SO(f"Created cactus-update-prepare input file", pad) + f"{cactus_update_file}");
     # The input file for cactus-update-prepare
-
-    return cactus_update_file;
 
 #############################################################################
 
-def createReplaceInputFile(genome_name, genome_fasta, output_dir):
+def createReplaceInputFile(cactus_replace_file, genome_name, genome_fasta, output_dir, pad):
 # This function creates the input file for cactus-update-prepare
 
     if not os.path.isfile(genome_fasta):
@@ -58,16 +55,12 @@ def createReplaceInputFile(genome_name, genome_fasta, output_dir):
     # Check the genome fasta file
     genome_fasta = os.path.abspath(genome_fasta);
 
-    cactus_replace_file = os.path.join(output_dir, "cactus-replace-input.txt");
-
     with open(cactus_replace_file, "w") as f:
         f.write(f"{genome_name}\t{genome_fasta}\n");
         # Write the genome name and fasta file to the input file
 
-    CLOG.info(f"Created cactus-update-prepare input file.... {cactus_replace_file}");
+    CLOG.info(SO(f"Created cactus-update-prepare input file", pad) + f"{cactus_replace_file}");
     # The input file for cactus-update-prepare
-
-    return cactus_replace_file;
 
 #############################################################################
 

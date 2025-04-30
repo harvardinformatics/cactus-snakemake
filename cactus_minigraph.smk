@@ -13,6 +13,7 @@ import logging
 import subprocess
 
 import lib.cactuslib as CACTUSLIB
+from lib.cactuslib import spacedOut as SO
 
 from functools import partial
 
@@ -23,14 +24,19 @@ config_flag = config.get("display", False);
 version_flag = config.get("version", False);
 info_flag = config.get("info", False);
 debug = config.get("debug", False);
+prep_only = config.get("prep", False);
 #debug = True;
 # A hacky way to get some custom command line arguments for the pipeline
 # These just control preprocessing flags that stop the pipeline early anyways
 
-MAIN, DRY_RUN, OUTPUT_DIR, LOG_DIR, TMPDIR, LOG_LEVEL, LOG_VERBOSITY = CACTUSLIB.pipelineSetup(config, sys.argv, version_flag, info_flag, config_flag, debug, workflow);
+pad = config.get("pad", 40);
+debug_pad = pad - 1;
+# The padding for some of the log messages
+
+MAIN, DRY_RUN, OUTPUT_DIR, LOG_DIR, TMPDIR, LOG_LEVEL, LOG_VERBOSITY = CACTUSLIB.pipelineSetup(config, sys.argv, version_flag, info_flag, config_flag, debug, workflow, pad);
 # Setup the pipeline, including the output directory, log directory, and tmp directory
 
-cactuslib_logger = logging.getLogger('cactuslib')
+CLOG = logging.getLogger('cactuslib')
 # Setup logging if debugging
 
 getRuleResources = partial(CACTUSLIB.getResources, config)
@@ -40,7 +46,7 @@ getRuleResources = partial(CACTUSLIB.getResources, config)
 #############################################################################
 # Cactus setup
 
-cactus_image_path, cactus_gpu_image_path = CACTUSLIB.parseCactusPath(config["cactus_path"], False, MAIN);
+cactus_image_path, cactus_gpu_image_path = CACTUSLIB.parseCactusPath(config["cactus_path"], False, MAIN, pad);
 # Parse the cactus path from the config file
 
 CACTUS_PATH = ["singularity", "exec", "--nv", "--cleanenv", cactus_image_path]
@@ -52,17 +58,17 @@ CACTUS_PATH_TMP = ["singularity", "exec", "--nv", "--cleanenv", "--bind", f"{TMP
 
 INPUT_FILE_ORIG = os.path.abspath(config["input_file"]);
 if not os.path.isfile(INPUT_FILE_ORIG):
-    cactuslib_logger.error(f"Could not find input file at {INPUT_FILE_ORIG}");
+    CLOG.error(f"Could not find input file at {INPUT_FILE_ORIG}");
     sys.exit(1);
 else:
     if MAIN:
-        cactuslib_logger.info(f"Input file found at {INPUT_FILE_ORIG}");
+        CLOG.info(SO(f"Input file found at", pad) +  f"{INPUT_FILE_ORIG}");
 # The cactus input file used to generate the config file with cactus-prepare
 
 INPUT_FILE_COPY = os.path.join(OUTPUT_DIR, os.path.basename(INPUT_FILE_ORIG));
 COPY_READY_FILE = os.path.join(OUTPUT_DIR, "copy_input.done");
 if MAIN:
-    cactuslib_logger.info(f"During rule copy_input, a copy of the input file will be created and modified at {INPUT_FILE_COPY}");
+    CLOG.info(f"During rule copy_input, a copy of the input file will be created and modified at {INPUT_FILE_COPY}");
 # A copy of the input file must be created and used since cactus-minigraph modifies the input file
 
 CHROMS_DIR = os.path.join(OUTPUT_DIR, "chroms");
@@ -98,9 +104,14 @@ PREFIX = config["prefix"];
 # The temporary/job directory specified in cactus-prepare
 
 if LOG_LEVEL == "debug":
-    cactuslib_logger.debug("EXITING BEFORE RULES. DEBUG MODE.");
+    CLOG.debug("EXITING BEFORE RULES. DEBUG MODE.");
     sys.exit(0);
 # Exit before running rules if in debug mode
+
+if prep_only:
+    CLOG.info("PREP ONLY FLAG SET. EXITING.");
+    sys.exit(0);
+# Exit before running rules if prep only flag is set
 
 #############################################################################
 # Final rule - rule that depends on final expected output file and initiates all
