@@ -24,7 +24,7 @@ However, Snakemake and Singularity are required as dependencies. For more inform
 
 ## Usage
 
-Each pipeline has a different [config file](config-templates/) that is required to specify input and output options and cluster resource specifications.
+Each pipeline has a different [config file](config-templates/) that is required to specify input and output options and cluster resources.
 
 With the config file setup, the pipelines are generally run as:
 
