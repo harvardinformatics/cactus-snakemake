@@ -1,9 +1,9 @@
-version: 2.3.1
+version: 2.4.0
 releasedate-major: March 4, 2025
-releasedate-minor: 2025-04-30
-releasedate-patch: 2025-04-30
-latest-commit-date: 2025-04-30
-latest-commit-msg: "adjust info printout"
+releasedate-minor: 2025-05-28
+releasedate-patch: 2025-05-28
+latest-commit-date: 2025-05-28
+latest-commit-msg: "added support for the cannon plugin [v2.4.0]"
 doi:
 link: https://github.com/harvardinformatics/cactus-snakemake
 #github: https://github.com/harvardinformatics/cactus-snakemake
