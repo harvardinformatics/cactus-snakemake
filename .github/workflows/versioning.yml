@@ -1,0 +1,19 @@
+name: Custom Versioning and Tagging
+
+on:
+  push:
+    branches:
+      - main  # or your working branch
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # needed for tag creation
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Update version and tag if needed
+        run: .github/scripts/update-version.sh
