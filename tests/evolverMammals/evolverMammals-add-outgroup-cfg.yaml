@@ -44,7 +44,7 @@ branch_length_from_new_genome: 0.075
 branch_length_from_old_root: 0.10
 # The branch length of the new branch connecting the old_root_name to new_root_name.
 
-output_dir: evolverMammals-add-out/
+output_dir: evolverMammals-add-out2/
 # The output directory for the snakemake pipeline. This should be the same as the outDir in cactus-prepare.
 # This directory will be created if it doesn't exist.
 
@@ -74,47 +74,49 @@ use_gpu: False
 ##
 ## mem_mb is in MB
 ## time is in minutes
+##
+## If using the snakemake-executor-plugin-cannon (-e cannon), partition names can be left blank.
 
 rule_resources:
   default:
-    partition: shared
+    partition:
     mem_mb: 4000
     cpus: 1
     time: 60  
 
   get_root_fasta:
-    partition: shared
+    partition:
     mem_mb: 8000
     cpus: 1
     time: 30
 
   preprocess:
-    partition: shared
+    partition:
     mem_mb: 25000
     cpus: 8
     time: 30
 
   blast:
-    partition: gpu # If use_gpu is True, this must be a partition with GPUs
-    mem_mb: 50000
-    cpus: 48
+    partition: # If use_gpu is True, this must be a partition with GPUs
+    mem_mb: 25000
+    cpus: 24
     gpus: 1           # If use_gpu is False, this will be ignored
     time: 30
 
   align:
-    partition: shared
+    partition:
     mem_mb: 25000
     cpus: 24
     time: 30
 
   combine_hals:
-    partition: shared
+    partition:
     mem_mb: 8000
     cpus: 8
     time: 30
 
   maf:
-    partition: shared
+    partition:
     mem_mb: 25000
     cpus: 8
     time: 30

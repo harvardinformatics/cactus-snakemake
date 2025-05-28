@@ -26,7 +26,7 @@ cactus_gpu_path:
 input_file: evolverMammals.txt
 # File containing rooted Newick tree on the first line, and a list of genome files on the following lines.
 
-output_dir: evolverMammals-out/
+output_dir: evolverMammals-out2/
 # The output directory for the snakemake pipeline. This should be the same as the outDir in cactus-prepare.
 # This directory will be created if it doesn't exist.
 
@@ -56,53 +56,55 @@ use_gpu: False
 ##
 ## mem_mb is in MB
 ## time is in minutes
+##
+## If using the snakemake-executor-plugin-cannon (-e cannon), partition names can be left blank.
 
 rule_resources:
   default:
-    partition: shared
-    mem_mb: 25000
+    partition:
+    mem_mb: 30000
     cpus: 8
     time: 60  
 
   preprocess:
     partition: shared
-    mem_mb: 25000
+    mem_mb: 8000
     cpus: 8
     time: 30
 
   blast:
-    partition: shared  # If use_gpu is True, this must be a partition with GPUs
+    partition:  # If use_gpu is True, this must be a partition with GPUs
     mem_mb: 50000
-    cpus: 48
-    gpus: 2         # If use_gpu is False, this will be ignored
+    cpus: 24
+    gpus: 1         # If use_gpu is False, this will be ignored
     time: 120
 
   align:
-    partition: shared
+    partition:
     mem_mb: 25000
     cpus: 24
     time: 120
 
   convert:
-    partition: shared
+    partition:
     mem_mb: 8000
     cpus: 8
     time: 30
 
   copy_hal:
-    partition: shared
+    partition:
     mem_mb: 8000
     cpus: 1
     time: 30
 
   append:
-    partition: shared
+    partition:
     mem_mb: 8000
     cpus: 8
     time: 30
 
   maf:
-    partition: shared
+    partition:
     mem_mb: 25000
     cpus: 8
     time: 60

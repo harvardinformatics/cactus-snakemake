@@ -36,13 +36,13 @@ pad = config.get("pad", 50);
 debug_pad = pad - 1;
 # The padding for some of the log messages
 
-MAIN, DRY_RUN, OUTPUT_DIR, LOG_DIR, TMPDIR, LOG_LEVEL, LOG_VERBOSITY = CACTUSLIB.pipelineSetup(config, sys.argv, version_flag, info_flag, config_flag, debug, workflow, pad);
+MAIN, DRY_RUN, OUTPUT_DIR, LOG_DIR, TMPDIR, LOG_LEVEL, LOG_VERBOSITY, TOP_LEVEL_EXECUTOR = CACTUSLIB.pipelineSetup(config, sys.argv, version_flag, info_flag, config_flag, debug, workflow, pad);
 # Setup the pipeline, including the output directory, log directory, and tmp directory
 
 CLOG = logging.getLogger('cactuslib')
 # Setup logging if debugging
 
-getRuleResources = partial(CACTUSLIB.getResources, config)
+getRuleResources = partial(CACTUSLIB.getResources, config, TOP_LEVEL_EXECUTOR)
 # This maps the function to get rule resources from the config file
 # so we don't have to pass config each time we call it
 

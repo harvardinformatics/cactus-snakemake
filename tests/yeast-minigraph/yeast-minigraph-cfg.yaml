@@ -29,7 +29,7 @@ cactus_path: download
 input_file: yeastPangenome-local.txt
 # File containing a list of sample IDs and genome files.
 
-output_dir: yeastPangenome-out/
+output_dir: yeastPangenome-out2/
 # The desired output directory for the snakemake pipeline. This directory will be created if it doesn't exist.
 # This directory will be created if it doesn't exist.
 
@@ -52,46 +52,48 @@ tmp_dir: /n/holylfs05/LABS/informatics/Users/gthomas/tmp/yeastPangenome/
 ##
 ## mem_mb is in MB
 ## time is in minutes
+##
+## If using the snakemake-executor-plugin-cannon (-e cannon), partition names can be left blank.
 
 rule_resources:
   default:
-    partition: shared
+    partition:
     mem_mb: 25000
     cpus: 1
     time: 60  
 
   copy_input:
-    partition: shared
+    partition:
     mem_mb: 25000
     cpus: 1
     time: 30
 
   minigraph:
-    partition: shared
+    partition:
     mem_mb: 25000
     cpus: 8
     time: 30
 
   graphmap:
-    partition: shared
+    partition:
     mem_mb: 50000
     cpus: 1
     time: 30
 
   split:
-    partition: shared
+    partition:
     mem_mb: 50000
     cpus: 1
     time: 30
 
   align:  
-    partition: shared
+    partition:
     mem_mb: 25000
     cpus: 1
     time: 30
 
   join:
-    partition: shared
+    partition:
     mem_mb: 8000
     cpus: 1
     time: 30

@@ -63,6 +63,8 @@ use_gpu:
 ##
 ## mem_mb is in MB
 ## time is in minutes
+##
+## If using the snakemake-executor-plugin-cannon (-e cannon), partition names can be left blank.
 
 rule_resources:
   default:
