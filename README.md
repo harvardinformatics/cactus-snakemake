@@ -32,6 +32,12 @@ With the config file setup, the pipelines are generally run as:
 snakemake -j <number of jobs to submit simultaneously> -e slurm -s </path/to/snakefile.smk> --configfile </path/to/your/snakmake-config.yml>
 ```
 
+
+> 💡 **Tip:** Cannon cluster Snakemake plugin
+>
+> If you are on the Harvard Cannon cluster, you can use the [snakemake-executor-plugin-cannon](https://github.com/harvardinformatics/snakemake-executor-plugin-cannon) to do automatic partition selection instead of the generic SLURM executor plugin. Install the plugin with pip or mamba and then use `-e cannon` in all of your commands instead of `-e slurm`.
+
+
 For more information, see the setup and run instructions in each of the tutorials linked above.
 
 ## Meta config options
