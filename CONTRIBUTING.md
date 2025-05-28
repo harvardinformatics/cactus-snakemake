@@ -4,118 +4,115 @@
 
 Thank you for contributing to this project.
 
-This repository uses Git hooks and structured commit messages to manage versioning metadata in `lib/info.yaml`. When making commits, your messages help automate version bumps and update commit metadata. Please follow the guidelines below.
+> Automated versioning and release tagging are managed using a GitHub Actions workflow.
+> You do not need to install or configure any Git hooks locally.
+
+Version and release metadata are stored in `lib/info.yaml` and are automatically updated after pull request merges, using the commit message of the merge commit.
 
 ---
 
-## Setup (one-time)
+## Workflow Overview
 
-This project uses project-scoped Git hooks stored in `.githooks/`.
-
-To enable them in your local clone:
-
-1. Set Git to use the project hooks directory:
-
-   ```bash
-   git config core.hooksPath .githooks
-   ```
-
-2. Make sure all scripts are executable:
-
-   ```bash
-   chmod +x .githooks/*
-   ```
+- You propose changes on a feature branch and open a pull request (PR).
+- To request a version bump or set a specific version/tag, include a version tag in the PR title.
+- After merge (using "Squash and merge"), a GitHub Actions workflow (`.github/workflows/versioning.yml`) will:
+  - Parse the PR title (which becomes the merge commit message)
+  - Validate and apply the appropriate version change in `lib/info.yaml`
+  - Commit the metadata update (as `github-actions[bot]`)
+  - Create a matching Git tag (e.g. `v2.5.0`) on the main branch
 
 ---
 
-## Commit Message Tags
+## How to Request a Version Bump
 
-Your commit message controls how the version is updated. Tag your commits with one of:
+Include a tag in your PR title. The workflow supports:
 
-| Tag                | Action                                 | Example                                |
-|--------------------|----------------------------------------|----------------------------------------|
-| `[major]`          | Bump major version (X → X+1.0.0)       | `Rewrite internals [major]`            |
-| `[minor]`          | Bump minor version (Y → Y+1)           | `Add option for format [minor]`        |
-| `[patch]`          | Bump patch version (Z → Z+1)           | `Fix typos and style [patch]`          |
-| `[bump]`           | Same as `[patch]`, for convenience     | `Update citation link [bump]`          |
-| `[vX.Y.Z]`         | Set exact version (overrides bumps)    | `Release new version [v2.5.0]`         |
-| No tag or `[no v]` | Skip versioning; update timestamp only | `Adjust spacing [no v]`                |
+| Tag                | Action                                 | Example PR Title                      |
+|--------------------|----------------------------------------|---------------------------------------|
+| `[major]`          | Bump major version (X → X+1.0.0)       | `[major] Rewrite internals`           |
+| `[minor]`          | Bump minor version (Y → Y+1)           | `[minor] Add option for format`       |
+| `[patch]`          | Bump patch version (Z → Z+1)           | `[patch] Fix typos and style`         |
+| `[bump]`           | Same as `[patch]`, for convenience     | `[bump] Update citation link`         |
+| `[vX.Y.Z]`         | Set exact version (overrides bumps)    | `[v2.5.0] Release new version`        |
+| No tag or `[no v]` | Skip versioning; update timestamp only | `Adjust spacing [no v]`               |
 
-Multiple tags are allowed, but the most significant one will take effect:
+Multiple tags are allowed, but only the most significant one is used:
 `[major] > [minor] > [patch]/[bump]`
 
-Redundant tags will trigger a warning.
+Redundant tags will trigger a warning in the Actions log.
 
 ---
 
 ## What Happens Automatically
 
-When you commit:
+After your PR is merged (usually with "Squash and merge"):
 
-- The `commit-msg` hook:
-  - Parses your message
-  - Validates version changes
+- The workflow:
+  - Extracts the tag from the merge commit message (usually the PR title)
+  - Validates and applies the version bump, with checks to ensure:
+    - No version downgrades
+    - No duplicate versions (unless `[allow same version]` is present)
+    - Warnings for large version jumps
   - Updates `lib/info.yaml` fields:
     - `version`
     - `releasedate-*`
     - `latest-commit-msg`
     - `latest-commit-date`
-  - Rejects duplicate or downgraded versions
-  - Prints warnings for large version jumps
-
-- The `post-commit` hook:
-  - If `info.yaml` was modified, creates a second commit:
-
-    ```
-    [info]
-    ```
-
-  - This ensures metadata is added reliably without interfering with your working commit
+  - Creates and pushes a corresponding Git tag (e.g., `v2.5.0`).
 
 ---
 
-## Examples
+## Example PR Titles
 
-```bash
-git commit -m "Add option [minor]"
-git commit -m "Adjust wording [bump]"
-git commit -m "Release 3.0 final [v3.0.0]"
-git commit -m "Improve formatting"
-```
+[minor] Add support for custom plugins
+[bump] Update citation link for paper
+[v2.5.0] Release 2.5.0 with new features
+Fix typos in docs [patch]
 
-After each commit, you can check that the hooks ran and updated the info file with:
+Tip: If you do not want a version bump for your PR, use `[no v]` or omit tags.
 
-```bash
-git log --oneline -n 2
-git diff HEAD~1 lib/info.yaml
-```
+---
+
+## Checking Version Updates
+
+After your PR is merged:
+- The bot may create a new commit updating `lib/info.yaml` and the version tag.
+- You can view the workflow and tag activity under the Actions tab and Tags tab on GitHub.
+- The `latest-commit-msg` and `version` fields in `lib/info.yaml` will reflect your change.
 
 ---
 
 ## Notes
 
-- Be sure to `git add` the files you want in the commit before running `git commit`
-- You do not need to stage or edit `lib/info.yaml` — it is handled automatically
-- Do not squash or remove `[info]` commits — they are part of the versioning log
+- You do not need to edit or stage `lib/info.yaml`. The workflow takes care of this.
+- Always use "Squash and merge" to ensure your PR title becomes the merge commit message.
+- If you need to repeat a version (very rare), include `[allow same version]` in your PR title.
+- Accidental version downgrades are rejected by the workflow.
+- If the bot doesn't update the version or tag as expected, check the Actions logs for details.
 
 ---
 
 ## Troubleshooting
 
-- **Hook not firing?**
-  - Check that `.githooks/commit-msg` and `.githooks/post-commit` are executable
-  - Ensure `git config core.hooksPath` is set properly
-
-- **Version not updating?**
-  - Make sure you included a bump tag in your commit (like `[patch]` or `[v2.3.0]`)
-
-- **Accidentally repeated a version?**
-  - Add `[allow same version]` to override
+- Workflow failed?
+  - Check the Actions tab for error logs (for example: invalid version string, downgrade, duplicate version, etc.).
+  - Fix PR title/tag and try again (e.g., by editing your PR title and re-merging/rebasing).
+- Tag didn't appear?
+  - Only specific tag patterns (`[vX.Y.Z]`, `[major]`, `[minor]`, `[patch]`, `[bump]`) will trigger a new tag.
+- Need a silent/no-bump change?
+  - Use `[no v]` in your PR title, or no tag (only dates/commit message will update).
 
 ---
 
 ## Thank You
 
-We appreciate your contributions. Reliable versioning ensures reproducibility and clear project history.
+We appreciate your contributions!
+Automated versioning ensures clear project history and reproducibility for all users.
 
-Need help? Open an issue or contact the maintainers directly.
+For help, open an issue or contact the maintainers.
+
+---
+
+## (If you're still running old hooks)
+
+- Old instructions for Git hooks (now deprecated) are no longer needed; versioning is now fully automated by GitHub Actions.
