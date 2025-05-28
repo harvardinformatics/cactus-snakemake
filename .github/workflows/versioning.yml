@@ -16,4 +16,4 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Update version and tag if needed
-        run: .github/scripts/update-version.sh
+        run: .github/scripts/update_version.sh
