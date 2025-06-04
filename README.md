@@ -22,6 +22,8 @@ Installation is done simply by cloning the repository:
 git clone https://github.com/harvardinformatics/cactus-snakemake.git
 ```
 
+Alternatively, you could just manually download the [latest release](https://github.com/harvardinformatics/cactus-snakemake/releases/latest) and unzip it and it should be good to go.
+
 However, Snakemake and Singularity are required as dependencies. For more information, see the setup instructions in any of the tutorials linked above.
 
 ## Usage
