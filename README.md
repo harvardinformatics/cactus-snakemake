@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/576319135.svg)](https://doi.org/10.5281/zenodo.15596989)
+
 ### These pipelines facilitate the running of the [Cactus whole genome alignment tool](https://github.com/ComparativeGenomicsToolkit/cactus) efficiently on SLURM (and possibly other) clusters.
 
 ## Tutorials available on the [FAS Informatics website](https://informatics.fas.harvard.edu/):
