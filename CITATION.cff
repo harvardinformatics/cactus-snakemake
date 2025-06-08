@@ -3,7 +3,7 @@ message: "If you use this software, please cite it as below."
 authors:
 - family-names: "Thomas"
   given-names: "Gregg"
-title: "Snakemake worflows for Cactus"
+title: "Snakemake workflows for Cactus"
 version: 2.1.0
 doi: 10.5281/zenodo.15596990
 date-released: 2025-06-05
