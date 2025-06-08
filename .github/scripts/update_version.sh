@@ -2,7 +2,7 @@
 set -e
 
 YAML_FILE="lib/info.yaml"
-COMMIT_MSG="$(git log -1 --pretty=%B)"
+COMMIT_MSG="$(git log -1 --pretty=%s)"
 DATE=$(date +'%Y-%m-%d')
 
 if [ ! -f "$YAML_FILE" ]; then
