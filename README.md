@@ -55,3 +55,14 @@ Several meta config options exist across pipelines as pseudo-command line flags
 | `--config version=T` | Display the version of the pipeline |
 | `--config prep=T`    | Run all pre-processing steps and exit (*e.g.* output directory creation, cactus image download, running `cactus-prepare`). |
 | `--config debug=T`   | The same as prep, but display extra information about the pre-processing steps. |
+
+## Citation
+
+If you use this software, please cite:
+
+Thomas, G. (2025). Snakemake worflows for Cactus (Version 2.1.0) [Computer software]. 
+[https://doi.org/10.5281/zenodo.15596990](https://doi.org/10.5281/zenodo.15596989)
+
+> **To cite a specific version:**  
+> See the [full list of versions and DOIs here](https://zenodo.org/records/15596990).  
+> (Find the version you used in the Zenodo version history.)
