@@ -1,4 +1,10 @@
-[![DOI](https://zenodo.org/badge/576319135.svg)](https://doi.org/10.5281/zenodo.15596989)
+<div align="center">
+  <img src="https://github.com/harvardinformatics/cactus-snakemake/blob/main/etc/logo/cactus-snakemake-hex.png" style="height: 200px;"/>
+</div>
+
+<div align="center">
+  <img src="https://zenodo.org/badge/576319135.svg"/>
+</div>
 
 ### These pipelines facilitate the running of the [Cactus whole genome alignment tool](https://github.com/ComparativeGenomicsToolkit/cactus) efficiently on SLURM (and possibly other) clusters.
 
