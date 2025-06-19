@@ -20,6 +20,10 @@
 
 ### <[Pangenome inference with Minigraph-Cactus](https://informatics.fas.harvard.edu/resources/Tutorials/pangenome-cactus-minigraph/)>
 
+> ⚠️ **Important!** cactus-snakemake v3.0.0 and later requires Cactus v2.9.9 or later. 
+>
+> Due to bug fixes in Cactus, v3.0.0+ of cactus-snakemake is only compatibile with Cactus v2.9.9 or later. Don't worry, cactus-snakemake will always use the latest version of Cactus available unless you specify otherwise in your config file. However, if you do wish to use an older version of Cactus, you can use cactus-snakemake v2.1.0.
+
 ## Installation
 
 Installation is done simply by cloning the repository:
