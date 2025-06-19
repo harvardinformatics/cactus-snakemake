@@ -50,17 +50,13 @@ getRuleResources = partial(CACTUSLIB.getResources, config, TOP_LEVEL_EXECUTOR)
 USE_GPU = config["use_gpu"]
 # Whether to use GPU or CPU cactus
 
-cactus_image_path, cactus_gpu_image_path = CACTUSLIB.parseCactusPath(config["cactus_path"], USE_GPU, MAIN, pad);
+CACTUS_PATH, CACTUS_PATH_TMP, VERSION_TAG = CACTUSLIB.parseCactusPath(config["cactus_path"], USE_GPU, MAIN, TMPDIR, pad);
 # Parse the cactus path from the config file
 
-CACTUS_PATH = ["singularity", "exec", "--cleanenv", cactus_image_path]
-CACTUS_PATH_TMP = ["singularity", "exec", "--cleanenv", "--bind", TMPDIR + ":/tmp", cactus_image_path]
-
-CACTUS_GPU_PATH = ["singularity", "exec", "--nv", "--cleanenv", cactus_gpu_image_path]
-CACTUS_GPU_PATH_TMP = ["singularity", "exec", "--nv", "--cleanenv", "--bind", TMPDIR + ":/tmp", cactus_gpu_image_path]
-#CACTUS_PATH = "singularity exec --nv --cleanenv " + cactus_image_path
-#CACTUS_PATH_TMP = "singularity exec --nv --cleanenv --bind " + TMPDIR + ":/tmp " + cactus_image_path
-# The path to the cactus image with and without a tmpdir binding
+KEG_PATCH_FILE = None
+if USE_GPU:
+    KEG_PATCH_FILE = CACTUSLIB.downloadKegPatch(OUTPUT_DIR, MAIN, VERSION_TAG)
+# Download the KEG patch file if using GPU cactus, and set the path to it
 
 #############################################################################
 # Input files and output paths
@@ -195,17 +191,8 @@ rule preprocess:
             "--maxCores", str(resources.cpus_per_task)
         ];
 
-        # if params.gpu_opt:
-        #     cmd.append("--gpu");
-
         CACTUSLIB.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, wildcards.final_tip)
         # When not requesting all CPU on a node: toil.batchSystems.abstractBatchSystem.InsufficientSystemResources: The job LastzRepeatMaskJob is requesting 64.0 cores, more than the maximum of 32 cores that SingleMachineBatchSystem was configured with, or enforced by --maxCores.Scale is set to 1.0.
-    # shell:
-    #     """
-    #     {params.path} cactus-preprocess {params.job_dir} {params.input_file} {params.cactus_file} --inputNames {params.genome_name} --realTimeLogging true --logInfo --retryCount 0 --maxCores {resources.cpus_per_task} {params.gpu_opt}
-    #     """
-    # Keeping shell around now for debugging purposes
-
 ## This rule runs cactus-preprocess for every genome (tip in the tree), which does some masking
 ## Runtimes for turtles range from 8 to 15 minutes with the above resoureces
 
@@ -217,7 +204,7 @@ rule blast:
     output:
         paf_file = os.path.join(OUTPUT_DIR, "{internal_node}.paf")
     params:
-        path = CACTUS_GPU_PATH_TMP, # Note that if USE_GPU is False, this will be the same as CACTUS_PATH_TMP
+        path = CACTUS_PATH_TMP,
         cactus_file = os.path.join(OUTPUT_DIR, CACTUS_FILE),
         node = lambda wildcards: wildcards.internal_node,
         host_tmp_dir = lambda wildcards: os.path.join(TMPDIR, wildcards.internal_node + "-blast"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
@@ -244,16 +231,8 @@ rule blast:
 
         if params.gpu_opt:
             cmd += ["--gpu", str(params.gpu_num)];
-            #cmd.append("--gpu");
-            #cmd.append("1");
-            # TODO: fix this
 
         CACTUSLIB.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, wildcards.internal_node)
-    # shell:
-    #     """
-    #     {params.path} cactus-blast {params.job_tmp_dir} {params.cactus_file} {output} --root {params.node} --logInfo --retryCount 0 --lastzCores {resources.cpus_per_task} {params.gpu_opt}
-    #     """
-    # Keeping shell around now for debugging purposes
 ## This rule runs cactus-blast for every internal node
 ## Runtimes for turtles range from 1 to 10 hours with the above resources
 
@@ -270,6 +249,7 @@ rule align:
         #config_file = os.path.join(OUTPUT_DIR, CONFIG_FILE),
         cactus_file = os.path.join(OUTPUT_DIR, CACTUS_FILE),
         node = lambda wildcards: wildcards.internal_node,
+        keg_patch_file = KEG_PATCH_FILE,
         #job_dir = lambda wildcards: os.path.join(TMPDIR, wildcards.internal_node + "-align"),
         host_tmp_dir = lambda wildcards: os.path.join(TMPDIR, wildcards.internal_node + "-align"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
         job_tmp_dir = lambda wildcards: os.path.join("/tmp", wildcards.internal_node + "-align"), # This is the tmp dir in the container, which is bound to the host tmp dir
@@ -295,15 +275,10 @@ rule align:
             #"--defaultDisk", "450G"
         ];
 
-        # if params.gpu_opt:
-        #     cmd.append("--gpu");
+        if params.keg_patch_file:
+            cmd += ["--configFile", params.keg_patch_file];
 
         CACTUSLIB.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, wildcards.internal_node)
-    # shell:
-    #     """   
-    #     {params.path} cactus-align {params.job_tmp_dir} {params.cactus_file} {input.paf_file} {output} --root {params.node} --logInfo --retryCount 0 --workDir {params.work_dir} --maxCores {resources.cpus_per_task} --defaultDisk 450G {params.gpu_opt}
-    #     """
-    # Keeping shell around now for debugging purposes
 ## This rule runs cactus-align for every internal node
 ## Runtimes for turtles range from 4 to 16 hours with the above resources
 

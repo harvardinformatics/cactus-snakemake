@@ -16,12 +16,6 @@ cactus_path:
 # If you don't have it, set this to "download" and the pipeline will download it for you.
 # If you want to download a specific version, provide the version tag, e.g. v2.9.7
 
-cactus_gpu_path:
-# If using GPUs (i.e. if use_gpu: True), provide the path to the cactus GPU singularity container. 
-# If use_gpu is False, this will be ignored.
-# If you don't have it, set this to "download" and the pipeline will download it for you.
-# If you want to download a specific version, provide the version tag, e.g. v2.9.7
-
 input_hal: evolverMammals-out/evolverMammals.hal
 # The input HAL file. This is the output of a previous cactus run.
 
@@ -44,7 +38,7 @@ branch_length_from_new_genome: 0.075
 branch_length_from_old_root: 0.10
 # The branch length of the new branch connecting the old_root_name to new_root_name.
 
-output_dir: evolverMammals-add-out2/
+output_dir: evolverMammals-add-out/
 # The output directory for the snakemake pipeline. This should be the same as the outDir in cactus-prepare.
 # This directory will be created if it doesn't exist.
 

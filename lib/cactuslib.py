@@ -191,6 +191,8 @@ def pipelineSetup(config, args, version_flag, info_flag, config_flag, debug, wor
 
     if main_flag:
         top_level_executor = getExecutor(args, config);
+        if not os.path.isdir(".snakemake"):
+            os.makedirs(".snakemake");
         with open(".snakemake/top-level-executor.txt", "w") as f:
             f.write(top_level_executor);
     else:
@@ -330,7 +332,6 @@ def fetchLatestCactusTag(get_gpu: bool, main: bool, pad: int) -> str:
     pattern = re.compile(r'^v\d+\.\d+\.\d+(-gpu)?$')
     tags = [tag_info['name'] for tag_info in tags_info if pattern.match(tag_info['name'])]
 
-
     if get_gpu:
         # Filter GPU tags
         relevant_tags = [tag for tag in tags if '-gpu' in tag]
@@ -342,7 +343,7 @@ def fetchLatestCactusTag(get_gpu: bool, main: bool, pad: int) -> str:
         # Find the latest version tag based on numeric comparison
         latest_version_tag = max(relevant_tags, key=parseCactusVersion)
     except ValueError:
-        raise RuntimeError(f"No valid {'GPU' if use_gpu else 'non-GPU'} version tags found.")
+        raise RuntimeError(f"No valid {'GPU' if get_gpu else 'non-GPU'} version tags found.")
     
     # Verify that the result is a valid string that fits the pattern
     if not isinstance(latest_version_tag, str) or not pattern.match(latest_version_tag):
@@ -378,7 +379,7 @@ def downloadCactusImage(use_gpu: bool, main: bool, pad: int, tag: str="") -> Non
         if main:
             cactuslib_logger.info(f"Image {image_name} already exists. This image will be used.")
             cactuslib_logger.debug("=" * 83);
-        return os.path.abspath(image_name)
+        return os.path.abspath(image_name), tag
 
     else:
         # The singularity pull command with the output file name
@@ -391,51 +392,123 @@ def downloadCactusImage(use_gpu: bool, main: bool, pad: int, tag: str="") -> Non
         try:
             subprocess.run(command, check=True)
             cactuslib_logger.info(f"Successfully pulled {image_uri} to {os.path.abspath(image_name)}")
-            return os.path.abspath(image_name)
+            return os.path.abspath(image_name), tag
         except subprocess.CalledProcessError as e:
             cactuslib_logger.error(f"Failed to pull the image: {e}")
             sys.exit(1)
 
+#############################################################################
+
+def downloadKegPatch(output_dir: str, main: bool, tag: str) -> str:
+    dl_patch = False;
+    # if tag.startswith("v2.9.8"):
+    #     patch_url = "https://github.com/ComparativeGenomicsToolkit/cactus/releases/download/v2.9.8/config-v298-keg-patch.xml"
+    #     patch_output_file = os.path.join(output_dir, "config-v298-keg-patch.xml")
+    #     dl_patch = True
+    ## Version 3.0.0 of the cactus-snakemake pipeline will not be backwards compatible anyways, so not implementing
+    ## the patch for cactus v2.9.8
+    
+    if tag.startswith("v2.9.9"):
+        patch_url = "https://github.com/ComparativeGenomicsToolkit/cactus/releases/download/v2.9.9/config-v2.9.9-keg-patch.xml"
+        patch_output_file = os.path.join(output_dir, "config-v2.9.9-keg-patch.xml")
+        dl_patch = True    
+
+    if dl_patch:
+        if os.path.exists(patch_output_file):
+            if main:
+                cactuslib_logger.info(f"Patch file {patch_output_file} already exists. This patch will be used.")
+                cactuslib_logger.debug("=" * 83);
+            return os.path.abspath(patch_output_file)
+        
+        else:
+            command = ["curl", "-L", "-o", patch_output_file, patch_url]
+
+            cactuslib_logger.info(f"Version 2.9.9 patch download: {' '.join(command)}")
+            cactuslib_logger.debug("===================================================================================");
+
+            try:
+                subprocess.run(command, check=True)
+                return os.path.abspath(patch_output_file)
+            except subprocess.CalledProcessError as e:
+                cactuslib_logger.error(f"Failed to download the patch: {e}")
+                sys.exit(1)
+
+    else:
+        cactuslib_logger.error(f"KegAlign patch file is only available for version 2.9.9, but got {tag}.")
+        cactuslib_logger.error("Please use an earlier version of the pipeline to use a version of Cactus < 2.9.9.");
+        sys.exit(1);
+
 
 #############################################################################
 
-def parseCactusPath(cactus_cfg: str, use_gpu: bool, main: bool, pad: int) -> None:
+def parseCactusPath(cactus_cfg: str, use_gpu: bool, main: bool, tmpdir: str, pad: int) -> None:
     version_tag_pattern = r"^v?\d+(\.\d+)+$";
 
     if cactus_cfg == None or cactus_cfg.lower() in ["download", ""]:
-        cactus_image_path = downloadCactusImage(False, main, pad);
+        cactus_image_path, version_tag = downloadCactusImage(use_gpu, main, pad);
         # Download the latest cactus image if it is not specified in the config file
     elif re.match(version_tag_pattern, cactus_cfg) is not None:
-        cactus_image_path = downloadCactusImage(False, main, pad, cactus_cfg);
+        cactus_image_path, version_tag = downloadCactusImage(use_gpu, main, pad, cactus_cfg);
         # Pass a specific version tag to download
     else:
         cactus_image_path = cactus_cfg;
+        version_tag = "0.0.0";
         # The local path to the cactus image
 
         if not os.path.exists(cactus_image_path):
             cactuslib_logger.error(f"Could not find cactus image at {cactus_image_path}");
             sys.exit(1);
         # Check if the cactus image exists
-    ## Non-GPU image
 
-    if use_gpu:
-        if cactus_cfg == None or cactus_cfg.lower() in ["download", ""]:
-            cactus_gpu_image_path = downloadCactusImage(True, main, pad);
-            # Download the latest cactus image if it is not specified in the config file
-        elif re.match(version_tag_pattern, cactus_cfg) is not None:
-            cactus_gpu_image_path = downloadCactusImage(True, main, pad, cactus_cfg);
-            # Pass a specific version tag to download
-        else:
-            cactus_gpu_image_path = cactus_cfg;
-            # The local path to the cactus image
+    cactus_path_base = [
+        "singularity", "exec",
+        *(["--nv"] if use_gpu else []),
+        "--cleanenv"
+    ]
 
-            if not os.path.exists(cactus_gpu_image_path):
-                cactuslib_logger.error(f"Could not find cactus image at {cactus_gpu_image_path}");
-                sys.exit(1);
-            # Check if the cactus image exists
-    ## GPU image
-    else:
-        cactus_gpu_image_path = cactus_image_path;
+    cactus_path_tmp = cactus_path_base + ["--bind", f"{tmpdir}:/tmp", cactus_image_path]
+    cactus_path = cactus_path_base + [cactus_image_path]
+
+    return cactus_path, cactus_path_tmp, version_tag
+
+    # if not use_gpu:
+    #     if cactus_cfg == None or cactus_cfg.lower() in ["download", ""]:
+    #         cactus_image_path = downloadCactusImage(False, main, pad);
+    #         # Download the latest cactus image if it is not specified in the config file
+    #     elif re.match(version_tag_pattern, cactus_cfg) is not None:
+    #         cactus_image_path = downloadCactusImage(False, main, pad, cactus_cfg);
+    #         # Pass a specific version tag to download
+    #     else:
+    #         cactus_image_path = cactus_cfg;
+    #         # The local path to the cactus image
+
+    #         if not os.path.exists(cactus_image_path):
+    #             cactuslib_logger.error(f"Could not find cactus image at {cactus_image_path}");
+    #             sys.exit(1);
+    #         # Check if the cactus image exists
+
+    #     return cactus_image_path
+    # ## Non-GPU image
+
+    # else:
+    #     if cactus_cfg == None or cactus_cfg.lower() in ["download", ""]:
+    #         cactus_gpu_image_path = downloadCactusImage(True, main, pad);
+    #         # Download the latest cactus image if it is not specified in the config file
+    #     elif re.match(version_tag_pattern, cactus_cfg) is not None:
+    #         cactus_gpu_image_path = downloadCactusImage(True, main, pad, cactus_cfg);
+    #         # Pass a specific version tag to download
+    #     else:
+    #         cactus_gpu_image_path = cactus_cfg;
+    #         # The local path to the cactus image
+
+    #         if not os.path.exists(cactus_gpu_image_path):
+    #             cactuslib_logger.error(f"Could not find cactus image at {cactus_gpu_image_path}");
+    #             sys.exit(1);
+    #         # Check if the cactus image exists
+    #     return cactus_gpu_image_path;
+    # ## GPU image
+    # else:
+    #     cactus_gpu_image_path = cactus_image_path;
     # If not using GPU, set the cactus GPU image path to the cactus image path
 
 

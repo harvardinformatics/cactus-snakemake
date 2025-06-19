@@ -37,6 +37,7 @@ cactus/
 tests/*.sif
 tests/gpu-test.log
 tests/gpu-usage.log
+data/
 turtles/
 lepidoptera/
 

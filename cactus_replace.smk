@@ -50,14 +50,13 @@ getRuleResources = partial(CACTUSLIB.getResources, config, TOP_LEVEL_EXECUTOR);
 USE_GPU = config["use_gpu"]
 # Whether to use GPU or CPU cactus
 
-cactus_image_path, cactus_gpu_image_path = CACTUSLIB.parseCactusPath(config["cactus_path"], USE_GPU, MAIN, pad);
+CACTUS_PATH, CACTUS_PATH_TMP, VERSION_TAG = CACTUSLIB.parseCactusPath(config["cactus_path"], USE_GPU, MAIN, TMPDIR, pad);
 # Parse the cactus path from the config file
 
-CACTUS_PATH = ["singularity", "exec", "--cleanenv", cactus_image_path]
-CACTUS_PATH_TMP = ["singularity", "exec", "--cleanenv", "--bind", TMPDIR + ":/tmp", cactus_image_path]
-
-CACTUS_GPU_PATH = ["singularity", "exec", "--nv", "--cleanenv", cactus_gpu_image_path]
-CACTUS_GPU_PATH_TMP = ["singularity", "exec", "--nv", "--cleanenv", "--bind", TMPDIR + ":/tmp", cactus_gpu_image_path]
+KEG_PATCH_FILE = None
+if USE_GPU:
+    KEG_PATCH_FILE = CACTUSLIB.downloadKegPatch(OUTPUT_DIR, MAIN, VERSION_TAG)
+# Download the KEG patch file if using GPU cactus, and set the path to it
 # The path to the cactus image with and without a tmpdir binding
 
 #############################################################################
@@ -178,9 +177,6 @@ rule preprocess:
             
         ];
 
-        # if params.gpu_opt:
-        #     cmd.append("--gpu");
-
         CACTUSLIB.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, params.replace_name)
         # When not requesting all CPU on a node: toil.batchSystems.abstractBatchSystem.InsufficientSystemResources: The job LastzRepeatMaskJob is requesting 64.0 cores, more than the maximum of 32 cores that SingleMachineBatchSystem was configured with, or enforced by --maxCores.Scale is set to 1.0.
 ## This rule runs cactus-preprocess for every genome (tip in the tree), which does some masking
@@ -194,7 +190,7 @@ rule blast:
     output:
         paf_file = os.path.join(OUTPUT_DIR, f"{ANCNAME}.paf")
     params:
-        path = CACTUS_GPU_PATH_TMP, # Note that if USE_GPU is False, this will be the same as CACTUS_PATH_TMP
+        path = CACTUS_PATH_TMP,
         cactus_file = os.path.join(OUTPUT_DIR, "seq_file.out"),
         node = ANCNAME,
         job_tmp_dir = os.path.join("/tmp", f"{ANCNAME}-blast"), # This is the tmp dir in the container, which is bound to the host tmp dir
@@ -238,6 +234,7 @@ rule align:
         path = CACTUS_PATH_TMP,
         cactus_file = os.path.join(OUTPUT_DIR, "seq_file.out"),
         node = ANCNAME,
+        keg_patch_file = KEG_PATCH_FILE,
         job_tmp_dir = os.path.join("/tmp", f"{ANCNAME}-align"), # This is the tmp dir in the container, which is bound to the host tmp dir
         host_tmp_dir = os.path.join(TMPDIR, f"{ANCNAME}-align"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
         work_dir = TMPDIR,
@@ -259,6 +256,9 @@ rule align:
             "--includeRoot",
             "--maxCores", str(resources.cpus_per_task),
         ];
+
+        if params.keg_patch_file:
+            cmd += ["--configFile", params.keg_patch_file];
 
         CACTUSLIB.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, params.node)
 ## This rule runs cactus-align for every internal node
