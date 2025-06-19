@@ -3,7 +3,7 @@
 </div>
 
 <div align="center">
-  <img src="https://zenodo.org/badge/576319135.svg"/>
+  <a href="https://doi.org/10.5281/zenodo.15699752"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.15699752.svg" alt="DOI"></a>
 </div>
 
 ### These pipelines facilitate the running of the [Cactus whole genome alignment tool](https://github.com/ComparativeGenomicsToolkit/cactus) efficiently on SLURM (and possibly other) clusters.
