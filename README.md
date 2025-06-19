@@ -70,6 +70,13 @@ Several meta config options exist across pipelines as pseudo-command line flags
 
 If you use this software, please cite:
 
+##### Latest version
+
+Thomas, G. (2025). Snakemake workflows for Cactus (Version 3.0.0) [Computer software]. 
+[https://doi.org/10.5281/zenodo.15699752](https://doi.org/10.5281/zenodo.15699752)
+
+##### v2.1.0
+
 Thomas, G. (2025). Snakemake workflows for Cactus (Version 2.1.0) [Computer software]. 
 [https://doi.org/10.5281/zenodo.15596990](https://doi.org/10.5281/zenodo.15596989)
 
