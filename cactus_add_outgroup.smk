@@ -50,15 +50,13 @@ getRuleResources = partial(CACTUSLIB.getResources, config, TOP_LEVEL_EXECUTOR);
 USE_GPU = config["use_gpu"]
 # Whether to use GPU or CPU cactus
 
-cactus_image_path, cactus_gpu_image_path = CACTUSLIB.parseCactusPath(config["cactus_path"], USE_GPU, MAIN, pad);
+CACTUS_PATH, CACTUS_PATH_TMP, VERSION_TAG = CACTUSLIB.parseCactusPath(config["cactus_path"], USE_GPU, MAIN, TMPDIR, pad);
 # Parse the cactus path from the config file
 
-CACTUS_PATH = ["singularity", "exec", "--cleanenv", cactus_image_path]
-CACTUS_PATH_TMP = ["singularity", "exec", "--cleanenv", "--bind", TMPDIR + ":/tmp", cactus_image_path]
-
-CACTUS_GPU_PATH = ["singularity", "exec", "--nv", "--cleanenv", cactus_gpu_image_path]
-CACTUS_GPU_PATH_TMP = ["singularity", "exec", "--nv", "--cleanenv", "--bind", TMPDIR + ":/tmp", cactus_gpu_image_path]
-# The path to the cactus image with and without a tmpdir binding
+KEG_PATCH_FILE = None
+if USE_GPU:
+    KEG_PATCH_FILE = CACTUSLIB.downloadKegPatch(OUTPUT_DIR, MAIN, VERSION_TAG)
+# Download the KEG patch file if using GPU cactus, and set the path to it
 
 #############################################################################
 # Input files and output paths
@@ -234,7 +232,7 @@ rule blast:
     output:
         paf_file = NEW_ROOT_PAF
     params:
-        path = CACTUS_GPU_PATH_TMP, # Note that if USE_GPU is False, this will be the same as CACTUS_PATH_TMP
+        path = CACTUS_PATH_TMP, # Note that if USE_GPU is False, this will be the same as CACTUS_PATH_TMP
         node = NEW_ROOT,
         post_in = POST_INPUT_FILE, # Note this has to be a param instead of an input or else it will retrigger each time the pipeline is run (since it is created during preprocessing)
         job_tmp_dir = os.path.join("/tmp", f"{NEW_ROOT}-blast"), # This is the tmp dir in the container, which is bound to the host tmp dir
@@ -277,6 +275,7 @@ rule align:
         path = CACTUS_PATH_TMP,
         post_in = POST_INPUT_FILE, # Note this has to be a param instead of an input or else it will retrigger each time the pipeline is run (since it is created during preprocessing)
         node = NEW_ROOT,
+        keg_patch_file = KEG_PATCH_FILE,
         job_tmp_dir = os.path.join("/tmp", f"{NEW_ROOT}-align"), # This is the tmp dir in the container, which is bound to the host tmp dir
         host_tmp_dir = os.path.join(TMPDIR, f"{NEW_ROOT}-align"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
         work_dir = TMPDIR,
@@ -297,6 +296,9 @@ rule align:
             "--retryCount", "0",
             "--maxCores", str(resources.cpus_per_task),
         ];
+
+        if params.keg_patch_file:
+            cmd += ["--configFile", params.keg_patch_file];
 
         CACTUSLIB.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, params.node)
 ## This rule runs cactus-align for every internal node

@@ -17,14 +17,7 @@ cactus_path:
 # File path or version string (e.g. 2.9.5) or "download".
 # Provide the path to the cactus singularity container. This is needed whether use_gpu is True or False.
 # If you don't have it, set this to "download" and the pipeline will download it for you.
-# If you want to download a specific version, provide the version tag, e.g. v2.9.7
-
-cactus_gpu_path:
-# File path or version string (e.g. 2.9.5) or "download".
-# If using GPUs (i.e. if use_gpu: True), provide the path to the cactus GPU singularity container. 
-# If use_gpu is False, this will be ignored.
-# If you don't have it, set this to "download" and the pipeline will download it for you.
-# If you want to download a specific version, provide the version tag, e.g. v2.9.7
+# If you want to download a specific version, provide the version tag, e.g. v2.9.9
 
 input_hal:
 # File path.

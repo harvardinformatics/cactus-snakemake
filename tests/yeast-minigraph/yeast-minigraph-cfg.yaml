@@ -29,7 +29,7 @@ cactus_path: download
 input_file: yeastPangenome-local.txt
 # File containing a list of sample IDs and genome files.
 
-output_dir: yeastPangenome-out2/
+output_dir: yeastPangenome-out/
 # The desired output directory for the snakemake pipeline. This directory will be created if it doesn't exist.
 # This directory will be created if it doesn't exist.
 

@@ -46,12 +46,8 @@ getRuleResources = partial(CACTUSLIB.getResources, config, TOP_LEVEL_EXECUTOR);
 #############################################################################
 # Cactus setup
 
-cactus_image_path, cactus_gpu_image_path = CACTUSLIB.parseCactusPath(config["cactus_path"], False, MAIN, pad);
+CACTUS_PATH, CACTUS_PATH_TMP, VERSION_TAG = CACTUSLIB.parseCactusPath(config["cactus_path"], False, MAIN, TMPDIR, pad);
 # Parse the cactus path from the config file
-
-CACTUS_PATH = ["singularity", "exec", "--nv", "--cleanenv", cactus_image_path]
-CACTUS_PATH_TMP = ["singularity", "exec", "--nv", "--cleanenv", "--bind", f"{TMPDIR}:/tmp", cactus_image_path]
-# The path to the cactus image with and without a tmpdir binding
 
 #############################################################################
 # Input files and output paths
@@ -250,11 +246,6 @@ rule graphmap:
             "--reference", params.ref_genome
         ];
         CACTUSLIB.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name);
-    # shell:
-    #     """
-    #     {params.path} cactus-graphmap {params.job_tmp_dir} {input.cactus_input} {input.sv_gfa} {output.paf} --outputFasta {output.fasta} --reference {params.ref_genome}
-    #     """
-    # Keeping shell around now for debugging purposes
 
 ####################
 
@@ -290,11 +281,6 @@ checkpoint split:
             "--reference", params.ref_genome
         ];
         CACTUSLIB.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name);
-    # shell:
-    #     """
-    #     {params.path} cactus-graphmap-split {params.job_tmp_dir} {input.cactus_input} {input.sv_gfa} {input.paf} --outDir {output.chroms_dir} --reference {params.ref_genome}
-    #     """
-    # # Keeping shell around now for debugging purposes
 
 ####################
 
@@ -330,11 +316,6 @@ rule align:
         #     cmd.append("--gpu");
 
         CACTUSLIB.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name, wildcards.chrom);
-    # shell:
-    #     """
-    #     {params.path} cactus-align {params.job_tmp_dir} {input.chrom_seqfile} {input.chrom_paf} {output.chrom_hal} --pangenome --reference {params.ref_genome} --outVG {params.gpu_opt}
-    #     """
-    # Keeping shell around now for debugging purposes
 
 ####################
 
@@ -407,10 +388,5 @@ rule join:
             "--giraffe", "clip"
         ];
         CACTUSLIB.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name);
-    # shell:
-    #     """
-    #     {params.path} cactus-graphmap-join {params.job_tmp_dir} --vg {params.chrom_haldir}/*.vg --hal {params.chrom_haldir}/*.hal --outDir {output.join_outdir} --outName {params.prefix} --reference {params.ref_genome} --vcf --giraffe clip
-    #     """
-    # Keeping shell around now for debugging purposes
 
 #############################################################################

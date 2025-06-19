@@ -17,16 +17,10 @@ cactus_path:
 # If you don't have it, set this to "download" and the pipeline will download it for you.
 # If you want to download a specific version, provide the version tag, e.g. v2.9.7
 
-cactus_gpu_path:
-# If using GPUs (i.e. if use_gpu: True), provide the path to the cactus GPU singularity container. 
-# If use_gpu is False, this will be ignored.
-# If you don't have it, set this to "download" and the pipeline will download it for you.
-# If you want to download a specific version, provide the version tag, e.g. v2.9.7
-
 input_file: evolverMammals.txt
 # File containing rooted Newick tree on the first line, and a list of genome files on the following lines.
 
-output_dir: evolverMammals-out2/
+output_dir: evolverMammals-out/
 # The output directory for the snakemake pipeline. This should be the same as the outDir in cactus-prepare.
 # This directory will be created if it doesn't exist.
 
