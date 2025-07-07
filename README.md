@@ -10,15 +10,15 @@
 
 ## Tutorials available on the [FAS Informatics website](https://informatics.fas.harvard.edu/):
 
-### <[Whole genome alignment with Progressive Cactus](https://informatics.fas.harvard.edu/resources/Tutorials/whole-genome-alignment-cactus/)>
+### <[Whole genome alignment with Progressive Cactus](https://informatics.fas.harvard.edu/resources/tutorials/whole-genome-alignment-cactus/)>
 
-#### <[Adding a genome to a whole genome alignment](https://informatics.fas.harvard.edu/resources/Tutorials/add-to-whole-genome-alignment-cactus/)>
+#### <[Adding a genome to a whole genome alignment](https://informatics.fas.harvard.edu/resources/tutorials/add-to-whole-genome-alignment-cactus/)>
 
-#### <[Adding an outgroup to a whole genome alignment](https://informatics.fas.harvard.edu/resources/Tutorials/add-outgroup-to-whole-genome-alignment-cactus/)>
+#### <[Adding an outgroup to a whole genome alignment](https://informatics.fas.harvard.edu/resources/tutorials/add-outgroup-to-whole-genome-alignment-cactus/)>
 
-#### <[Replacing a genome in a whole genome alignment](https://informatics.fas.harvard.edu/resources/Tutorials/replace-genome-whole-genome-alignment-cactus/)>
+#### <[Replacing a genome in a whole genome alignment](https://informatics.fas.harvard.edu/resources/tutorials/replace-genome-whole-genome-alignment-cactus/)>
 
-### <[Pangenome inference with Minigraph-Cactus](https://informatics.fas.harvard.edu/resources/Tutorials/pangenome-cactus-minigraph/)>
+### <[Pangenome inference with Minigraph-Cactus](https://informatics.fas.harvard.edu/resources/tutorials/pangenome-cactus-minigraph/)>
 
 > ⚠️ **Important!** cactus-snakemake v3.0.0 and later requires Cactus v2.9.9 or later. 
 >
