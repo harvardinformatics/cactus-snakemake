@@ -54,8 +54,13 @@ CACTUS_PATH, CACTUS_PATH_TMP, VERSION_TAG = CACTUSLIB.parseCactusPath(config["ca
 # Parse the cactus path from the config file
 
 KEG_PATCH_FILE = None
+
 if USE_GPU:
-    KEG_PATCH_FILE = CACTUSLIB.downloadKegPatch(OUTPUT_DIR, MAIN, VERSION_TAG)
+    # Normalize tag (strip leading "v"), grab the major version before the first dot,
+    # ensure it's numeric, and check if it's less than 3.
+    tag_major = str(VERSION_TAG).lstrip('v').split('.', 1)[0]
+    if tag_major.isdigit() and int(tag_major) < 3:
+        KEG_PATCH_FILE = CACTUSLIB.downloadKegPatch(OUTPUT_DIR, MAIN, VERSION_TAG)
 # Download the KEG patch file if using GPU cactus, and set the path to it
 
 #############################################################################
@@ -289,7 +294,7 @@ rule convert:
         hal_file = os.path.join(OUTPUT_DIR, "{internal_node}.hal")
         #lambda wildcards: [ os.path.join(output_dir, input_file) for input_file in internals[wildcards.internal_node]['hal-inputs'] ][0]
     output:
-        fa_file = os.path.join(OUTPUT_DIR, "{internal_node}.fa")
+        fa_file = os.path.join(OUTPUT_DIR, "{internal_node}.fa.gz")
     params:
         path = CACTUS_PATH,
         node = lambda wildcards: wildcards.internal_node,
@@ -315,7 +320,7 @@ rule convert:
 
 rule copy_hal:
     input:
-        all_hals = expand(os.path.join(OUTPUT_DIR, "{internal_node}.fa"), internal_node=internals),
+        all_hals = expand(os.path.join(OUTPUT_DIR, "{internal_node}.fa.gz"), internal_node=internals),
         anc_hal = os.path.join(OUTPUT_DIR, ROOT_NAME + ".hal")
     output:
         final_hal = OUTPUT_HAL
@@ -424,7 +429,7 @@ rule maf:
             "--chunkSize", str(params.chunk_size),
             "--batchCount", str(resources.cpus_per_task),
             "--filterGapCausingDupes",
-            "--dupeMode", "single"
+            "--outType", "single"
         ];
 
         CACTUSLIB.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, fmode="a+");

@@ -1,6 +1,6 @@
 (simHuman_chr6:0.144018,(mr:0.171974,simGorilla:0.075)AncGorilla:0.1)Anc1;
-mr	/n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/evolverMammals-update-out/mr.fa
-simGorilla	/n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/evolverMammals-update-out/simGorilla.chr6
-simHuman_chr6	/n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/evolverMammals-update-out/simHuman_chr6.fa
+mr	/n/holylfs05/LABS/informatics/Lab/projects/gwct/dev/cactus-snakemake/tests/evolverMammals/evolverMammals-update-out/mr.fa
+simGorilla	/n/holylfs05/LABS/informatics/Lab/projects/gwct/dev/cactus-snakemake/tests/evolverMammals/evolverMammals-update-out/simGorilla.chr6
+simHuman_chr6	/n/holylfs05/LABS/informatics/Lab/projects/gwct/dev/cactus-snakemake/tests/evolverMammals/evolverMammals-update-out/simHuman_chr6.fa
 Anc1	evolverMammals-update-out/Anc1.fa
-AncGorilla	/n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/evolverMammals-update-out/AncGorilla.fa
+AncGorilla	/n/holylfs05/LABS/informatics/Lab/projects/gwct/dev/cactus-snakemake/tests/evolverMammals/evolverMammals-update-out/AncGorilla.fa.gz

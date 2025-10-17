@@ -1,1 +1,1 @@
-simHuman_chr6	evolverMammals-seq/simGorilla.chr6	0.10
+simGorilla_chr6	evolverMammals-seq/simGorilla.chr6	0.10

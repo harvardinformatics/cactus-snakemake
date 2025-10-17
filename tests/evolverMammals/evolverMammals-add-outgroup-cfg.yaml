@@ -51,7 +51,7 @@ maf_reference: simHuman_chr6
 tmp_dir: /n/holylfs05/LABS/informatics/Users/gthomas/tmp/evolverMammals/
 # A temporary directory for snakemake and cactus to use. Should have lots of space.
 
-use_gpu: False
+use_gpu: True
 # Whether or not to use the GPU version of cactus.
 # If you don't have a GPU partition, set this to False.
 # Either way, be sure to set the correct values for the partitions and GPUs below.
@@ -73,7 +73,7 @@ use_gpu: False
 
 rule_resources:
   default:
-    partition:
+    partition: shared
     mem_mb: 4000
     cpus: 1
     time: 60  
@@ -91,7 +91,7 @@ rule_resources:
     time: 30
 
   blast:
-    partition: # If use_gpu is True, this must be a partition with GPUs
+    partition: gpu_test # If use_gpu is True, this must be a partition with GPUs
     mem_mb: 25000
     cpus: 24
     gpus: 1           # If use_gpu is False, this will be ignored

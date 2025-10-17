@@ -57,7 +57,11 @@ CACTUS_PATH, CACTUS_PATH_TMP, VERSION_TAG = CACTUSLIB.parseCactusPath(config["ca
 
 KEG_PATCH_FILE = None
 if USE_GPU:
-    KEG_PATCH_FILE = CACTUSLIB.downloadKegPatch(OUTPUT_DIR, MAIN, VERSION_TAG)
+    # Normalize tag (strip leading "v"), grab the major version before the first dot,
+    # ensure it's numeric, and check if it's less than 3.
+    tag_major = str(VERSION_TAG).lstrip('v').split('.', 1)[0]
+    if tag_major.isdigit() and int(tag_major) < 3:
+        KEG_PATCH_FILE = CACTUSLIB.downloadKegPatch(OUTPUT_DIR, MAIN, VERSION_TAG)
 # Download the KEG patch file if using GPU cactus, and set the path to it
 
 #############################################################################
@@ -137,7 +141,7 @@ rounds = { ANCNAME : { "name" : ANCNAME,
                             "blast-input" : NEW_GENOME_FILE,
                             "blast-output" : os.path.join(OUTPUT_DIR, ANCNAME + ".paf"), 
                             "align-output" : os.path.join(OUTPUT_DIR, ANCNAME + ".hal"),
-                            "convert-output" : os.path.join(OUTPUT_DIR, ANCNAME + ".fa") },
+                            "convert-output" : os.path.join(OUTPUT_DIR, ANCNAME + ".fa.gz") },
             PARENT : { "name" : PARENT, 
                         "blast-input" : [os.path.join(OUTPUT_DIR, ANCNAME + ".hal"), os.path.join(OUTPUT_DIR, ANCNAME + ".fa")], 
                         # This technically also needs the other descendant seq file, but it should always be there
@@ -474,7 +478,7 @@ rule maf:
             "--chunkSize", str(params.chunk_size),
             "--batchCount", str(resources.cpus_per_task),
             "--filterGapCausingDupes",
-            "--dupeMode", "single"
+            "--outType", "single"
         ];
 
         CACTUSLIB.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, fmode="a+");
