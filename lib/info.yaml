@@ -1,9 +1,9 @@
-version: 3.0.0
+version: 3.1.0
 releasedate-major: 2025-06-19
-releasedate-minor: 2025-06-19
+releasedate-minor: 2025-10-28
 releasedate-patch: 2025-06-19
-latest-commit-date: 2025-06-19
-latest-commit-msg: "updating readme for [v3.0.0]"
+latest-commit-date: 2025-10-28
+latest-commit-msg: "trigger version script [bump-minor]"
 doi:
 link: https://github.com/harvardinformatics/cactus-snakemake
 #github: https://github.com/harvardinformatics/cactus-snakemake
