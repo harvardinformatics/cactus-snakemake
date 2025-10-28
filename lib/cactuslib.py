@@ -434,7 +434,7 @@ def downloadKegPatch(output_dir: str, main: bool, tag: str) -> str:
                 sys.exit(1)
 
     else:
-        cactuslib_logger.error(f"KegAlign patch file is only available for version 2.9.9, but got {tag}.")
+        cactuslib_logger.error(f"KegAlign patch file is only available for Cactus version 2.9.9, but got {tag}.")
         cactuslib_logger.error("Please use an earlier version of the pipeline to use a version of Cactus < 2.9.9.");
         sys.exit(1);
 

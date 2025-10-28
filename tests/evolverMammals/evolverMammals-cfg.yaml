@@ -67,38 +67,38 @@ rule_resources:
     time: 30
 
   blast:
-    partition:  # If use_gpu is True, this must be a partition with GPUs
+    partition: shared  # If use_gpu is True, this must be a partition with GPUs
     mem_mb: 50000
     cpus: 24
     gpus: 1         # If use_gpu is False, this will be ignored
     time: 120
 
   align:
-    partition:
+    partition: shared
     mem_mb: 25000
     cpus: 24
     time: 120
 
   convert:
-    partition:
+    partition: shared
     mem_mb: 8000
     cpus: 8
     time: 30
 
   copy_hal:
-    partition:
+    partition: shared
     mem_mb: 8000
     cpus: 1
     time: 30
 
   append:
-    partition:
+    partition: shared
     mem_mb: 8000
     cpus: 8
     time: 30
 
   maf:
-    partition:
+    partition: shared
     mem_mb: 25000
     cpus: 8
     time: 60

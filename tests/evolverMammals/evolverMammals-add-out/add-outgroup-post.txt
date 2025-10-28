@@ -1,4 +1,4 @@
 (Anc0:0.1,simGorilla:0.075)newRoot;
-simGorilla	/n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/evolverMammals-add-out/simGorilla.chr6
-Anc0	/n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/evolverMammals-add-out/Anc0.fa
-newRoot	/n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/evolverMammals-add-out/newRoot.fa
+simGorilla	/n/holylfs05/LABS/informatics/Lab/projects/gwct/dev/cactus-snakemake/tests/evolverMammals/evolverMammals-add-out/simGorilla.chr6
+Anc0	/n/holylfs05/LABS/informatics/Lab/projects/gwct/dev/cactus-snakemake/tests/evolverMammals/evolverMammals-add-out/Anc0.fa
+newRoot	/n/holylfs05/LABS/informatics/Lab/projects/gwct/dev/cactus-snakemake/tests/evolverMammals/evolverMammals-add-out/newRoot.fa

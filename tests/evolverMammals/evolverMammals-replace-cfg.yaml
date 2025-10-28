@@ -25,6 +25,9 @@ input_hal: evolverMammals-out/evolverMammals.hal
 replace: simHuman_chr6
 # The genome in the input hal file to be replaced
 
+new_genome_name: simGorilla_chr6
+# The name of the new genome to be added to the HAL file.
+
 new_genome_fasta: evolverMammals-seq/simGorilla.chr6
 # The path to the genome file to be added to the HAL file.
 
@@ -40,7 +43,7 @@ overwrite_original_hal: False
 final_prefix: evolverMammals-replace
 # The prefix for the final output files. This will be used to name the final HAL file and the final MAF files.
 
-maf_reference: simHuman_chr6
+maf_reference: simGorilla_chr6
 # The desired reference genome for the MAF files.
 
 tmp_dir: /n/holylfs05/LABS/informatics/Users/gthomas/tmp/evolverMammals/
@@ -68,7 +71,7 @@ use_gpu: False
 
 rule_resources:
   default:
-    partition:
+    partition: shared
     mem_mb: 4000
     cpus: 1
     time: 60  
@@ -80,7 +83,7 @@ rule_resources:
     time: 30
 
   blast:
-    partition:  # If use_gpu is True, this must be a partition with GPUs
+    partition: shared  # If use_gpu is True, this must be a partition with GPUs
     mem_mb: 25000
     cpus: 24
     gpus: 1           # If use_gpu is False, this will be ignored

@@ -73,7 +73,7 @@ use_gpu: False
 
 rule_resources:
   default:
-    partition:
+    partition: shared
     mem_mb: 4000
     cpus: 1
     time: 60  
@@ -91,7 +91,7 @@ rule_resources:
     time: 30
 
   blast:
-    partition: # If use_gpu is True, this must be a partition with GPUs
+    partition: shared # If use_gpu is True, this must be a partition with GPUs
     mem_mb: 25000
     cpus: 24
     gpus: 1           # If use_gpu is False, this will be ignored

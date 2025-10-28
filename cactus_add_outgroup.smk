@@ -55,7 +55,11 @@ CACTUS_PATH, CACTUS_PATH_TMP, VERSION_TAG = CACTUSLIB.parseCactusPath(config["ca
 
 KEG_PATCH_FILE = None
 if USE_GPU:
-    KEG_PATCH_FILE = CACTUSLIB.downloadKegPatch(OUTPUT_DIR, MAIN, VERSION_TAG)
+    # Normalize tag (strip leading "v"), grab the major version before the first dot,
+    # ensure it's numeric, and check if it's less than 3.
+    tag_major = str(VERSION_TAG).lstrip('v').split('.', 1)[0]
+    if tag_major.isdigit() and int(tag_major) < 3:
+        KEG_PATCH_FILE = CACTUSLIB.downloadKegPatch(OUTPUT_DIR, MAIN, VERSION_TAG)
 # Download the KEG patch file if using GPU cactus, and set the path to it
 
 #############################################################################
@@ -252,6 +256,7 @@ rule blast:
             params.post_in,
             output.paf_file,
             "--root", params.node,
+            #"--includeRoot",
             "--logInfo",
             "--retryCount", "0",
             "--lastzCores", str(resources.cpus_per_task)
@@ -292,6 +297,7 @@ rule align:
             input.paf_file,
             output.hal_file,
             "--root", params.node,
+            #"--includeRoot",
             "--logInfo",
             "--retryCount", "0",
             "--maxCores", str(resources.cpus_per_task),
@@ -382,7 +388,7 @@ rule maf:
             "--chunkSize", str(params.chunk_size),
             "--batchCount", str(resources.cpus_per_task),
             "--filterGapCausingDupes",
-            "--dupeMode", "single"
+            "--outType", "single"
         ];
 
         CACTUSLIB.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, fmode="a+");
