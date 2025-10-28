@@ -31,6 +31,10 @@ new_genome_fasta:
 # File path.
 # The path to the genome file to be added to the HAL file.
 
+new_genome_name: simGorilla_chr6
+# String.
+# The name of the new genome to be added to the HAL file.
+
 output_dir:
 # Directory path.
 # The output directory for the snakemake pipeline. This should be the same as the outDir in cactus-prepare.

@@ -68,12 +68,13 @@ if USE_GPU:
 
 UPDATE_TYPE = "replace";
 REPLACE_NAME  = config["replace"];
+NEW_GENOME_NAME = config["new_genome_name"];
 GENOME_FASTA = config["new_genome_fasta"];
 # The update type and genome to replace
 
 INPUT_FILE = os.path.join(OUTPUT_DIR, "cactus-replace-input.txt");
 if MAIN:
-    UPDATELIB.createReplaceInputFile(INPUT_FILE, REPLACE_NAME, GENOME_FASTA, OUTPUT_DIR, pad);
+    UPDATELIB.createReplaceInputFile(INPUT_FILE, NEW_GENOME_NAME, GENOME_FASTA, OUTPUT_DIR, pad);
 # The cactus input file used by cactus-update-prepare
 # The cactus input file used to generate the config file with cactus-prepare
 
@@ -118,7 +119,7 @@ CACTUS_FILE = os.path.join(OUTPUT_DIR, os.path.basename(INPUT_FILE));
 #############################################################################
 # Reading files
 
-NEW_GENOME_FILE, ANCNAME = UPDATELIB.getGenomesToAddReplace(os.path.join(OUTPUT_DIR, "seq_file.out"), REPLACE_NAME);
+NEW_GENOME_FILE, ANCNAME = UPDATELIB.getGenomesToAddReplace(os.path.join(OUTPUT_DIR, "seq_file.out"), NEW_GENOME_NAME);
 # Get the genomes to add from the input file
 
 CLOG.debug(SO(f"New genome file will be at", pad) + f"{NEW_GENOME_FILE}");
@@ -160,9 +161,9 @@ rule preprocess:
         replacement_fa = NEW_GENOME_FILE
     params:
         path = CACTUS_PATH_TMP,
-        replace_name = REPLACE_NAME,
-        job_tmp_dir = os.path.join("/tmp", f"{REPLACE_NAME}-preprocess"), # This is the tmp dir in the container, which is bound to the host tmp dir
-        host_tmp_dir = os.path.join(TMPDIR, f"{REPLACE_NAME}-preprocess"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
+        new_genome_name = NEW_GENOME_NAME,
+        job_tmp_dir = os.path.join("/tmp", f"{NEW_GENOME_NAME}-preprocess"), # This is the tmp dir in the container, which is bound to the host tmp dir
+        host_tmp_dir = os.path.join(TMPDIR, f"{NEW_GENOME_NAME}-preprocess"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
         rule_name = "preprocess"
     log:
         job_log = os.path.join(LOG_DIR, f"{os.path.basename(NEW_GENOME_FILE)}.preprocess.log")
@@ -174,14 +175,14 @@ rule preprocess:
             params.job_tmp_dir,
             input.seq_in,
             input.seq_out,
-            "--inputNames", params.replace_name,
+            "--inputNames", params.new_genome_name,
             "--logInfo",
             "--retryCount", "0",
             "--maxCores", str(resources.cpus_per_task),
             
         ];
 
-        CACTUSLIB.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, params.replace_name)
+        CACTUSLIB.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, params.new_genome_name)
         # When not requesting all CPU on a node: toil.batchSystems.abstractBatchSystem.InsufficientSystemResources: The job LastzRepeatMaskJob is requesting 64.0 cores, more than the maximum of 32 cores that SingleMachineBatchSystem was configured with, or enforced by --maxCores.Scale is set to 1.0.
 ## This rule runs cactus-preprocess for every genome (tip in the tree), which does some masking
 ## Runtimes for turtles range from 8 to 15 minutes with the above resoureces

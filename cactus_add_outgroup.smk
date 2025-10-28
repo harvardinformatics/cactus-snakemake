@@ -256,6 +256,7 @@ rule blast:
             params.post_in,
             output.paf_file,
             "--root", params.node,
+            #"--includeRoot",
             "--logInfo",
             "--retryCount", "0",
             "--lastzCores", str(resources.cpus_per_task)
@@ -296,6 +297,7 @@ rule align:
             input.paf_file,
             output.hal_file,
             "--root", params.node,
+            #"--includeRoot",
             "--logInfo",
             "--retryCount", "0",
             "--maxCores", str(resources.cpus_per_task),

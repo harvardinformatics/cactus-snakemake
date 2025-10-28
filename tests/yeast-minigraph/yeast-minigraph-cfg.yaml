@@ -57,7 +57,7 @@ tmp_dir: /n/holylfs05/LABS/informatics/Users/gthomas/tmp/yeastPangenome/
 
 rule_resources:
   default:
-    partition:
+    partition: shared
     mem_mb: 25000
     cpus: 1
     time: 60  
