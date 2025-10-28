@@ -3,7 +3,7 @@
 </div>
 
 <div align="center">
-  <a href="https://doi.org/10.5281/zenodo.15699752"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.15699752.svg" alt="DOI"></a>
+  <a href="https://doi.org/10.5281/zenodo.17467905"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.17467905.svg" alt="DOI"></a>
 </div>
 
 ### These pipelines facilitate the running of the [Cactus whole genome alignment tool](https://github.com/ComparativeGenomicsToolkit/cactus) efficiently on SLURM (and possibly other) clusters.
@@ -71,6 +71,11 @@ Several meta config options exist across pipelines as pseudo-command line flags
 If you use this software, please cite:
 
 ##### Latest version
+
+Thomas, G. (2025). Snakemake workflows for Cactus (Version 3.1.0) [Computer software]. 
+[https://doi.org/10.5281/zenodo.17467905](https://doi.org/10.5281/zenodo.17467905)
+
+##### v3.0.0
 
 Thomas, G. (2025). Snakemake workflows for Cactus (Version 3.0.0) [Computer software]. 
 [https://doi.org/10.5281/zenodo.15699752](https://doi.org/10.5281/zenodo.15699752)
