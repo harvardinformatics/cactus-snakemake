@@ -26,6 +26,7 @@ version_flag = config.get("version", False);
 info_flag = config.get("info", False);
 debug = config.get("debug", False);
 prep_only = config.get("prep", False);
+skip_prepare = config.get("skip_prepare", False);
 #debug = True;
 # A hacky way to get some custom command line arguments for the pipeline
 # These just control preprocessing flags that stop the pipeline early anyways
@@ -108,7 +109,7 @@ TOP_BL = "";
 #############################################################################
 # cactus-prepare
 
-if MAIN:
+if MAIN and not skip_prepare:
     SEQ_FILES = UPDATELIB.runCactusUpdatePrepare(INPUT_HAL, INPUT_FILE, CACTUS_PATH, OUTPUT_DIR, UPDATE_TYPE, USE_GPU, LOG_DIR, DRY_RUN, REPLACE_NAME, CHILD, ANCNAME, TOP_BL);
 # if DRY_RUN:
 #     CACTUS_FILE = os.path.join("/tmp/", "cactus-update-smk-dryrun", os.path.basename(INPUT_FILE));
@@ -207,7 +208,8 @@ rule blast:
         job_log = os.path.join(LOG_DIR, f"{ANCNAME}.blast.log")
     resources:
         **getRuleResources("blast"),
-        slurm_extra = f"'--gres=gpu:{config['rule_resources']['blast']['gpus']}'" if USE_GPU else ""
+        slurm_extra = "--gpus-per-task=" + str(config['rule_resources']['blast']['gpus']) if USE_GPU else "",
+        tasks_per_gpu = 0
     run:
         cmd = params.path + [
             "cactus-blast",

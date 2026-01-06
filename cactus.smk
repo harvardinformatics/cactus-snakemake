@@ -131,6 +131,10 @@ preprocess_out = [ tips[name]['output'] for name in tips ];
 CLOG.debug(f"Preprocess output files: {preprocess_out}");
 # The expected output from the preprocess step for each genome
 
+# Build a regex of allowed tip output names to constrain the preprocess wildcard
+import re as _re_for_wildcard
+allowed_tips_regex = "|".join([_re_for_wildcard.escape(x) for x in preprocess_out]) if preprocess_out else ""
+
 if LOG_LEVEL == "debug":
     CLOG.debug("EXITING BEFORE RULES. DEBUG MODE.");
     sys.exit(0);
@@ -159,13 +163,21 @@ rule all:
 
 def getPreprocessInputs(wildcards, key):
     preprocess_input = [ tips[name][key] for name in tips if tips[name]['output'] == wildcards.final_tip ];
+    # If nothing matched the requested wildcard, provide a clear error instead
     if not preprocess_input:
-        return "dryrun_input";
-    return preprocess_input[0];
+        available_outputs = [tips[name]['output'] for name in tips]
+        CLOG.error(f"No preprocess input found for final_tip '{wildcards.final_tip}'. Available outputs: {available_outputs}")
+        raise ValueError(f"No preprocess input found for final_tip '{wildcards.final_tip}'. Check your input file and config.")
+
+    return preprocess_input[0]
 # This function gets the input for the preprocess step for a given genome
 # Avoids the IndexErrors with dummy wildcards that snakmake apparently uses sometimes??
 
 rule preprocess:
+    # Original code (without wildcard_constraints):
+    # rule preprocess:
+    wildcard_constraints:
+        final_tip=f"({allowed_tips_regex})"  # Only allow actual tip output names
     input:
         lambda wildcards: getPreprocessInputs(wildcards, 'input')
         #lambda wildcards: [ tips[name]['input'] for name in tips if tips[name]['output'] == wildcards.final_tip ][0]
@@ -204,6 +216,10 @@ rule preprocess:
 ####################
 
 rule blast:
+    # Original code (without wildcard_constraints):
+    # rule blast:
+    wildcard_constraints:
+        internal_node="[^/]+"  # Match any internal node name
     input:
         lambda wildcards: [ os.path.join(OUTPUT_DIR, input_file) for input_file in internals[wildcards.internal_node]['input-seqs'] ]
     output:
@@ -221,7 +237,8 @@ rule blast:
         job_log = os.path.join(LOG_DIR, "{internal_node}.blast.log")
     resources:
         **getRuleResources("blast"),
-        slurm_extra = f"'--gres=gpu:{config['rule_resources']['blast']['gpus']}'" if USE_GPU else ""
+        slurm_extra = "--gpus-per-task=" + str(config['rule_resources']['blast']['gpus']) if USE_GPU else "",
+        tasks_per_gpu = 0
     run:
         cmd = params.path + [
             "cactus-blast",
@@ -237,13 +254,17 @@ rule blast:
         if params.gpu_opt:
             cmd += ["--gpu", str(params.gpu_num)];
 
-        CACTUSLIB.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, wildcards.internal_node)
+        CACTUSLIB.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, wildcards.internal_node, fmode="a+")
 ## This rule runs cactus-blast for every internal node
 ## Runtimes for turtles range from 1 to 10 hours with the above resources
 
 ####################
 
 rule align:
+    # Original code (without wildcard_constraints):
+    # rule align:
+    wildcard_constraints:
+        internal_node="[^/]+"  # Match any internal node name
     input:
         paf_file = os.path.join(OUTPUT_DIR, "{internal_node}.paf"),
         #seq_files = lambda wildcards: [ os.path.join(OUTPUT_DIR, input_file) for input_file in internals[wildcards.internal_node]['desc-seqs'] ]
@@ -290,6 +311,10 @@ rule align:
 ####################
 
 rule convert:
+    # Original code (without wildcard_constraints):
+    # rule convert:
+    wildcard_constraints:
+        internal_node="[^/]+"  # Match any internal node name
     input:
         hal_file = os.path.join(OUTPUT_DIR, "{internal_node}.hal")
         #lambda wildcards: [ os.path.join(output_dir, input_file) for input_file in internals[wildcards.internal_node]['hal-inputs'] ][0]

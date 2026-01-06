@@ -76,19 +76,17 @@ use_gpu:
 ## provide a partition with GPUs and set gpus to the number of GPUs you want to use.
 ## If you are not using the cactus GPU version, the gpus value will be ignored.
 ##
-## The partitions are specific to the Harvard cluster. If you run this on a different cluster
-## you must change them.
-##
 ## mem_mb is in MB
 ## time is in minutes
 ##
-## If using the snakemake-executor-plugin-cannon (-e cannon), partition names can be left blank.
+## If using the Harvard cannon cluster profile with --slurm-partition-config <path to cannon-cfg.yml>, partition names can be left blank.
 
 rule_resources:
   default:
     partition: 
     mem_mb: 
     cpus: 
+    gpus: 0
     time:   
 
   get_root_fasta:

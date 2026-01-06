@@ -248,7 +248,8 @@ rule blast:
         job_log = os.path.join(LOG_DIR, f"{NEW_ROOT}.blast.log")
     resources:
         **getRuleResources("blast"),
-        slurm_extra = f"'--gres=gpu:{config['rule_resources']['blast']['gpus']}'" if USE_GPU else ""
+        slurm_extra = "--gpus-per-task=" + str(config['rule_resources']['blast']['gpus']) if USE_GPU else "",
+        tasks_per_gpu = 0
     run:
         cmd = params.path + [
             "cactus-blast",

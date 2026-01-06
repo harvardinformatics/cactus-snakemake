@@ -4,7 +4,7 @@
 # See: https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/progressive.md#running-step-by-step
 #############################################################################
 
-# time -p snakemake -j 5 -e slurm -s ../../cactus.smk --configfile evolverMammals-cfg.yaml --dryrun
+# time -p snakemake -j 5 -e slurm -s ../../cactus.smk --configfile evolverMammals-cfg.yaml --slurm-partition-config $SMK_PART_CFG --dryrun
 
 #############################################################################
 #
@@ -30,7 +30,7 @@ final_prefix: evolverMammals
 maf_reference: simHuman_chr6
 # The reference genome for the MAF files. This should be the name of the reference genome in the input_file.
 
-tmp_dir: /n/holylfs05/LABS/informatics/Users/gthomas/tmp/evolverMammals/
+tmp_dir: /n/holylfs05/LABS/informatics/Lab/projects/gwct/tmp/evolverMammals/
 # A temporary directory for snakemake and cactus to use. Should have lots of space.
 
 use_gpu: False
@@ -45,60 +45,58 @@ use_gpu: False
 ## provide a partition with GPUs and set gpus to the number of GPUs you want to use.
 ## If you are not using the cactus GPU version, the gpus value will be ignored.
 ##
-## The partitions are specific to the Harvard cluster. If you run this on a different cluster
-## you must change them.
-##
 ## mem_mb is in MB
 ## time is in minutes
 ##
-## If using the snakemake-executor-plugin-cannon (-e cannon), partition names can be left blank.
+## If using the Harvard cannon cluster profile with --slurm-partition-config <path to cannon-cfg.yml>, partition names can be left blank.
 
 rule_resources:
   default:
     partition:
     mem_mb: 30000
     cpus: 8
+    gpus: 0
     time: 60  
 
   preprocess:
-    partition: shared
+    partition:
     mem_mb: 8000
     cpus: 8
     time: 30
 
   blast:
-    partition: shared  # If use_gpu is True, this must be a partition with GPUs
+    partition:  # If use_gpu is True, this must be a partition with GPUs
     mem_mb: 50000
     cpus: 24
-    gpus: 1         # If use_gpu is False, this will be ignored
+    gpus: 2         # If use_gpu is False, this will be ignored
     time: 120
 
   align:
-    partition: shared
+    partition:
     mem_mb: 25000
     cpus: 24
     time: 120
 
   convert:
-    partition: shared
+    partition:
     mem_mb: 8000
     cpus: 8
     time: 30
 
   copy_hal:
-    partition: shared
+    partition:
     mem_mb: 8000
     cpus: 1
     time: 30
 
   append:
-    partition: shared
+    partition:
     mem_mb: 8000
     cpus: 8
     time: 30
 
   maf:
-    partition: shared
+    partition:
     mem_mb: 25000
     cpus: 8
     time: 60

@@ -6,7 +6,7 @@
 # https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/cactus-update-prepare.md#replacing-a-genome
 #############################################################################
 
-# time -p snakemake -j 5 -e slurm -s ../../cactus_replace.smk --configfile evolverMammals-replace-cfg.yaml --dryrun
+# time -p snakemake -j 5 -e slurm -s ../../cactus_replace.smk --configfile evolverMammals-replace-cfg.yaml --slurm-partition-config $SMK_PART_CFG --dryrun
 
 #############################################################################
 #
@@ -61,19 +61,17 @@ use_gpu: False
 ## provide a partition with GPUs and set gpus to the number of GPUs you want to use.
 ## If you are not using the cactus GPU version, the gpus value will be ignored.
 ##
-## The partitions are specific to the Harvard cluster. If you run this on a different cluster
-## you must change them.
-##
 ## mem_mb is in MB
 ## time is in minutes
 ##
-## If using the snakemake-executor-plugin-cannon (-e cannon), partition names can be left blank.
+## If using the Harvard cannon cluster profile with --slurm-partition-config <path to cannon-cfg.yml>, partition names can be left blank.
 
 rule_resources:
   default:
-    partition: shared
+    partition:
     mem_mb: 4000
     cpus: 1
+    gpus: 0
     time: 60  
 
   preprocess:
@@ -83,7 +81,7 @@ rule_resources:
     time: 30
 
   blast:
-    partition: shared  # If use_gpu is True, this must be a partition with GPUs
+    partition:   # If use_gpu is True, this must be a partition with GPUs
     mem_mb: 25000
     cpus: 24
     gpus: 1           # If use_gpu is False, this will be ignored

@@ -526,10 +526,12 @@ def runCactusPrepare(input_file, cactus_path, output_dir, output_hal, use_gpu, l
         # log_prefix = os.path.join(output_dir, "cactus-prepare");
     # If this is a dry run, create a temporary output directory and log file
 
-    command = cactus_path + ["cactus-prepare", input_file, "--outDir", output_dir, "--outHal", output_hal];
+    command = cactus_path + ["cactus-prepare", input_file, "--outDir", output_dir];
     if use_gpu:
         command.append("--gpu");
     # The command to run cactus-prepare
+    # Note: We do not pass --outHal to cactus-prepare to avoid conflicts with the final_prefix parameter.
+    # The final HAL file will be created through the progressive alignment process and copied to the final location.
 
     cactuslib_logger.info(f"Command to run cactus-prepare: {' '.join(command)}");
     cactuslib_logger.debug("===================================================================================");
@@ -591,12 +593,12 @@ def writeFlush(string, stream):
 
 #############################################################################
 
-def getResources(config, top_level_executor, rule_name, keys=("partition", "mem_mb", "cpus", "time")):
+def getResources(config, top_level_executor, rule_name, keys=("partition", "mem_mb", "cpus", "time", "gpus")):
 # Return dict of all requested resource keys for a rule (with fallback to defaults).
     
     #cactuslib_logger.info(f"Getting resources for rule '{rule_name}' with executor '{top_level_executor}'");
     slurm_resource_map = { "partition" : "slurm_partition", "mem_mb" : "mem_mb", 
-                            "cpus" : "cpus_per_task", "time" : "runtime" };
+                            "cpus" : "cpus_per_task", "time" : "runtime", "gpus" : "gpu" };
     # Because I use slightly different resource names from what snakemake does for slurm
 
     rule_resources = {
@@ -629,7 +631,7 @@ def getResource(config, top_level_executor, rule_name, resource):
     elif default_val is not None:
         return default_val
     else:
-        if top_level_executor == "cannon" and resource == "partition":
+        if top_level_executor in ["cannon", "slurm"] and resource == "partition":
             return "";
         else:
             cactuslib_logger.error(f"Missing resource '{resource}' for rule '{rule_name}' and no default set ({top_level_executor}).");

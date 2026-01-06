@@ -33,6 +33,8 @@ tests/yeast-minigraph*/**
 
 bin/
 cactus/
+.vscode/
+support/
 
 tests/*.sif
 tests/gpu-test.log
