@@ -449,7 +449,7 @@ def parseCactusPath(cactus_cfg: str, use_gpu: bool, main: bool, tmpdir: str, pad
         # Download the latest cactus image if it is not specified in the config file
     elif re.match(version_tag_pattern, cactus_cfg) is not None:
         cactus_image_path, version_tag = downloadCactusImage(use_gpu, main, pad, cactus_cfg);
-        # Pass a specific version tag to download
+        # Pass a specific version tag to download      
     else:
         cactus_image_path = cactus_cfg;
         version_tag = "0.0.0";
@@ -590,6 +590,39 @@ def writeFlush(string, stream):
     stream.write(string + "\n");
     stream.flush();
 # For logging in runCommand(), write the string to the file stream
+
+#############################################################################
+
+def normalizeInternalSeqs(internals):
+# Normalize internal node sequence extensions (.fa or .fa.gz) in-place.
+
+    if not internals:
+        return ".fa"
+
+    internal_seq_ext = ".fa"
+    if any(internals[n]["seq-file"].endswith(".fa.gz") for n in internals):
+        internal_seq_ext = ".fa.gz"
+
+    def _strip_internal_ext(seq_name):
+        if seq_name.endswith(".fa.gz"):
+            return seq_name[:-len(".fa.gz")]
+        if seq_name.endswith(".fa"):
+            return seq_name[:-len(".fa")]
+        return seq_name
+
+    internal_seq_base = { _strip_internal_ext(internals[n]["seq-file"]) for n in internals }
+
+    def _normalize_internal_seq(seq_name):
+        base = _strip_internal_ext(seq_name)
+        if base in internal_seq_base:
+            return base + internal_seq_ext
+        return seq_name
+
+    for n in internals:
+        internals[n]["seq-file"] = _normalize_internal_seq(internals[n]["seq-file"])
+        internals[n]["input-seqs"] = [_normalize_internal_seq(s) for s in internals[n]["input-seqs"]]
+
+    return internal_seq_ext
 
 #############################################################################
 
