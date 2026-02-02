@@ -4,7 +4,7 @@ authors:
 - family-names: "Thomas"
   given-names: "Gregg"
 title: "Snakemake workflows for Cactus"
-version: 3.2.0
-doi: 10.5281/zenodo.18166547
-date-released: 2026-01-06
+version: 3.3.0
+doi: 10.5281/zenodo.18462157
+date-released: 2026-02-02
 url: "https://github.com/harvardinformatics/cactus-snakemake"
