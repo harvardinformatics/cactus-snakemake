@@ -59,7 +59,7 @@ if USE_GPU:
     # Normalize tag (strip leading "v"), grab the major version before the first dot,
     # ensure it's numeric, and check if it's less than 3.
     tag_major = str(VERSION_TAG).lstrip('v').split('.', 1)[0]
-    if tag_major.isdigit() and int(tag_major) < 3:
+    if tag_major.isdigit() and int(tag_major) < 3 and int(tag_major) > 0:
         KEG_PATCH_FILE = CACTUSLIB.downloadKegPatch(OUTPUT_DIR, MAIN, VERSION_TAG)
 # Download the KEG patch file if using GPU cactus, and set the path to it
 
@@ -134,6 +134,13 @@ CLOG.debug(f"Preprocess output files: {preprocess_out}");
 # Build a regex of allowed tip output names to constrain the preprocess wildcard
 import re as _re_for_wildcard
 allowed_tips_regex = "|".join([_re_for_wildcard.escape(x) for x in preprocess_out]) if preprocess_out else ""
+
+# Build a regex of allowed internal node names to constrain internal_node wildcards
+internal_node_names = list(internals.keys());
+allowed_internals_regex = "|".join([_re_for_wildcard.escape(x) for x in internal_node_names]) if internal_node_names else "";
+
+# Normalize internal node sequence extension to whatever cactus-prepare wrote (.fa or .fa.gz)
+internal_seq_ext = CACTUSLIB.normalizeInternalSeqs(internals);
 
 if LOG_LEVEL == "debug":
     CLOG.debug("EXITING BEFORE RULES. DEBUG MODE.");
@@ -219,7 +226,7 @@ rule blast:
     # Original code (without wildcard_constraints):
     # rule blast:
     wildcard_constraints:
-        internal_node="[^/]+"  # Match any internal node name
+        internal_node=f"({allowed_internals_regex})"  # Only allow actual internal node names
     input:
         lambda wildcards: [ os.path.join(OUTPUT_DIR, input_file) for input_file in internals[wildcards.internal_node]['input-seqs'] ]
     output:
@@ -264,7 +271,7 @@ rule align:
     # Original code (without wildcard_constraints):
     # rule align:
     wildcard_constraints:
-        internal_node="[^/]+"  # Match any internal node name
+        internal_node=f"({allowed_internals_regex})"  # Only allow actual internal node names
     input:
         paf_file = os.path.join(OUTPUT_DIR, "{internal_node}.paf"),
         #seq_files = lambda wildcards: [ os.path.join(OUTPUT_DIR, input_file) for input_file in internals[wildcards.internal_node]['desc-seqs'] ]
@@ -314,12 +321,12 @@ rule convert:
     # Original code (without wildcard_constraints):
     # rule convert:
     wildcard_constraints:
-        internal_node="[^/]+"  # Match any internal node name
+        internal_node=f"({allowed_internals_regex})"  # Only allow actual internal node names
     input:
         hal_file = os.path.join(OUTPUT_DIR, "{internal_node}.hal")
         #lambda wildcards: [ os.path.join(output_dir, input_file) for input_file in internals[wildcards.internal_node]['hal-inputs'] ][0]
     output:
-        fa_file = os.path.join(OUTPUT_DIR, "{internal_node}.fa.gz")
+        fa_file = os.path.join(OUTPUT_DIR, "{internal_node}" + internal_seq_ext)
     params:
         path = CACTUS_PATH,
         node = lambda wildcards: wildcards.internal_node,
@@ -345,7 +352,7 @@ rule convert:
 
 rule copy_hal:
     input:
-        all_hals = expand(os.path.join(OUTPUT_DIR, "{internal_node}.fa.gz"), internal_node=internals),
+        all_hals = [os.path.join(OUTPUT_DIR, internals[n]['seq-file']) for n in internals],
         anc_hal = os.path.join(OUTPUT_DIR, ROOT_NAME + ".hal")
     output:
         final_hal = OUTPUT_HAL

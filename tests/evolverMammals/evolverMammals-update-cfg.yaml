@@ -15,7 +15,7 @@
 # YOU WILL NEED TO CHANGE THESE
 #
 
-cactus_path:
+cactus_path: v3.1.2
 # Provide the path to the cactus singularity container. This is needed whether use_gpu is True or False.
 # If you don't have it, set this to "download" and the pipeline will download it for you.
 # If you want to download a specific version, provide the version tag, e.g. v2.9.9
@@ -54,7 +54,7 @@ top_branch_length: 0.10
 # This is the length of the branch that will connect new_anc_node to the existing parent_node.
 # Leave blank if the original tree did not have branch lengths (or if the tree in the HAL file has all branch lengths set to 1.0)
 
-output_dir: evolverMammals-update-out/
+output_dir: evolverMammals-update-out3/
 # The output directory for the snakemake pipeline. This should be the same as the outDir in cactus-prepare.
 # This directory will be created if it doesn't exist.
 
@@ -107,7 +107,7 @@ rule_resources:
     partition:   # If use_gpu is True, this must be a partition with GPUs
     mem_mb: 25000
     cpus: 24
-    gpus: 1           # If use_gpu is False, this will be ignored
+    gpus: 0           # If use_gpu is False, this will be ignored
     time: 30
 
   align:
