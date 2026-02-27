@@ -596,6 +596,7 @@ rule maf:
         path = CACTUS_PATH_TMP,
         hal_to_edit = HAL_TO_EDIT,
         ref_genome = MAF_REFERENCE,
+        include_anc = config.get("maf_include_anc", False),
         chunk_size = 500000, # 500kb
         host_tmp_dir = os.path.join(TMPDIR, "maf"),
         job_tmp_dir = os.path.join("/tmp", "maf"),
@@ -616,6 +617,9 @@ rule maf:
             "--filterGapCausingDupes"
         ];
 
+        if not params.include_anc:
+            cmd += ["--noAncestors"];
+
         CACTUSLIB.runCommand(cmd, params.job_tmp_dir, log.job_log, params.rule_name);
 
         cmd = params.path + [
@@ -629,6 +633,9 @@ rule maf:
             "--filterGapCausingDupes",
             "--outType", "single"
         ];
+
+        if not params.include_anc:
+            cmd += ["--noAncestors"];
 
         CACTUSLIB.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, fmode="a+");
 
