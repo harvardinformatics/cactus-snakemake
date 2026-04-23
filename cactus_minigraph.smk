@@ -46,7 +46,10 @@ getRuleResources = partial(CACTUSLIB.getResources, config, TOP_LEVEL_EXECUTOR);
 #############################################################################
 # Cactus setup
 
-CACTUS_PATH, CACTUS_PATH_TMP, VERSION_TAG = CACTUSLIB.parseCactusPath(config["cactus_path"], False, MAIN, TMPDIR, pad);
+SINGULARITY_BIND_PATHS = config.get("singularity_bind_paths", []);
+# Optional extra host paths to bind into every singularity command
+
+CACTUS_PATH, CACTUS_PATH_TMP, VERSION_TAG = CACTUSLIB.parseCactusPath(config["cactus_path"], False, MAIN, TMPDIR, SINGULARITY_BIND_PATHS, pad);
 # Parse the cactus path from the config file
 
 #############################################################################

@@ -441,7 +441,48 @@ def downloadKegPatch(output_dir: str, main: bool, tag: str) -> str:
 
 #############################################################################
 
-def parseCactusPath(cactus_cfg: str, use_gpu: bool, main: bool, tmpdir: str, pad: int) -> None:
+def parseSingularityBindPaths(bind_paths) -> list:
+    if bind_paths in [None, ""]:
+        return [];
+
+    if not isinstance(bind_paths, list):
+        raise ValueError("Config option 'singularity_bind_paths' must be a YAML list of bind specifications.");
+
+    bind_args = [];
+    seen = set();
+    for bind_path in bind_paths:
+        if not isinstance(bind_path, str):
+            raise ValueError("Each entry in 'singularity_bind_paths' must be a string.");
+
+        bind_path = bind_path.strip();
+        if not bind_path:
+            raise ValueError("Entries in 'singularity_bind_paths' cannot be blank.");
+
+        bind_parts = bind_path.split(":");
+        if len(bind_parts) > 3:
+            raise ValueError(f"Invalid bind specification '{bind_path}'. Expected src[:dest[:opts]].");
+
+        src_path = bind_parts[0];
+        if not os.path.isabs(src_path):
+            raise ValueError(f"Bind source path must be absolute: '{src_path}'.");
+        if not os.path.exists(src_path):
+            raise ValueError(f"Bind source path does not exist: '{src_path}'.");
+
+        if len(bind_parts) >= 2 and bind_parts[1] and not os.path.isabs(bind_parts[1]):
+            raise ValueError(f"Bind destination path must be absolute: '{bind_parts[1]}'.");
+
+        if len(bind_parts) == 3 and bind_parts[2] not in ["ro", "rw"]:
+            raise ValueError(f"Invalid bind mount option '{bind_parts[2]}' in '{bind_path}'. Use 'ro' or 'rw'.");
+
+        if bind_path not in seen:
+            bind_args += ["--bind", bind_path];
+            seen.add(bind_path);
+
+    return bind_args;
+
+#############################################################################
+
+def parseCactusPath(cactus_cfg: str, use_gpu: bool, main: bool, tmpdir: str, bind_paths, pad: int) -> None:
     version_tag_pattern = r"^v?\d+(\.\d+)+$";
 
     if cactus_cfg == None or cactus_cfg.lower() in ["download", ""]:
@@ -460,11 +501,13 @@ def parseCactusPath(cactus_cfg: str, use_gpu: bool, main: bool, tmpdir: str, pad
             sys.exit(1);
         # Check if the cactus image exists
 
+    singularity_bind_args = parseSingularityBindPaths(bind_paths);
+
     cactus_path_base = [
         "singularity", "exec",
         *(["--nv"] if use_gpu else []),
         "--cleanenv"
-    ]
+    ] + singularity_bind_args;
 
     cactus_path_tmp = cactus_path_base + ["--bind", f"{tmpdir}:/tmp", cactus_image_path]
     cactus_path = cactus_path_base + [cactus_image_path]

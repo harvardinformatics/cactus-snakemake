@@ -17,6 +17,11 @@ cactus_path:
 # If you don't have it, set this to "download" and the pipeline will download it for you.
 # If you want to download a specific version, provide the version tag, e.g. v2.9.9
 
+singularity_bind_paths:
+# Optional YAML list of extra Singularity bind paths to add to every container command.
+# Each entry must use src[:dest[:opts]] format, e.g. /nfs6:/nfs6 or /scratch:/scratch:rw
+# Leave blank or set to [] to use the cluster defaults only.
+
 input_file: 
 # File path.
 # File containing rooted Newick tree on the first line, and a list of tip labels and corresponding genome files on the following lines.
