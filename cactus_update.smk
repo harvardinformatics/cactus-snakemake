@@ -47,6 +47,9 @@ getRuleResources = partial(CACTUSLIB.getResources, config, TOP_LEVEL_EXECUTOR)
 # This maps the function to get rule resources from the config file
 # so we don't have to pass config each time we call it
 
+getRuleGpuResources = partial(CACTUSLIB.getGpuResources, config)
+getRuleGpuCount = partial(CACTUSLIB.getGpuCount, config)
+
 #############################################################################
 # Cactus setup
 
@@ -283,13 +286,13 @@ rule blast_new_genome:
         job_tmp_dir = os.path.join("/tmp", f"{ANCNAME}-blast"), # This is the tmp dir in the container, which is bound to the host tmp dir
         host_tmp_dir = os.path.join(TMPDIR, f"{ANCNAME}-blast"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
         gpu_opt = USE_GPU,
-        gpu_num = config['rule_resources']['blast']['gpus'],
+        gpu_num = getRuleGpuCount("blast"),
         rule_name = "blast"
     log:
         job_log = os.path.join(LOG_DIR, f"{ANCNAME}.blast.log")
     resources:
-        **getRuleResources("blast"),
-        slurm_extra = "--gpus-per-task=" + str(config['rule_resources']['blast']['gpus']) if USE_GPU else "",
+        **getRuleResources("blast", keys=("partition", "mem_mb", "cpus", "time")),
+        **getRuleGpuResources("blast"),
         tasks_per_gpu = 0
     run:
         cmd = params.path + [
@@ -392,13 +395,13 @@ rule blast_parent:
         job_tmp_dir = os.path.join("/tmp", f"{PARENT}-blast"), # This is the tmp dir in the container, which is bound to the host tmp dir
         host_tmp_dir = os.path.join(TMPDIR, f"{PARENT}-blast"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
         gpu_opt = USE_GPU,
-        gpu_num = config['rule_resources']['blast']['gpus'],
+        gpu_num = getRuleGpuCount("blast"),
         rule_name = "blast"
     log:
         job_log = os.path.join(LOG_DIR, f"{PARENT}.blast.log")
     resources:
-        **getRuleResources("blast"),
-        slurm_extra = "--gpus-per-task=" + str(config['rule_resources']['blast']['gpus']) if USE_GPU else "",
+        **getRuleResources("blast", keys=("partition", "mem_mb", "cpus", "time")),
+        **getRuleGpuResources("blast"),
         tasks_per_gpu = 0
     run:
         cmd = params.path + [

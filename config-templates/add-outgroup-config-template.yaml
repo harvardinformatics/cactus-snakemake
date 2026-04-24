@@ -78,8 +78,11 @@ use_gpu:
 ## Below are the partitions and resources for each rule in the snakemake pipeline.
 ## Be sure to adjust them to meet your needs and the resources available on your cluster.
 ## Notably, for rule blast, if you use the GPU version of cactus you will need to
-## provide a partition with GPUs and set gpus to the number of GPUs you want to use.
-## If you are not using the cactus GPU version, the gpus value will be ignored.
+## provide a partition with GPUs and set exactly one of the two options below:
+##   gpus: number of GPUs to request through Snakemake's gpu resource
+##   gres: GPU GRES request in any of these forms: 1, a100:2, gpu:1, gpu:a100:2
+##         If gpu: is omitted, the pipeline will add it.
+## If you are not using the cactus GPU version, both values will be ignored.
 ##
 ## mem_mb is in MB
 ## time is in minutes
@@ -110,7 +113,8 @@ rule_resources:
     partition:  # If use_gpu is True, this must be a partition with GPUs
     mem_mb: 
     cpus: 
-    gpus:            # If use_gpu is False, this will be ignored
+    gpus:            # Use this for Snakemake's gpu resource; do not set together with gres
+    gres:            # Use this for Snakemake's gres resource, e.g. 1, a100:2, gpu:1, or gpu:a100:2
     time: 
 
   align:

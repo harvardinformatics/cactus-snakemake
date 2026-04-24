@@ -40,6 +40,8 @@ However, Snakemake and Singularity are required as dependencies. For more inform
 
 Each pipeline has a different [config file](config-templates/) that is required to specify input and output options and cluster resources.
 
+For GPU-enabled blast rules, configure exactly one of `gpus` or `gres` in the relevant `rule_resources.blast` block. Use `gpus` to request Snakemake's `gpu` resource, or use `gres` with any of `1`, `a100:2`, `gpu:1`, or `gpu:a100:2`. If the `gpu:` prefix is omitted, the pipeline adds it before submitting the Slurm GRES request.
+
 With the config file setup, the pipelines are generally run as:
 
 ```{bash}

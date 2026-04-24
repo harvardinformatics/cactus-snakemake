@@ -669,12 +669,116 @@ def normalizeInternalSeqs(internals):
 
 #############################################################################
 
-def getResources(config, top_level_executor, rule_name, keys=("partition", "mem_mb", "cpus", "time", "gpus")):
+def _normalizeGpuConfigValue(value):
+    if isinstance(value, str):
+        value = value.strip();
+        if value == "":
+            return None;
+    return value;
+
+def _parseGresValue(gres_value, rule_name):
+    gres_value = _normalizeGpuConfigValue(gres_value);
+    if gres_value is None:
+        return None, 0;
+
+    if isinstance(gres_value, int):
+        if gres_value <= 0:
+            raise ValueError(f"Resource 'gres' for rule '{rule_name}' must request at least one GPU.");
+        return f"gpu:{gres_value}", gres_value;
+
+    if not isinstance(gres_value, str):
+        raise ValueError(f"Resource 'gres' for rule '{rule_name}' must be a string or integer.");
+
+    if not gres_value.startswith("gpu:"):
+        gres_value = f"gpu:{gres_value}";
+
+    gres_match = re.fullmatch(r"gpu(?::[^:]+)?:([1-9]\d*)", gres_value);
+    if not gres_match:
+        raise ValueError(
+            f"Invalid 'gres' value for rule '{rule_name}': {gres_value}. "
+            "Accepted forms include N, model:N, gpu:N, or gpu:model:N."
+        );
+
+    return gres_value, int(gres_match.group(1));
+
+def getGpuSettings(config, rule_name):
+    rule_resources = config.get("rule_resources", {}).get(rule_name, {});
+    default_resources = config.get("rule_resources", {}).get("default", {});
+
+    rule_gpus = _normalizeGpuConfigValue(rule_resources.get("gpus"));
+    default_gpus = _normalizeGpuConfigValue(default_resources.get("gpus"));
+    rule_gres = _normalizeGpuConfigValue(rule_resources.get("gres"));
+    default_gres = _normalizeGpuConfigValue(default_resources.get("gres"));
+
+    if rule_gpus is not None:
+        try:
+            rule_gpus = int(rule_gpus);
+        except Exception as exc:
+            raise ValueError(f"Resource 'gpus' for rule '{rule_name}' must be an integer.") from exc;
+        if rule_gpus < 0:
+            raise ValueError(f"Resource 'gpus' for rule '{rule_name}' must be non-negative.");
+
+    if default_gpus is not None:
+        try:
+            default_gpus = int(default_gpus);
+        except Exception as exc:
+            raise ValueError("Default resource 'gpus' must be an integer.") from exc;
+        if default_gpus < 0:
+            raise ValueError("Default resource 'gpus' must be non-negative.");
+
+    if rule_gpus is not None and rule_gres is not None:
+        raise ValueError(f"Rule '{rule_name}' cannot set both 'gpus' and 'gres'.");
+    if rule_gpus is None and rule_gres is None and default_gpus is not None and default_gres is not None:
+        raise ValueError(f"Rule '{rule_name}' inherits both default 'gpus' and default 'gres'. Set only one.");
+
+    if rule_gres is not None:
+        gres_value, gpu_count = _parseGresValue(rule_gres, rule_name);
+        return {"resources": {"gres": gres_value}, "gpu_count": gpu_count, "mode": "gres"};
+
+    if rule_gpus is not None:
+        return {"resources": {"gpu": rule_gpus}, "gpu_count": rule_gpus, "mode": "gpu"};
+
+    if default_gres is not None:
+        gres_value, gpu_count = _parseGresValue(default_gres, rule_name);
+        return {"resources": {"gres": gres_value}, "gpu_count": gpu_count, "mode": "gres"};
+
+    if default_gpus is not None:
+        return {"resources": {"gpu": default_gpus}, "gpu_count": default_gpus, "mode": "gpu"};
+
+    return {"resources": {}, "gpu_count": 0, "mode": None};
+
+def getGpuResources(config, rule_name):
+    if not config.get("use_gpu", False):
+        return {};
+
+    gpu_settings = getGpuSettings(config, rule_name);
+    if not gpu_settings["resources"]:
+        raise ValueError(f"Rule '{rule_name}' requires either 'gpus' or 'gres' when use_gpu is True.");
+    if gpu_settings["gpu_count"] <= 0:
+        raise ValueError(f"Rule '{rule_name}' requires a positive GPU count when use_gpu is True.");
+
+    return gpu_settings["resources"];
+
+def getGpuCount(config, rule_name):
+    if not config.get("use_gpu", False):
+        return 0;
+
+    gpu_settings = getGpuSettings(config, rule_name);
+    if not gpu_settings["resources"]:
+        raise ValueError(f"Rule '{rule_name}' requires either 'gpus' or 'gres' when use_gpu is True.");
+    if gpu_settings["gpu_count"] <= 0:
+        raise ValueError(f"Rule '{rule_name}' requires a positive GPU count when use_gpu is True.");
+
+    return gpu_settings["gpu_count"];
+
+#############################################################################
+
+def getResources(config, top_level_executor, rule_name, keys=("partition", "mem_mb", "cpus", "time")):
 # Return dict of all requested resource keys for a rule (with fallback to defaults).
     
     #cactuslib_logger.info(f"Getting resources for rule '{rule_name}' with executor '{top_level_executor}'");
     slurm_resource_map = { "partition" : "slurm_partition", "mem_mb" : "mem_mb", 
-                            "cpus" : "cpus_per_task", "time" : "runtime", "gpus" : "gpu" };
+                            "cpus" : "cpus_per_task", "time" : "runtime" };
     # Because I use slightly different resource names from what snakemake does for slurm
 
     rule_resources = {

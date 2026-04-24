@@ -20,7 +20,7 @@ cactus_path: 3.1.3
 input_file: evolverMammals.txt
 # File containing rooted Newick tree on the first line, and a list of genome files on the following lines.
 
-output_dir: evolverMammals-out6/
+output_dir: evolverMammals-out8/
 # The output directory for the snakemake pipeline. This should be the same as the outDir in cactus-prepare.
 # This directory will be created if it doesn't exist.
 
@@ -33,7 +33,7 @@ maf_reference: simHuman_chr6
 tmp_dir: /n/holylfs05/LABS/informatics/Lab/projects/gwct/tmp/evolverMammals/
 # A temporary directory for snakemake and cactus to use. Should have lots of space.
 
-use_gpu: False
+use_gpu: True
 # Whether or not to use the GPU version of cactus.
 # If you don't have a GPU partition, set this to False.
 # Either way, be sure to set the correct values for the partitions and GPUs below.
@@ -68,7 +68,7 @@ rule_resources:
     partition:  # If use_gpu is True, this must be a partition with GPUs
     mem_mb: 50000
     cpus: 24
-    gpus: 0         # If use_gpu is False, this will be ignored
+    gres: 1         # If use_gpu is False, this will be ignored
     time: 120
 
   align:
