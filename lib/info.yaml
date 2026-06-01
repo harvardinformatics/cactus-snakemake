@@ -1,9 +1,9 @@
-version: 3.3.1
+version: 3.4.0
 releasedate-major: 2025-06-19
-releasedate-minor: 2026-02-03
-releasedate-patch: 2025-02-27
-latest-commit-date: 2026-02-27
-latest-commit-msg: "added --noAncestors option to maf/cactus-hal2maf rules"
+releasedate-minor: 2026-06-01
+releasedate-patch: 2026-06-01
+latest-commit-date: 2026-06-01
+latest-commit-msg: "aligned minigraph outputs with cactus updates, added options for output types, and updated configs and templates [bump-minor]"
 doi:
 link: https://github.com/harvardinformatics/cactus-snakemake
 #github: https://github.com/harvardinformatics/cactus-snakemake
