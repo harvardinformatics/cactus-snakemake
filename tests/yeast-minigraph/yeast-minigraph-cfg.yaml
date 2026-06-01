@@ -39,6 +39,13 @@ reference: S288C
 prefix: yeast
 # A prefix for the output files.
 
+join_graph_type: "clip"   # one of: full, clip, filter
+# Controls how the final pangenome graph is generated. See the cactus documentation for more details:
+# https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/pangenome.md#clipping-filtering-and-indexing
+
+join_filter: 2            # only relevant if join_graph_type: filter
+# The minimum number of haplotypes that must be present in a node for it to be retained.
+
 tmp_dir: /n/holylfs05/LABS/informatics/Users/gthomas/tmp/yeastPangenome/
 # A temporary directory for snakemake and cactus to use. 
 # Will be created if it doesn't exist, but it should be located somewhere with lots of space.

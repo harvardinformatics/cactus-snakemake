@@ -49,9 +49,6 @@ getRuleResources = partial(CACTUSLIB.getResources, config, TOP_LEVEL_EXECUTOR);
 SINGULARITY_BIND_PATHS = config.get("singularity_bind_paths", []);
 # Optional extra host paths to bind into every singularity command
 
-CACTUS_PATH, CACTUS_PATH_TMP, VERSION_TAG = CACTUSLIB.parseCactusPath(config["cactus_path"], False, MAIN, TMPDIR, SINGULARITY_BIND_PATHS, pad);
-# Parse the cactus path from the config file
-
 #############################################################################
 # Input files and output paths
 
@@ -86,21 +83,49 @@ ALIGN_DIR = os.path.join(OUTPUT_DIR, "chrom-alignments");
 # The directory where the aligned chromosomes are stored
 # (generated during align:)
 
-FINAL_DIR = os.path.join(OUTPUT_DIR, "final");
-# The directory where the final output files are stored
-# (generated during join:)
-
 REF_GENOME = config["reference"];
 # The reference genome used for alignment
 
 PREFIX = config["prefix"];
 # The prefix for the output files
 
+JOIN_GRAPH_TYPE = config.get("join_graph_type", "clip");
+JOIN_FILTER = int(config.get("join_filter", 2));
+
+if JOIN_GRAPH_TYPE not in {"full", "clip", "filter"}:
+    raise ValueError("join_graph_type must be one of: full, clip, filter");
+
+if JOIN_GRAPH_TYPE == "clip":
+    JOIN_SUFFIX = ""
+elif JOIN_GRAPH_TYPE == "full":
+    JOIN_SUFFIX = ".full"
+elif JOIN_GRAPH_TYPE == "filter":
+    JOIN_SUFFIX = f".d{JOIN_FILTER}"
+else:
+    raise ValueError("join_graph_type must be one of: full, clip, filter")
+
 #OUTPUT_HAL = os.path.join(OUTPUT_DIR, config["final_hal"]);
 #OUTPUT_MAF = os.path.join(OUTPUT_DIR, config["final_hal"].replace(".hal", ".maf"));
 
 #job_path = os.path.join(OUTPUT_DIR, "jobstore");
 # The temporary/job directory specified in cactus-prepare
+
+if JOIN_GRAPH_TYPE == "filter":
+    FINAL_DIR = os.path.join(OUTPUT_DIR, f"{JOIN_GRAPH_TYPE}-d{JOIN_FILTER}");
+else:
+    FINAL_DIR = os.path.join(OUTPUT_DIR, JOIN_GRAPH_TYPE);
+# The directory where the final output files are stored
+# (generated during join:)
+
+# BASE_TMPDIR = TMPDIR;
+# TMPDIR = os.path.join(BASE_TMPDIR, JOIN_GRAPH_TYPE);
+# if not os.path.exists(TMPDIR):
+#     if MAIN:
+#         CLOG.info(f"Creating temporary sub-directory at {TMPDIR}");
+#         os.makedirs(TMPDIR);
+
+CACTUS_PATH, CACTUS_PATH_TMP, VERSION_TAG = CACTUSLIB.parseCactusPath(config["cactus_path"], False, MAIN, TMPDIR, SINGULARITY_BIND_PATHS, pad);
+# Parse the cactus path from the config file after TMPDIR is finalized for the selected join graph type
 
 if LOG_LEVEL == "debug":
     CLOG.debug("EXITING BEFORE RULES. DEBUG MODE.");
@@ -121,15 +146,17 @@ localrules: all
 rule all:
     input:
         final_hal = os.path.join(FINAL_DIR, f"{PREFIX}.full.hal"),
-        final_gfa = os.path.join(FINAL_DIR, f"{PREFIX}.gfa.gz"),
-        final_vcf = os.path.join(FINAL_DIR, f"{PREFIX}.vcf.gz"),
-        final_vcf_index = os.path.join(FINAL_DIR, f"{PREFIX}.vcf.gz.tbi"),
-        final_dist = os.path.join(FINAL_DIR, f"{PREFIX}.dist"),
-        final_gbz = os.path.join(FINAL_DIR, f"{PREFIX}.gbz"),
-        final_min = os.path.join(FINAL_DIR, f"{PREFIX}.min"),
-        final_raw_vcf = os.path.join(FINAL_DIR, f"{PREFIX}.raw.vcf.gz"),
-        final_raw_vcf_index = os.path.join(FINAL_DIR, f"{PREFIX}.raw.vcf.gz.tbi"),
-        final_stats = os.path.join(FINAL_DIR, f"{PREFIX}.stats.tgz")
+        final_gfa = os.path.join(FINAL_DIR, f"{PREFIX}{JOIN_SUFFIX}.gfa.gz"),
+        final_vcf = os.path.join(FINAL_DIR, f"{PREFIX}{JOIN_SUFFIX}.vcf.gz"),
+        final_vcf_index = os.path.join(FINAL_DIR, f"{PREFIX}{JOIN_SUFFIX}.vcf.gz.tbi"),
+        final_dist = os.path.join(FINAL_DIR, f"{PREFIX}{JOIN_SUFFIX}.dist"),
+        final_gbz = os.path.join(FINAL_DIR, f"{PREFIX}{JOIN_SUFFIX}.gbz"),
+        final_min = os.path.join(FINAL_DIR, f"{PREFIX}{JOIN_SUFFIX}.shortread.withzip.min"),
+        final_zipcodes = os.path.join(FINAL_DIR, f"{PREFIX}{JOIN_SUFFIX}.shortread.zipcodes"),
+        final_raw_vcf = os.path.join(FINAL_DIR, f"{PREFIX}{JOIN_SUFFIX}.raw.vcf.gz"),
+        final_raw_vcf_index = os.path.join(FINAL_DIR, f"{PREFIX}{JOIN_SUFFIX}.raw.vcf.gz.tbi"),
+        final_snarls = os.path.join(FINAL_DIR, f"{PREFIX}{JOIN_SUFFIX}.snarls"),
+        final_snarl_stats = os.path.join(FINAL_DIR, f"{PREFIX}{JOIN_SUFFIX}.snarl-stats.tsv.gz")
         #expand(os.path.join(OUTPUT_DIR, "chrom-alignments", "{chrom}.hal"), chrom=gather_chromosomes)
         #getAlignIO(os.path.join(OUTPUT_DIR, "chroms", "chromfile.txt"), "chrom-alignments")["hals"]
         #directory(os.path.join(OUTPUT_DIR, "chroms")),
@@ -343,19 +370,23 @@ rule join:
         chrom_vg = expand(os.path.join(ALIGN_DIR, "{chrom}.vg"), chrom=gatherChromosomes)
     output:
         final_hal = os.path.join(FINAL_DIR, f"{PREFIX}.full.hal"),
-        final_gfa = os.path.join(FINAL_DIR, f"{PREFIX}.gfa.gz"),
-        final_vcf = os.path.join(FINAL_DIR, f"{PREFIX}.vcf.gz"),
-        final_vcf_index = os.path.join(FINAL_DIR, f"{PREFIX}.vcf.gz.tbi"),
-        final_dist = os.path.join(FINAL_DIR, f"{PREFIX}.dist"),
-        final_gbz = os.path.join(FINAL_DIR, f"{PREFIX}.gbz"),
-        final_min = os.path.join(FINAL_DIR, f"{PREFIX}.min"),
-        final_raw_vcf = os.path.join(FINAL_DIR, f"{PREFIX}.raw.vcf.gz"),
-        final_raw_vcf_index = os.path.join(FINAL_DIR, f"{PREFIX}.raw.vcf.gz.tbi"),
-        final_stats = os.path.join(FINAL_DIR, f"{PREFIX}.stats.tgz")
+        final_gfa = os.path.join(FINAL_DIR, f"{PREFIX}{JOIN_SUFFIX}.gfa.gz"),
+        final_vcf = os.path.join(FINAL_DIR, f"{PREFIX}{JOIN_SUFFIX}.vcf.gz"),
+        final_vcf_index = os.path.join(FINAL_DIR, f"{PREFIX}{JOIN_SUFFIX}.vcf.gz.tbi"),
+        final_dist = os.path.join(FINAL_DIR, f"{PREFIX}{JOIN_SUFFIX}.dist"),
+        final_gbz = os.path.join(FINAL_DIR, f"{PREFIX}{JOIN_SUFFIX}.gbz"),
+        final_min = os.path.join(FINAL_DIR, f"{PREFIX}{JOIN_SUFFIX}.shortread.withzip.min"),
+        final_zipcodes = os.path.join(FINAL_DIR, f"{PREFIX}{JOIN_SUFFIX}.shortread.zipcodes"),
+        final_raw_vcf = os.path.join(FINAL_DIR, f"{PREFIX}{JOIN_SUFFIX}.raw.vcf.gz"),
+        final_raw_vcf_index = os.path.join(FINAL_DIR, f"{PREFIX}{JOIN_SUFFIX}.raw.vcf.gz.tbi"),
+        final_snarls = os.path.join(FINAL_DIR, f"{PREFIX}{JOIN_SUFFIX}.snarls"),
+        final_snarl_stats = os.path.join(FINAL_DIR, f"{PREFIX}{JOIN_SUFFIX}.snarl-stats.tsv.gz")
     params:
         path = CACTUS_PATH_TMP,
         ref_genome = REF_GENOME,
         chrom_haldir = ALIGN_DIR,
+        join_graph_type = JOIN_GRAPH_TYPE,
+        join_filter = JOIN_FILTER,
         join_outdir = FINAL_DIR,
         prefix = PREFIX,
         host_tmp_dir = os.path.join(TMPDIR, "join"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
@@ -366,20 +397,23 @@ rule join:
     resources:
         **getRuleResources("join")
     run:
-        vg_files = [
-            os.path.join(params.chrom_haldir, f) for f in os.listdir(params.chrom_haldir)
-            if f.endswith('.vg')
-        ]
+        # vg_files = [
+        #     os.path.join(params.chrom_haldir, f) for f in os.listdir(params.chrom_haldir)
+        #     if f.endswith('.vg')
+        # ]
 
-        hal_files = [
-            os.path.join(params.chrom_haldir, f) for f in os.listdir(params.chrom_haldir)
-            if f.endswith('.hal')
-        ]
+        # hal_files = [
+        #     os.path.join(params.chrom_haldir, f) for f in os.listdir(params.chrom_haldir)
+        #     if f.endswith('.hal')
+        # ]
+        vg_files = list(input.chrom_vg)
+        hal_files = list(input.chrom_hal)        
         # Need to manually expand the vg and hal files since subprocess.run() won't do it later on
 
         cmd = params.path + [
             "cactus-graphmap-join",
             params.job_tmp_dir,
+            # "--clean", "never",
             "--vg"
         ] + vg_files + [
             "--hal"
@@ -387,9 +421,24 @@ rule join:
             "--outDir", params.join_outdir,
             "--outName", params.prefix,
             "--reference", params.ref_genome,
-            "--vcf",
-            "--giraffe", "clip"
-        ];
+
+            # Explicit final graph outputs
+            "--gfa", params.join_graph_type,
+            "--gbz", params.join_graph_type,
+            "--vcf", params.join_graph_type,
+
+            # Giraffe short-read index outputs
+            "--giraffe", params.join_graph_type,
+
+            "--snarlStats", params.join_graph_type,  # only if you really need stats
+
+            # Optional, if you want per-chromosome VG files too
+            # "--chrom-vg", params.join_graph_type,
+        ]
+
+        if params.join_graph_type == "filter":
+            cmd += ["--filter", str(params.join_filter)];
+
         CACTUSLIB.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name);
 
 #############################################################################
