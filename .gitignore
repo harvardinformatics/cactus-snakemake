@@ -1,4 +1,5 @@
 *.code-workspace
+.llm-tmp/
 
 tests/evolverMammals/evolverMammals-out*/
 !tests/evolverMammals/evolverMammals-out/evolverMammals.txt

@@ -61,6 +61,14 @@ use_gpu:
 ##
 ## mem_mb is in MB
 ## time is in minutes
+## Any resource can be either a single value or a YAML list of per-attempt values.
+## If a list is provided, attempt 1 uses the first value, attempt 2 the second, etc.,
+## and attempts beyond the list length reuse the last value.
+## This requires Snakemake retries, e.g. --retries 3.
+## Example:
+##   blast:
+##     mem_mb: [80000, 160000, 200000]
+##     time: [1660, 3320, 6640, 7200]
 ##
 ## If using the Harvard cannon cluster profile with --slurm-partition-config <path to cannon-cfg.yml>, partition names can be left blank.
 
