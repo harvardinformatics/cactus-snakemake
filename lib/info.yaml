@@ -1,9 +1,9 @@
-version: 3.4.0
+version: 3.5.0
 releasedate-major: 2025-06-19
-releasedate-minor: 2026-06-01
+releasedate-minor: 2026-06-09
 releasedate-patch: 2026-06-01
-latest-commit-date: 2026-06-01
-latest-commit-msg: "aligned minigraph outputs with cactus updates, added options for output types, and updated configs and templates [bump-minor]"
+latest-commit-date: 2026-06-09
+latest-commit-msg: "chore: [bump-minor]"
 doi:
 link: https://github.com/harvardinformatics/cactus-snakemake
 #github: https://github.com/harvardinformatics/cactus-snakemake
