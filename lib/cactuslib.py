@@ -791,24 +791,69 @@ def getResources(config, top_level_executor, rule_name, keys=("partition", "mem_
 
     return rule_resources
 
+def _coerceResourceValue(value):
+    if isinstance(value, bool):
+        return value
+
+    try:
+        return int(value);
+    except (TypeError, ValueError):
+        return value;
+
+def _normalizeResourceValue(value, rule_name, resource):
+    if not isinstance(value, list):
+        return _coerceResourceValue(value);
+
+    if not value:
+        raise ValueError(f"Resource schedule for rule '{rule_name}' and resource '{resource}' cannot be empty.");
+
+    return [_coerceResourceValue(item) for item in value];
+
+def _getAttemptScheduledResource(value, rule_name, resource):
+    schedule = tuple(value);
+
+    def getScheduledResource(wildcards, input=None, attempt=1, threads=None, rulename=None):
+        if attempt is None:
+            attempt = 1;
+
+        attempt_index = max(int(attempt) - 1, 0);
+        if attempt_index >= len(schedule):
+            attempt_index = len(schedule) - 1;
+
+        selected_value = schedule[attempt_index];
+        if selected_value is None:
+            raise ValueError(
+                f"Resource schedule for rule '{rule_name}' and resource '{resource}' "
+                f"contains an empty value at attempt {attempt}."
+            );
+
+        return selected_value;
+
+    return getScheduledResource
+
 def getResource(config, top_level_executor, rule_name, resource):
     # Get a specific resource value from the Snakemake config.yaml.
 
     #cactuslib_logger.info(f"Getting resource '{resource}' for rule '{rule_name}' with executor '{top_level_executor}'");
-    rule_val = config.get("rule_resources", {}).get(rule_name, {}).get(resource)
-    default_val = config.get("rule_resources", {}).get("default", {}).get(resource)
-
-    try:
-        rule_val = int(rule_val);
-        default_val = int(default_val);
-    except:
-        pass;
-    # Make sure numerical resources are integers, for consistency with plugin
-        
+    rule_val = _normalizeResourceValue(
+        config.get("rule_resources", {}).get(rule_name, {}).get(resource),
+        rule_name,
+        resource
+    );
+    default_val = _normalizeResourceValue(
+        config.get("rule_resources", {}).get("default", {}).get(resource),
+        "default",
+        resource
+    );
+    # Make sure numerical resources are integers, while allowing optional per-attempt schedules.
 
     if rule_val is not None:
+        if isinstance(rule_val, list):
+            return _getAttemptScheduledResource(rule_val, rule_name, resource);
         return rule_val
     elif default_val is not None:
+        if isinstance(default_val, list):
+            return _getAttemptScheduledResource(default_val, rule_name, resource);
         return default_val
     else:
         if top_level_executor in ["cannon", "slurm"] and resource == "partition":
