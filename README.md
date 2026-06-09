@@ -3,7 +3,7 @@
 </div>
 
 <div align="center">
-  <a href="https://doi.org/10.5281/zenodo.20497850"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.20497850.svg" alt="DOI"></a>
+  <a href="https://doi.org/10.5281/zenodo.20614344"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.20614344.svg" alt="DOI"></a>
   
 </div>
 
@@ -75,38 +75,8 @@ If you use this software, please cite:
 
 ##### Latest version
 
-Thomas, G. (2026). Snakemake workflows for Cactus (Version 3.4.0) [Computer software]. 
-[https://doi.org/10.5281/zenodo.20497850](https://doi.org/10.5281/zenodo.20497850)
-
-##### v3.3.1
-
-Thomas, G. (2026). Snakemake workflows for Cactus (Version 3.3.1) [Computer software]. 
-[https://doi.org/10.5281/zenodo.18806830](https://doi.org/10.5281/zenodo.18806830)
-
-##### v3.3.0
-
-Thomas, G. (2026). Snakemake workflows for Cactus (Version 3.3.0) [Computer software]. 
-[https://doi.org/10.5281/zenodo.18462157](https://doi.org/10.5281/zenodo.18462157)
-
-##### v3.2.0
-
-Thomas, G. (2026). Snakemake workflows for Cactus (Version 3.1.0) [Computer software]. 
-[https://doi.org/10.5281/zenodo.18166547](https://doi.org/10.5281/zenodo.18166547)
-
-##### v3.1.0
-
-Thomas, G. (2025). Snakemake workflows for Cactus (Version 3.1.0) [Computer software]. 
-[https://doi.org/10.5281/zenodo.17467905](https://doi.org/10.5281/zenodo.17467905)
-
-##### v3.0.0
-
-Thomas, G. (2025). Snakemake workflows for Cactus (Version 3.0.0) [Computer software]. 
-[https://doi.org/10.5281/zenodo.15699752](https://doi.org/10.5281/zenodo.15699752)
-
-##### v2.1.0
-
-Thomas, G. (2025). Snakemake workflows for Cactus (Version 2.1.0) [Computer software]. 
-[https://doi.org/10.5281/zenodo.15596990](https://doi.org/10.5281/zenodo.15596989)
+Thomas, G. (2026). Snakemake workflows for Cactus (Version 3.5.0) [Computer software]. 
+[https://doi.org/10.5281/zenodo.20614344](https://doi.org/10.5281/zenodo.20614344)
 
 > **To cite a specific version:**  
 > See the [full list of versions and DOIs here](https://zenodo.org/records/15596990).  
