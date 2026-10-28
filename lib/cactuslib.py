@@ -486,17 +486,6 @@ def buildCactusCommands(cactus_image_path: str, use_gpu: bool, tmpdir: str, bind
 
 #############################################################################
 
-def parseCactusPath(cactus_cfg: str, use_gpu: bool, main: bool, tmpdir: str, bind_paths, pad: int):
-# Resolves the image and builds the commands in one step, which is how every pipeline
-# did it before the prep step existed. Kept until the remaining pipelines move to prep.
-
-    cactus_image_path, version_tag = resolveCactusImage(cactus_cfg, use_gpu, main, pad);
-    cactus_path, cactus_path_tmp = buildCactusCommands(cactus_image_path, use_gpu, tmpdir, bind_paths);
-
-    return cactus_path, cactus_path_tmp, version_tag
-
-#############################################################################
-
 def runCactusPrepare(input_file, cactus_path, output_dir, output_hal, use_gpu, log_dir, dry_run):
 # This function runs cactus-prepare on the input file and saves the output in the output directory
 
