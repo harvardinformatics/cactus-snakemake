@@ -1,0 +1,11 @@
+name: cactus-snakemake
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python>=3.11,<3.13
+  - snakemake-minimal>=9.1,<10
+  - snakemake-executor-plugin-slurm>=2.0.0
+  - snakemake-executor-plugin-cannon  # automatic partition selection on Harvard's Cannon cluster (-e cannon)
+  - pyyaml
+  - requests  # quay.io tag lookup when cactus_path is "download"
