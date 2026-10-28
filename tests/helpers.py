@@ -26,8 +26,8 @@ YEAST_DIR = os.path.join(REPO_ROOT, "tests", "yeast-minigraph")
 
 SNAKEFILES = {
     "align": os.path.join(REPO_ROOT, "cactus.smk"),
-    "add-genome": os.path.join(REPO_ROOT, "cactus_update.smk"),
-    "replace-genome": os.path.join(REPO_ROOT, "cactus_replace.smk"),
+    "add-genome": os.path.join(REPO_ROOT, "cactus_add_genome.smk"),
+    "replace-genome": os.path.join(REPO_ROOT, "cactus_replace_genome.smk"),
     "add-outgroup": os.path.join(REPO_ROOT, "cactus_add_outgroup.smk"),
     "minigraph": os.path.join(REPO_ROOT, "cactus_minigraph.smk"),
 }

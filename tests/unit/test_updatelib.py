@@ -1,6 +1,6 @@
 #############################################################################
 # Tier-1 tests for lib/updatelib.py: the parsing of cactus-update-prepare output
-# used by the add-genome (cactus_update.smk) and replace-genome (cactus_replace.smk)
+# used by the add-genome (cactus_add_genome.smk) and replace-genome (cactus_replace_genome.smk)
 # pipelines, and the input files the add-outgroup pipeline writes for itself.
 #
 # Fixtures (tracked, read-only), all under tests/evolverMammals/:

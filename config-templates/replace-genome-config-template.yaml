@@ -1,12 +1,12 @@
 #############################################################################
-# This config file is a necessary input file for the Cactus replace Snakemake
-# pipeline: cactus_replace.smk. It contains the parameters needed to run the pipeline.
+# This config file is a necessary input file for the Cactus replace-genome Snakemake
+# pipeline: cactus_replace_genome.smk. It contains the parameters needed to run the pipeline.
 #
 # This pipeline uses the replace method to replace a genome in an existing HAL file.
 # https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/cactus-update-prepare.md#replacing-a-genome
 #############################################################################
 
-# time -p snakemake -j 5 -e slurm -s ../../cactus_replace.smk --configfile evolverMammals-replace-cfg.yaml --dryrun
+# time -p snakemake -j 5 -e slurm -s ../../cactus_replace_genome.smk --configfile evolverMammals-replace-cfg.yaml --dryrun
 
 #############################################################################
 #
