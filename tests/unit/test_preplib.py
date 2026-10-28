@@ -196,4 +196,6 @@ def test_require_prep_without_manifest(align, caplog):
     with pytest.raises(SystemExit):
         PREPLIB.requirePrep("align", config, config["output_dir"], True, 50, "cactus.smk", ["my-config.yaml"])
     assert "No prep manifest found" in caplog.text
+    # The wrapper command (next to the Snakefile) and the plain snakemake command
+    assert "cactus_snakemake prep align --configfile my-config.yaml" in caplog.text
     assert "snakemake -s cactus.smk --configfile my-config.yaml --config prep=T" in caplog.text

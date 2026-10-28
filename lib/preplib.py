@@ -289,7 +289,7 @@ def runPrep(pipeline, config, output_dir, log_dir, tmp_dir, main, pad, force=Fal
             CLOG.error(f"Prep has already been run for {output_dir}, but these no longer match:");
             for mismatch in mismatches:
                 CLOG.error(f"    {mismatch}");
-            CLOG.error("Files in the output directory were made from the earlier prep. To prep again anyway, add prep_force=T to --config.");
+            CLOG.error("Files in the output directory were made from the earlier prep. To prep again anyway, add --force to cactus_snakemake prep (or prep_force=T to --config).");
             sys.exit(1);
         # A stale manifest is an error unless re-prepping was explicitly asked for
 
@@ -330,13 +330,18 @@ def requirePrep(pipeline, config, output_dir, main, pad, snakefile, configfiles)
 # longer matches. Runs on every parse of the Snakefile, so it only reads small files.
 
     manifest_file = manifestPath(output_dir);
-    prep_cmd = f"snakemake -s {snakefile} --configfile {' '.join(str(f) for f in configfiles)} --config prep=T";
-    # The command to run prep, for the error messages (Snakemake gives the config files as Path objects)
+    configfile_args = ' '.join(str(f) for f in configfiles);
+    wrapper_cmd = f"{os.path.join(os.path.dirname(snakefile), 'cactus_snakemake')} prep {pipeline} --configfile {configfile_args}";
+    snakemake_cmd = f"snakemake -s {snakefile} --configfile {configfile_args} --config prep=T";
+    # The commands to run prep, with and without the wrapper, for the error messages (Snakemake gives the
+    # config files as Path objects)
 
     if not os.path.isfile(manifest_file):
         CLOG.error(f"No prep manifest found at {manifest_file}.");
         CLOG.error("Prep must be run once for this output directory before the pipeline can run:");
-        CLOG.error(f"    {prep_cmd}");
+        CLOG.error(f"    {wrapper_cmd}");
+        CLOG.error("or, without the wrapper:");
+        CLOG.error(f"    {snakemake_cmd}");
         sys.exit(1);
 
     manifest = readManifest(manifest_file);
@@ -346,7 +351,9 @@ def requirePrep(pipeline, config, output_dir, main, pad, snakefile, configfiles)
         for mismatch in mismatches:
             CLOG.error(f"    {mismatch}");
         CLOG.error("Files in the output directory were made from that prep. If the change is intended, prep again with:");
-        CLOG.error(f"    {prep_cmd} prep_force=T");
+        CLOG.error(f"    {wrapper_cmd} --force");
+        CLOG.error("or, without the wrapper:");
+        CLOG.error(f"    {snakemake_cmd} prep_force=T");
         sys.exit(1);
 
     if main:
