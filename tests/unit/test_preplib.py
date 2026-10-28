@@ -75,6 +75,34 @@ def test_fingerprint_config_changed(align, key, value):
     assert len(mismatches) == 1
     assert mismatches[0].startswith(f"{key}: ")
 
+def test_fingerprint_add_genome(tmp_path):
+    _, config = make_config("add-genome", tmp_path)
+    assert PREPLIB.fingerprint("add-genome", config) == {
+        "cactus_path": "v3.1.2",
+        "use_gpu": False,
+        "input_hal": os.path.join(MAMMALS_DIR, "evolverMammals-out", "evolverMammals.hal"),
+        "new_genome_fasta": os.path.join(MAMMALS_DIR, "evolverMammals-seq", "simGorilla.chr6"),
+        "new_genome_name": "simGorilla",
+        "new_branch_length": 0.075,
+        "parent_node": "Anc1",
+        "child_node": "mr",
+        "new_anc_node": "AncGorilla",
+        "top_branch_length": 0.1,
+    }
+
+
+def test_fingerprint_hal_by_path_only(tmp_path):
+    # overwrite_original_hal edits the input HAL during a run, so its contents can't be
+    # fingerprinted; the path is used without opening the file (this one is never created)
+    hal = str(tmp_path / "never-created.hal")
+    _, config = make_config("add-genome", tmp_path, input_hal=hal)
+    assert PREPLIB.fingerprint("add-genome", config)["input_hal"] == hal
+
+
+def test_seqfile_names():
+    seq_out = os.path.join(MAMMALS_DIR, "evolverMammals-update-out", "seq_file.out")
+    assert PREPLIB.readSeqfileNames(seq_out) == ["mr", "simGorilla", "simHuman_chr6", "Anc1", "AncGorilla"]
+
 #############################################################################
 # Files written by prep
 

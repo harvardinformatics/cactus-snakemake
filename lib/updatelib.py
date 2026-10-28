@@ -115,6 +115,16 @@ def createAddOutgroupInputFiles(file_dict, pre_file, post_file, output_dir, pad)
 
 #############################################################################
 
+def getTopBranchLength(top_bl):
+# The length of the branch between the new ancestor and its parent in the add-genome pipeline,
+# from the top_branch_length config option. Defaults to 1.0 when it isn't set.
+
+    if not top_bl:
+        top_bl = 1.0;
+    return top_bl;
+
+#############################################################################
+
 def getOrigBranchLength(seq_out_file, child_node, new_anc_node, new_top_bl):
 
     with open(seq_out_file, "r") as f:
@@ -301,6 +311,9 @@ def runCactusUpdatePrepare(input_hal, input_file, cactus_path, output_dir, updat
     # Run the command and check for errors
 
     CLOG.info(f"Successfully ran cactus-update-prepare.");# Parsing file names form {output_dir}/seq_file.out");
+
+    return command;
+    # Return the command that was run, which prep records in its manifest
 
     # with open(os.path.join(output_dir, "seq_file.out")) as f:
     #     seq_files = [];

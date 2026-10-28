@@ -52,6 +52,12 @@ def test_orig_branch_length():
     assert orig_bl == pytest.approx(0.271974)
 
 
+def test_top_branch_length_default():
+    assert UPDATELIB.getTopBranchLength(0.1) == 0.1
+    assert UPDATELIB.getTopBranchLength(None) == 1.0
+    assert UPDATELIB.getTopBranchLength("") == 1.0
+
+
 def test_orig_branch_length_mismatch_exits():
     with pytest.raises(SystemExit):
         UPDATELIB.getOrigBranchLength(UPDATE_SEQ_OUT, "mr", "AncGorilla", 0.2)

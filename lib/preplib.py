@@ -18,6 +18,7 @@ import yaml
 
 import lib.cactuslib as CACTUSLIB
 import lib.treelib as TREELIB
+import lib.updatelib as UPDATELIB
 from lib.cactuslib import spacedOut as SO
 
 #############################################################################
@@ -68,6 +69,15 @@ def fingerprint(pipeline, config):
     if pipeline == "align":
         fp["input_file_sha256"] = hashFile(os.path.abspath(config["input_file"]));
     # cactus-prepare's output depends on the whole input file: the tree and the genome paths
+
+    if pipeline == "add-genome":
+        fp["input_hal"] = os.path.abspath(config["input_hal"]);
+        fp["new_genome_fasta"] = os.path.abspath(config["new_genome_fasta"]);
+        for key in ["new_genome_name", "new_branch_length", "parent_node", "child_node", "new_anc_node", "top_branch_length"]:
+            fp[key] = config[key];
+    # cactus-update-prepare's output depends on where the new genome goes in the tree. The HAL and FASTA
+    # are fingerprinted by path only: with overwrite_original_hal the pipeline edits the input HAL during
+    # the run, and genome-sized files are too big to hash on every parse.
 
     return fp;
 
@@ -179,6 +189,46 @@ def prepAlign(config, cactus_path, use_gpu, output_dir, log_dir, pad):
 
 #############################################################################
 
+def readSeqfileNames(seq_file):
+# The genome and node names listed in a cactus seqfile (every line after the tree)
+
+    with open(seq_file, "r") as f:
+        lines = [ line.strip() for line in f if line.strip() ];
+    return [ line.split("\t")[0] for line in lines[1:] ];
+
+#############################################################################
+
+def prepAddGenome(config, cactus_path, use_gpu, output_dir, log_dir, pad):
+# Prep for cactus_add_genome.smk: writes the new genome's input file and runs cactus-update-prepare
+# (add branch), which extracts the sequences it needs from the input HAL and writes seq_file.in/out
+
+    input_file = os.path.join(output_dir, "cactus-update-input.txt");
+    UPDATELIB.createUpdateInputFile(input_file, config["new_genome_name"], config["new_genome_fasta"], config["new_branch_length"], output_dir, pad);
+    # The input file for cactus-update-prepare, with the new genome and its branch length
+
+    top_bl = UPDATELIB.getTopBranchLength(config["top_branch_length"]);
+
+    command = UPDATELIB.runCactusUpdatePrepare(config["input_hal"], input_file, cactus_path, output_dir, "branch", use_gpu, log_dir, False,
+                                                config["parent_node"], config["child_node"], config["new_anc_node"], top_bl);
+    # dry_run is not used by runCactusUpdatePrepare
+
+    seq_in = os.path.join(output_dir, "seq_file.in");
+    seq_out = os.path.join(output_dir, "seq_file.out");
+
+    seq_names = readSeqfileNames(seq_out);
+    for name in [config["new_genome_name"], config["new_anc_node"]]:
+        if name not in seq_names:
+            CLOG.error(f"'{name}' is not in the cactus-update-prepare output {seq_out}: {', '.join(seq_names)}");
+            sys.exit(1);
+    # The rules are built around the new genome and the new ancestor, so both must be in seq_file.out
+
+    UPDATELIB.getOrigBranchLength(seq_out, config["child_node"], config["new_anc_node"], top_bl);
+    # Exits with an error if the split branch lengths don't add up to the original branch
+
+    return [input_file, seq_in, seq_out], command;
+
+#############################################################################
+
 def runPrep(pipeline, config, output_dir, log_dir, tmp_dir, main, pad, force=False):
 # Runs the prep step for a pipeline and writes its manifest, unless a matching manifest already exists
 
@@ -214,6 +264,8 @@ def runPrep(pipeline, config, output_dir, log_dir, tmp_dir, main, pad, force=Fal
 
     if pipeline == "align":
         generated_files, command = prepAlign(config, cactus_path, use_gpu, output_dir, log_dir, pad);
+    elif pipeline == "add-genome":
+        generated_files, command = prepAddGenome(config, cactus_path, use_gpu, output_dir, log_dir, pad);
     else:
         CLOG.error(f"No prep step is defined for pipeline '{pipeline}'.");
         sys.exit(1);
