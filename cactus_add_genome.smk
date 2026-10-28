@@ -17,6 +17,7 @@ import subprocess
 import lib.cactuslib as CACTUSLIB
 from lib.cactuslib import spacedOut as SO
 import lib.updatelib as UPDATELIB
+import lib.preplib as PREPLIB
 
 from functools import partial
 
@@ -28,7 +29,7 @@ version_flag = config.get("version", False);
 info_flag = config.get("info", False);
 debug = config.get("debug", False);
 prep_only = config.get("prep", False);
-skip_prepare = config.get("skip_prepare", False);
+prep_force = config.get("prep_force", False);
 #debug = True;
 # A hacky way to get some custom command line arguments for the pipeline
 # These just control preprocessing flags that stop the pipeline early anyways
@@ -59,9 +60,6 @@ USE_GPU = config["use_gpu"]
 SINGULARITY_BIND_PATHS = config.get("singularity_bind_paths", []);
 # Optional extra host paths to bind into every singularity command
 
-CACTUS_PATH, CACTUS_PATH_TMP, VERSION_TAG = CACTUSLIB.parseCactusPath(config["cactus_path"], USE_GPU, MAIN, TMPDIR, SINGULARITY_BIND_PATHS, pad);
-# Parse the cactus path from the config file
-
 #############################################################################
 # Input files and output paths
 
@@ -75,11 +73,6 @@ GENOME_EXT = os.path.splitext(GENOME_FASTA)[1][1:];
 
 NEW_BL = config["new_branch_length"];
 # The new branch length for the new genome
-
-INPUT_FILE = os.path.join(OUTPUT_DIR, "cactus-update-input.txt");
-if MAIN:
-    UPDATELIB.createUpdateInputFile(INPUT_FILE, GENOME_NAME, GENOME_FASTA, NEW_BL, OUTPUT_DIR, pad);
-# The cactus input file used by cactus-update-prepare
 
 INPUT_HAL = config["input_hal"];
 MAF_REFERENCE = config["maf_reference"];
@@ -107,21 +100,27 @@ PARENT  = config["parent_node"];
 CHILD   = config["child_node"];
 ANCNAME = config["new_anc_node"];
 #ORIG_BL = config["orig_branch_length"]; # NOTE: Could read tree to get this
-TOP_BL  = config["top_branch_length"];
-if not TOP_BL:
-    TOP_BL = 1.0;
+TOP_BL  = UPDATELIB.getTopBranchLength(config["top_branch_length"]);
 # The update type and the parent and child genomes for the update
 
 #############################################################################
-# cactus-prepare
+# Prep: cactus-update-prepare and the cactus image
 
-if MAIN and not skip_prepare:
-    UPDATELIB.runCactusUpdatePrepare(INPUT_HAL, INPUT_FILE, CACTUS_PATH, OUTPUT_DIR, UPDATE_TYPE, USE_GPU, LOG_DIR, DRY_RUN, PARENT, CHILD, ANCNAME, TOP_BL);
-# if DRY_RUN:
-#     CACTUS_FILE = os.path.join("/tmp/", "cactus-update-smk-dryrun", os.path.basename(INPUT_FILE));
-# else:
-#CACTUS_FILE = os.path.join(OUTPUT_DIR, os.path.basename(INPUT_FILE));
-# Run cactus-prepare to generate the cactus input file with ancestral nodes and labeled tree
+if config.get("skip_prepare", False) and MAIN:
+    CLOG.warning("skip_prepare is no longer used and has no effect: cactus-update-prepare only runs during prep (--config prep=T).");
+# skip_prepare stopped cactus-update-prepare re-running on every invocation, which no longer happens
+
+if (prep_only or debug) and MAIN:
+    PREPLIB.runPrep("add-genome", config, OUTPUT_DIR, LOG_DIR, TMPDIR, MAIN, pad, force=prep_force);
+# Prep only runs when asked for with --config prep=T (or debug=T). It resolves the cactus image, writes the
+# new genome's input file, runs cactus-update-prepare, and records all of it in a manifest
+
+PREP = PREPLIB.requirePrep("add-genome", config, OUTPUT_DIR, MAIN, pad, workflow.main_snakefile, workflow.configfiles);
+# Every other run, including each cluster job, reads that manifest instead of re-running prep,
+# and stops if it is missing or no longer matches the config
+
+CACTUS_PATH, CACTUS_PATH_TMP = CACTUSLIB.buildCactusCommands(PREP["cactus_image"], USE_GPU, TMPDIR, SINGULARITY_BIND_PATHS);
+# The singularity commands for the image recorded at prep
 
 CACTUS_SEQ_INPUT = os.path.join(OUTPUT_DIR, "seq_file.in");
 CACTUS_SEQ_OUTPUT = os.path.join(OUTPUT_DIR, "seq_file.out");
