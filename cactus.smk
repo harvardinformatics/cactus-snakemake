@@ -15,6 +15,7 @@ import subprocess
 import lib.cactuslib as CACTUSLIB
 from lib.cactuslib import spacedOut as SO
 import lib.treelib as TREELIB
+import lib.preplib as PREPLIB
 
 from functools import partial
 
@@ -26,6 +27,7 @@ version_flag = config.get("version", False);
 info_flag = config.get("info", False);
 debug = config.get("debug", False);
 prep_only = config.get("prep", False);
+prep_force = config.get("prep_force", False);
 #debug = True;
 # A hacky way to get some custom command line arguments for the pipeline
 # These just control preprocessing flags that stop the pipeline early anyways
@@ -56,9 +58,6 @@ USE_GPU = config["use_gpu"]
 SINGULARITY_BIND_PATHS = config.get("singularity_bind_paths", []);
 # Optional extra host paths to bind into every singularity command
 
-CACTUS_PATH, CACTUS_PATH_TMP, VERSION_TAG = CACTUSLIB.parseCactusPath(config["cactus_path"], USE_GPU, MAIN, TMPDIR, SINGULARITY_BIND_PATHS, pad);
-# Parse the cactus path from the config file
-
 #############################################################################
 # Input files and output paths
 
@@ -87,15 +86,22 @@ if MAIN:
 # The temporary/job directory specified in cactus-prepare
 
 #############################################################################
-# cactus-prepare
+# Prep: cactus-prepare and the cactus image
 
-if MAIN:
-    CACTUSLIB.runCactusPrepare(INPUT_FILE, CACTUS_PATH, OUTPUT_DIR, OUTPUT_HAL, USE_GPU, LOG_DIR, DRY_RUN);
-# if DRY_RUN:
-#     CACTUS_FILE = os.path.join("/tmp/", "cactus-smk-dryrun", os.path.basename(INPUT_FILE));
-#else:
+if (prep_only or debug) and MAIN:
+    PREPLIB.runPrep("align", config, OUTPUT_DIR, LOG_DIR, TMPDIR, MAIN, pad, force=prep_force);
+# Prep only runs when asked for with --config prep=T (or debug=T). It resolves the cactus image,
+# runs cactus-prepare to label the tree and write the seqfile, and records both in a manifest
+
+PREP = PREPLIB.requirePrep("align", config, OUTPUT_DIR, MAIN, pad, workflow.main_snakefile, workflow.configfiles);
+# Every other run, including each cluster job, reads that manifest instead of re-running prep,
+# and stops if it is missing or no longer matches the config and input file
+
+CACTUS_PATH, CACTUS_PATH_TMP = CACTUSLIB.buildCactusCommands(PREP["cactus_image"], USE_GPU, TMPDIR, SINGULARITY_BIND_PATHS);
+# The singularity commands for the image recorded at prep
+
 CACTUS_FILE = os.path.join(OUTPUT_DIR, os.path.basename(INPUT_FILE));
-# Run cactus-prepare to generate the cactus input file with ancestral nodes and labeled tree
+# The seqfile written by cactus-prepare, with ancestral nodes and the labeled tree
 
 #############################################################################
 # Reading files
