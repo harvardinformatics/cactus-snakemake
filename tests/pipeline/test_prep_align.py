@@ -9,13 +9,13 @@
 # must produce exactly the same job plan.
 #############################################################################
 
-import hashlib
 import os
 
 import pytest
 
 import lib.preplib as PREPLIB
-from tests.helpers import MAMMALS_DIR, dry_run, find_test_image, job_counts, make_config, run_snakemake
+from tests.helpers import (MAMMALS_DIR, dry_run, file_state, find_test_image, first_line, job_counts,
+                           make_config, run_prep)
 
 pytestmark = pytest.mark.prep
 
@@ -25,19 +25,8 @@ BASELINE_JOBS = {"align": 4, "all": 1, "append": 1, "blast": 4, "convert": 4, "c
 TRACKED_SEQFILE = os.path.join(MAMMALS_DIR, "evolverMammals-out", "evolverMammals.txt")
 
 
-def first_line(path):
-    with open(path) as f:
-        return f.readline().strip()
-
-
-def file_state(path):
-    # Contents and modification time, to check that a run left a file untouched
-    with open(path, "rb") as f:
-        return hashlib.sha256(f.read()).hexdigest(), os.stat(path).st_mtime_ns
-
-
 def prep(config_path, cwd, *extra_config):
-    return run_snakemake("align", config_path, cwd, ["--config", "prep=T", *extra_config])
+    return run_prep("align", config_path, cwd, *extra_config)
 
 
 def prep_files(config):

@@ -10,6 +10,7 @@
 #############################################################################
 
 import glob
+import hashlib
 import os
 import shutil
 import subprocess
@@ -171,6 +172,11 @@ def run_snakemake(pipeline, config_path, cwd, args=(), env=None):
     return result.returncode, result.stdout + result.stderr
 
 
+def run_prep(pipeline, config_path, cwd, *extra_config):
+    """Run a pipeline's prep step (--config prep=T plus any extra key=value settings)."""
+    return run_snakemake(pipeline, config_path, cwd, ["--config", "prep=T", *extra_config])
+
+
 def dry_run(pipeline, config_path, cwd, args=()):
     """A Snakemake dry-run of one pipeline.
 
@@ -179,6 +185,17 @@ def dry_run(pipeline, config_path, cwd, args=()):
     in a dry-run.
     """
     return run_snakemake(pipeline, config_path, cwd, ["-n", "-e", "slurm", *args])
+
+
+def first_line(path):
+    with open(path) as f:
+        return f.readline().strip()
+
+
+def file_state(path):
+    """Contents hash and modification time, to check that a run left a file untouched."""
+    with open(path, "rb") as f:
+        return hashlib.sha256(f.read()).hexdigest(), os.stat(path).st_mtime_ns
 
 
 def job_counts(output):
