@@ -1,6 +1,6 @@
 #############################################################################
-# Tier-1 tests for lib/cactuslib.py: Singularity bind-path parsing, Cactus version
-# tag ordering, and per-rule resource lookup.
+# Tier-1 tests for lib/cactuslib.py: Singularity bind-path parsing, the singularity
+# command prefixes, Cactus version tag ordering, and per-rule resource lookup.
 #
 # Resource tests use the rule_resources block of the tracked align config,
 # tests/evolverMammals/evolverMammals-cfg.yaml (read-only).
@@ -46,6 +46,22 @@ def test_bind_paths_missing_source(tmp_path):
     missing = str(tmp_path / "does-not-exist")
     with pytest.raises(ValueError, match="does not exist"):
         CACTUSLIB.parseSingularityBindPaths([missing])
+
+#############################################################################
+# buildCactusCommands (only builds command lists; the image name is never opened)
+
+def test_cactus_commands_cpu():
+    cactus_path, cactus_path_tmp = CACTUSLIB.buildCactusCommands("cactus_v3.2.1.sif", False, "/scratch/cactus-tmp", [MAMMALS_DIR])
+    assert cactus_path == ["singularity", "exec", "--cleanenv", "--bind", MAMMALS_DIR, "cactus_v3.2.1.sif"]
+    # Only the tmp variant binds the host tmp dir to /tmp, after any user bind paths
+    assert cactus_path_tmp == ["singularity", "exec", "--cleanenv", "--bind", MAMMALS_DIR,
+                               "--bind", "/scratch/cactus-tmp:/tmp", "cactus_v3.2.1.sif"]
+
+
+def test_cactus_commands_gpu():
+    cactus_path, cactus_path_tmp = CACTUSLIB.buildCactusCommands("cactus_v3.2.1-gpu.sif", True, "/scratch/cactus-tmp", [])
+    assert cactus_path == ["singularity", "exec", "--nv", "--cleanenv", "cactus_v3.2.1-gpu.sif"]
+    assert cactus_path_tmp[:3] == ["singularity", "exec", "--nv"]
 
 #############################################################################
 # parseCactusVersion
