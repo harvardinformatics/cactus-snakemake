@@ -1,0 +1,32 @@
+name: Tests
+
+# Runs the tier-1 unit tests (tests/unit/) on every PR into main. They need only
+# Python, pytest, pyyaml and requests (lib/cactuslib.py imports requests), not
+# Snakemake, singularity or a Cactus image, so this installs those with pip
+# instead of building envs/environment.yml.
+#
+# tests/pipeline/ (tier 2: real prep steps in a container and Snakemake dry-runs)
+# and tests/integration/ (tier 3: full pipeline runs) need singularity and a Cactus
+# image, so they are run on the cluster instead - see "Running tests" in
+# CONTRIBUTING.md.
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependencies
+        run: pip install pytest pyyaml requests
+
+      - name: Run unit tests
+        run: pytest tests/unit -v
