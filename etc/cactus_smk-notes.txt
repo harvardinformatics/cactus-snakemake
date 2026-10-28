@@ -112,3 +112,29 @@ Traceback (most recent call last):
   File "/home/cactus/cactus_env/lib/python3.10/site-packages/cactus/update/cactus_update_prepare.py", line 1000, in replace_action_sanity_check
     raise RuntimeError(
 RuntimeError: Genome asked for replacement 'simHuman_chr6' does not match with the one mentioned in the input file /n/holylfs05/LABS/informatics/Users/gthomas/cactus-snakemake/tests/evolverMammals/evolverMammals-replace-out22/cactus-replace-input.txt: ['simGorilla_chr6']
+############################################################################
+TABLED (Oct 2026): installing a container runtime from cactus_snakemake setup
+
+`cactus_snakemake setup` assumes singularity is already installed on the system; `check` reports it if missing.
+Idea: install Apptainer (conda-forge) into the env when singularity isn't available.
+
+Caveats found:
+  - A conda-installed Apptainer can't be setuid, so it only works if the host allows unprivileged user
+    namespaces (/proc/sys/user/max_user_namespaces > 0). Clusters without a system singularity often
+    disable those too, in which case no conda install helps; an admin has to install it.
+  - Unprivileged Apptainer needs FUSE tools (squashfuse) to mount .sif images; without them it unpacks each
+    image to disk per job (slow/large for 0.4-1.7 GB Cactus images).
+  - setup updates the env with --prune, which would remove anything installed outside envs/environment.yml.
+  - Detecting at setup time is unreliable where singularity only comes from `module load`.
+  - The pipelines call `singularity` by name (CACTUSLIB.buildCactusCommands); check whether the conda
+    apptainer package provides a `singularity` command.
+  - Not yet verified: current conda-forge apptainer version and dependencies (needs `conda search`).
+
+Possible design if picked up:
+  1. Opt-in `setup --with-apptainer`, suggested by check/setup when singularity isn't found; no silent install.
+  2. Keep apptainer in its own env file (e.g. envs/apptainer.yml) layered on environment.yml, included in
+     the env hash, so --prune keeps it and the stale check still works.
+  3. Have `check` verify it can actually run (user namespaces; maybe `apptainer exec` on a tiny image).
+  4. If needed, have buildCactusCommands fall back to `apptainer` when `singularity` isn't on PATH.
+First decide whether real users would be on systems without singularity but with unprivileged
+user namespaces enabled; if not, the current `check` message may be enough.
