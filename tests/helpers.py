@@ -51,7 +51,10 @@ PATH_KEYS = ("input_file", "input_hal", "new_genome_fasta")
 # for "__main__.py" in sys.argv[0], which `python -m snakemake` always sets. A run
 # misclassified that way skips the top-level setup and looks for state that a real
 # top-level run would have written first.
-SNAKEMAKE_EXE = os.path.join(os.path.dirname(sys.executable), "snakemake")
+# $CACTUS_SMK_TEST_SNAKEMAKE can point at another environment's snakemake (e.g. one made by
+# "cactus_snakemake setup"), to test against that environment's Snakemake version while
+# pytest itself runs from an environment that has it installed.
+SNAKEMAKE_EXE = os.environ.get("CACTUS_SMK_TEST_SNAKEMAKE", os.path.join(os.path.dirname(sys.executable), "snakemake"))
 
 
 def find_test_image():
@@ -181,10 +184,11 @@ def dry_run(pipeline, config_path, cwd, args=()):
     """A Snakemake dry-run of one pipeline.
 
     -e slurm is passed because the tracked configs leave partitions blank, which
-    getResources() only accepts for the slurm/cannon executors. Nothing is submitted
-    in a dry-run.
+    getResources() only accepts for the slurm/cannon executors. Newer Snakemake 9
+    releases also require -j with a remote executor, even for a dry-run. Nothing is
+    submitted in a dry-run.
     """
-    return run_snakemake(pipeline, config_path, cwd, ["-n", "-e", "slurm", *args])
+    return run_snakemake(pipeline, config_path, cwd, ["-n", "-e", "slurm", "-j", "1", *args])
 
 
 def first_line(path):
