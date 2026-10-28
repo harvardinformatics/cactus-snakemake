@@ -72,7 +72,7 @@ Running a pipeline takes three steps, shown here for `align`:
 ./cactus_snakemake run align --configfile my-config.yaml -j 20 -e slurm
 ```
 
-`run` passes everything after the pipeline name to Snakemake. Give `-j` (the number of jobs to submit at once) whenever you use `-e slurm` or `-e cannon`: recent Snakemake versions require it even for a dry-run.
+`run` passes everything after the pipeline name to Snakemake. Give `-j` (the number of jobs to submit at once) whenever you use `-e slurm`: recent Snakemake versions require it even for a dry-run.
 
 ### Prep
 
@@ -89,9 +89,9 @@ If a change is intended, prep again with `--force`. Files already in the output 
 
 For GPU-enabled blast rules, configure exactly one of `gpus` or `gres` in the relevant `rule_resources.blast` block. Use `gpus` to request Snakemake's `gpu` resource, or use `gres` with any of `1`, `a100:2`, `gpu:1`, or `gpu:a100:2`. If the `gpu:` prefix is omitted, the pipeline adds it before submitting the Slurm GRES request.
 
-> 💡 **Tip:** Cannon cluster Snakemake plugin
+> 💡 **Tip:** Automatic partition selection
 >
-> If you are on the Harvard Cannon cluster, you can use the [snakemake-executor-plugin-cannon](https://github.com/harvardinformatics/snakemake-executor-plugin-cannon) to do automatic partition selection instead of the generic SLURM executor plugin. It is included in the environment `setup` creates; use `-e cannon` in all of your commands instead of `-e slurm`.
+> The SLURM executor plugin can choose a partition for each job from its resource requests, given a partition config for your cluster. Add `--slurm-partition-config <path to your cluster's partition config>` to your `run` (or `snakemake`) commands, and the partitions in your pipeline config can be left blank. See the [SLURM executor plugin documentation](https://snakemake.github.io/snakemake-plugin-catalog/plugins/executor/slurm.html) for the config format.
 
 ### Without the wrapper
 

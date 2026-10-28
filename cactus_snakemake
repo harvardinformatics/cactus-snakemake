@@ -290,7 +290,7 @@ print_verbose_env_details() {
     if [[ -d "$ENV_PREFIX" ]]; then
         echo "[cactus_snakemake]   installed versions:" >&2
         { conda list -n "$ENV_NAME" 2>/dev/null \
-            | grep -Ei '^(python|snakemake-minimal|snakemake-executor-plugin-slurm|snakemake-executor-plugin-cannon|pyyaml|requests) ' \
+            | grep -Ei '^(python|snakemake-minimal|snakemake-executor-plugin-slurm|pyyaml|requests) ' \
             | sed 's/^/[cactus_snakemake]     /' >&2; } || true
     fi
 }

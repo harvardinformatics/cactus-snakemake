@@ -3,7 +3,8 @@
 # Cactus jobs. Opt-in only (CACTUS_SMK_RUN_E2E=1): they submit cluster jobs and
 # take hours. The Snakemake arguments come from $CACTUS_SMK_E2E_ARGS (default
 # "-e slurm -j 20"). The tracked configs leave partitions blank, which the
-# pipelines only accept with the slurm or cannon executor.
+# pipelines only accept with the slurm executor; add
+# --slurm-partition-config <config> to have it choose partitions for each job.
 #
 # Mammals (tests/evolverMammals): align runs first, and its HAL is the input for
 # add-genome, replace-genome and add-outgroup. Yeast (tests/yeast-minigraph):

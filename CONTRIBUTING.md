@@ -114,6 +114,9 @@ The tests in `tests/` are built on the two datasets tracked in the repository: `
 pytest tests/unit                       # tier 1
 pytest tests/unit tests/pipeline        # tiers 1 and 2
 CACTUS_SMK_RUN_E2E=1 pytest tests/integration   # tier 3 (opt-in, submits cluster jobs)
+
+# tier 3 with automatic partition selection
+CACTUS_SMK_RUN_E2E=1 CACTUS_SMK_E2E_ARGS="-e slurm -j 20 --slurm-partition-config <partition config>" pytest tests/integration
 ```
 
 | Tier | Location | What it checks | Needs | Time |
