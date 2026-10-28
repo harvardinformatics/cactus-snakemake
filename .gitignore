@@ -29,6 +29,7 @@ tests/yeast-minigraph*/**
 
 *.snakemake*
 *__pycache__*
+.pytest_cache/
 
 *.sif
 
