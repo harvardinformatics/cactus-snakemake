@@ -230,8 +230,8 @@ def requirePrep(pipeline, config, output_dir, main, pad, snakefile, configfiles)
 # longer matches. Runs on every parse of the Snakefile, so it only reads small files.
 
     manifest_file = manifestPath(output_dir);
-    prep_cmd = f"snakemake -s {snakefile} --configfile {' '.join(configfiles)} --config prep=T";
-    # The command to run prep, for the error messages
+    prep_cmd = f"snakemake -s {snakefile} --configfile {' '.join(str(f) for f in configfiles)} --config prep=T";
+    # The command to run prep, for the error messages (Snakemake gives the config files as Path objects)
 
     if not os.path.isfile(manifest_file):
         CLOG.error(f"No prep manifest found at {manifest_file}.");
