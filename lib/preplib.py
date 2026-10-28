@@ -58,12 +58,22 @@ def getVersion():
 
 #############################################################################
 
+def usesGpu(pipeline, config):
+# Whether the pipeline runs the GPU cactus image. The minigraph pipeline always uses the CPU image,
+# whatever use_gpu says, as cactus_minigraph.smk always has.
+
+    if pipeline == "minigraph":
+        return False;
+    return bool(config.get("use_gpu", False));
+
+#############################################################################
+
 def fingerprint(pipeline, config):
 # The config values and input file contents a pipeline's prep step depends on. If any of these
 # change after prep, the prep outputs (and anything built from them) may no longer match.
 
     fp = { "cactus_path" : str(config.get("cactus_path")),
-            "use_gpu" : bool(config.get("use_gpu", False)) };
+            "use_gpu" : usesGpu(pipeline, config) };
     # Every pipeline's prep resolves the cactus image
 
     if pipeline == "align":
@@ -289,7 +299,7 @@ def runPrep(pipeline, config, output_dir, log_dir, tmp_dir, main, pad, force=Fal
         CLOG.warning("Intermediate files already in the output directory were made from the earlier prep and may not match the new one. Nothing is deleted.");
     ## Check any existing manifest first
 
-    use_gpu = bool(config.get("use_gpu", False));
+    use_gpu = usesGpu(pipeline, config);
 
     cactus_image, version_tag = CACTUSLIB.resolveCactusImage(config["cactus_path"], use_gpu, main, pad);
     cactus_path, cactus_path_tmp = CACTUSLIB.buildCactusCommands(cactus_image, use_gpu, tmp_dir, config.get("singularity_bind_paths", []));

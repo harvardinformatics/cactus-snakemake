@@ -111,6 +111,13 @@ def test_fingerprint_image_only(tmp_path, pipeline, cactus_path):
     assert PREPLIB.fingerprint(pipeline, config) == {"cactus_path": cactus_path, "use_gpu": False}
 
 
+def test_minigraph_never_uses_gpu(tmp_path):
+    # cactus_minigraph.smk always runs the CPU image, so prep must resolve that one
+    _, config = make_config("minigraph", tmp_path, use_gpu=True)
+    assert PREPLIB.usesGpu("minigraph", config) is False
+    assert PREPLIB.fingerprint("minigraph", config)["use_gpu"] is False
+
+
 def test_fingerprint_hal_by_path_only(tmp_path):
     # overwrite_original_hal edits the input HAL during a run, so its contents can't be
     # fingerprinted; the path is used without opening the file (this one is never created)

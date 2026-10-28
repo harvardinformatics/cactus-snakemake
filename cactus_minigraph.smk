@@ -14,6 +14,7 @@ import subprocess
 
 import lib.cactuslib as CACTUSLIB
 from lib.cactuslib import spacedOut as SO
+import lib.preplib as PREPLIB
 
 from functools import partial
 
@@ -25,6 +26,7 @@ version_flag = config.get("version", False);
 info_flag = config.get("info", False);
 debug = config.get("debug", False);
 prep_only = config.get("prep", False);
+prep_force = config.get("prep_force", False);
 #debug = True;
 # A hacky way to get some custom command line arguments for the pipeline
 # These just control preprocessing flags that stop the pipeline early anyways
@@ -124,8 +126,20 @@ else:
 #         CLOG.info(f"Creating temporary sub-directory at {TMPDIR}");
 #         os.makedirs(TMPDIR);
 
-CACTUS_PATH, CACTUS_PATH_TMP, VERSION_TAG = CACTUSLIB.parseCactusPath(config["cactus_path"], False, MAIN, TMPDIR, SINGULARITY_BIND_PATHS, pad);
-# Parse the cactus path from the config file after TMPDIR is finalized for the selected join graph type
+#############################################################################
+# Prep: the cactus image
+
+if (prep_only or debug) and MAIN:
+    PREPLIB.runPrep("minigraph", config, OUTPUT_DIR, LOG_DIR, TMPDIR, MAIN, pad, force=prep_force);
+# Prep only runs when asked for with --config prep=T (or debug=T). This pipeline has no cactus prepare
+# step, so prep only resolves the cactus image (always the CPU image) and records it in a manifest
+
+PREP = PREPLIB.requirePrep("minigraph", config, OUTPUT_DIR, MAIN, pad, workflow.main_snakefile, workflow.configfiles);
+# Every other run, including each cluster job, reads the image from that manifest instead of
+# resolving it again, and stops if the manifest is missing or no longer matches the config
+
+CACTUS_PATH, CACTUS_PATH_TMP = CACTUSLIB.buildCactusCommands(PREP["cactus_image"], False, TMPDIR, SINGULARITY_BIND_PATHS);
+# The singularity commands for the image recorded at prep, built after TMPDIR is finalized for the selected join graph type
 
 if LOG_LEVEL == "debug":
     CLOG.debug("EXITING BEFORE RULES. DEBUG MODE.");
