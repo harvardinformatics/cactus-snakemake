@@ -70,14 +70,21 @@ def fingerprint(pipeline, config):
         fp["input_file_sha256"] = hashFile(os.path.abspath(config["input_file"]));
     # cactus-prepare's output depends on the whole input file: the tree and the genome paths
 
-    if pipeline == "add-genome":
+    if pipeline in ["add-genome", "replace-genome"]:
         fp["input_hal"] = os.path.abspath(config["input_hal"]);
         fp["new_genome_fasta"] = os.path.abspath(config["new_genome_fasta"]);
+    # cactus-update-prepare reads the input HAL and the new genome. Both are fingerprinted by path only:
+    # with overwrite_original_hal the pipeline edits the input HAL during the run, and genome-sized
+    # files are too big to hash on every parse.
+
+    if pipeline == "add-genome":
         for key in ["new_genome_name", "new_branch_length", "parent_node", "child_node", "new_anc_node", "top_branch_length"]:
             fp[key] = config[key];
-    # cactus-update-prepare's output depends on where the new genome goes in the tree. The HAL and FASTA
-    # are fingerprinted by path only: with overwrite_original_hal the pipeline edits the input HAL during
-    # the run, and genome-sized files are too big to hash on every parse.
+    # Where the new genome goes in the tree
+    elif pipeline == "replace-genome":
+        for key in ["replace", "new_genome_name"]:
+            fp[key] = config[key];
+    # Which genome is replaced, and by what
 
     return fp;
 
@@ -229,6 +236,32 @@ def prepAddGenome(config, cactus_path, use_gpu, output_dir, log_dir, pad):
 
 #############################################################################
 
+def prepReplaceGenome(config, cactus_path, use_gpu, output_dir, log_dir, pad):
+# Prep for cactus_replace_genome.smk: writes the replacement genome's input file and runs
+# cactus-update-prepare (replace), which extracts the sequences it needs from the input HAL and
+# writes seq_file.in/out
+
+    input_file = os.path.join(output_dir, "cactus-replace-input.txt");
+    UPDATELIB.createReplaceInputFile(input_file, config["new_genome_name"], config["new_genome_fasta"], output_dir, pad);
+    # The input file for cactus-update-prepare, with the replacement genome
+
+    command = UPDATELIB.runCactusUpdatePrepare(config["input_hal"], input_file, cactus_path, output_dir, "replace", use_gpu, log_dir, False,
+                                                config["replace"], "", "", "");
+    # dry_run is not used by runCactusUpdatePrepare, and the last three arguments are only used to add a branch
+
+    seq_in = os.path.join(output_dir, "seq_file.in");
+    seq_out = os.path.join(output_dir, "seq_file.out");
+
+    seq_names = readSeqfileNames(seq_out);
+    if config["new_genome_name"] not in seq_names:
+        CLOG.error(f"'{config['new_genome_name']}' is not in the cactus-update-prepare output {seq_out}: {', '.join(seq_names)}");
+        sys.exit(1);
+    # The rules are built around the replacement genome, so it must be in seq_file.out
+
+    return [input_file, seq_in, seq_out], command;
+
+#############################################################################
+
 def runPrep(pipeline, config, output_dir, log_dir, tmp_dir, main, pad, force=False):
 # Runs the prep step for a pipeline and writes its manifest, unless a matching manifest already exists
 
@@ -266,6 +299,8 @@ def runPrep(pipeline, config, output_dir, log_dir, tmp_dir, main, pad, force=Fal
         generated_files, command = prepAlign(config, cactus_path, use_gpu, output_dir, log_dir, pad);
     elif pipeline == "add-genome":
         generated_files, command = prepAddGenome(config, cactus_path, use_gpu, output_dir, log_dir, pad);
+    elif pipeline == "replace-genome":
+        generated_files, command = prepReplaceGenome(config, cactus_path, use_gpu, output_dir, log_dir, pad);
     else:
         CLOG.error(f"No prep step is defined for pipeline '{pipeline}'.");
         sys.exit(1);

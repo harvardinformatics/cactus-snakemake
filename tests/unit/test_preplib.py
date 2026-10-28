@@ -91,6 +91,19 @@ def test_fingerprint_add_genome(tmp_path):
     }
 
 
+def test_fingerprint_replace_genome(tmp_path):
+    # The tracked replace config leaves cactus_path blank (download the latest image)
+    _, config = make_config("replace-genome", tmp_path)
+    assert PREPLIB.fingerprint("replace-genome", config) == {
+        "cactus_path": "None",
+        "use_gpu": False,
+        "input_hal": os.path.join(MAMMALS_DIR, "evolverMammals-out", "evolverMammals.hal"),
+        "new_genome_fasta": os.path.join(MAMMALS_DIR, "evolverMammals-seq", "simGorilla.chr6"),
+        "replace": "simHuman_chr6",
+        "new_genome_name": "simGorilla_chr6",
+    }
+
+
 def test_fingerprint_hal_by_path_only(tmp_path):
     # overwrite_original_hal edits the input HAL during a run, so its contents can't be
     # fingerprinted; the path is used without opening the file (this one is never created)
