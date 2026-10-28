@@ -104,6 +104,13 @@ def test_fingerprint_replace_genome(tmp_path):
     }
 
 
+@pytest.mark.parametrize("pipeline, cactus_path", [("add-outgroup", "None"), ("minigraph", "download")])
+def test_fingerprint_image_only(tmp_path, pipeline, cactus_path):
+    # These pipelines have no prepare step, so prep only depends on the cactus image settings
+    _, config = make_config(pipeline, tmp_path)
+    assert PREPLIB.fingerprint(pipeline, config) == {"cactus_path": cactus_path, "use_gpu": False}
+
+
 def test_fingerprint_hal_by_path_only(tmp_path):
     # overwrite_original_hal edits the input HAL during a run, so its contents can't be
     # fingerprinted; the path is used without opening the file (this one is never created)

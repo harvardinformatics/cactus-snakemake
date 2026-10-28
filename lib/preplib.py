@@ -301,6 +301,9 @@ def runPrep(pipeline, config, output_dir, log_dir, tmp_dir, main, pad, force=Fal
         generated_files, command = prepAddGenome(config, cactus_path, use_gpu, output_dir, log_dir, pad);
     elif pipeline == "replace-genome":
         generated_files, command = prepReplaceGenome(config, cactus_path, use_gpu, output_dir, log_dir, pad);
+    elif pipeline in ["add-outgroup", "minigraph"]:
+        generated_files, command = [], None;
+    # These pipelines have no prepare step: their input files are written by rules, so prep only resolves the image
     else:
         CLOG.error(f"No prep step is defined for pipeline '{pipeline}'.");
         sys.exit(1);
