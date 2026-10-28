@@ -116,8 +116,10 @@ pytest tests/unit tests/pipeline        # tiers 1 and 2
 CACTUS_SMK_RUN_E2E=1 pytest tests/integration   # tier 3 (opt-in, submits cluster jobs)
 
 # tier 3 with automatic partition selection
-CACTUS_SMK_RUN_E2E=1 CACTUS_SMK_E2E_ARGS="-e slurm -j 20 --slurm-partition-config <partition config>" pytest tests/integration
+CACTUS_SMK_RUN_E2E=1 CACTUS_SMK_E2E_ARGS="-e slurm -j 20 --slurm-partition-config <partition config>" pytest tests/integration --basetemp=<dir on shared storage>
 ```
+
+Tier 3 submits cluster jobs that write into the test output directories, so give pytest a `--basetemp` on storage the compute nodes can see. pytest's default is under `/tmp`, which is local to each node. pytest empties the `--basetemp` directory at the start of each run, so use one that holds nothing else.
 
 | Tier | Location | What it checks | Needs | Time |
 | ---- | -------- | -------------- | ----- | ---- |
