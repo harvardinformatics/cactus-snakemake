@@ -399,48 +399,6 @@ def downloadCactusImage(use_gpu: bool, main: bool, pad: int, tag: str="") -> Non
 
 #############################################################################
 
-def downloadKegPatch(output_dir: str, main: bool, tag: str) -> str:
-    dl_patch = False;
-    # if tag.startswith("v2.9.8"):
-    #     patch_url = "https://github.com/ComparativeGenomicsToolkit/cactus/releases/download/v2.9.8/config-v298-keg-patch.xml"
-    #     patch_output_file = os.path.join(output_dir, "config-v298-keg-patch.xml")
-    #     dl_patch = True
-    ## Version 3.0.0 of the cactus-snakemake pipeline will not be backwards compatible anyways, so not implementing
-    ## the patch for cactus v2.9.8
-    
-    if tag.startswith("v2.9.9"):
-        patch_url = "https://github.com/ComparativeGenomicsToolkit/cactus/releases/download/v2.9.9/config-v2.9.9-keg-patch.xml"
-        patch_output_file = os.path.join(output_dir, "config-v2.9.9-keg-patch.xml")
-        dl_patch = True    
-
-    if dl_patch:
-        if os.path.exists(patch_output_file):
-            if main:
-                cactuslib_logger.info(f"Patch file {patch_output_file} already exists. This patch will be used.")
-                cactuslib_logger.debug("=" * 83);
-            return os.path.abspath(patch_output_file)
-        
-        else:
-            command = ["curl", "-L", "-o", patch_output_file, patch_url]
-
-            cactuslib_logger.info(f"Version 2.9.9 patch download: {' '.join(command)}")
-            cactuslib_logger.debug("===================================================================================");
-
-            try:
-                subprocess.run(command, check=True)
-                return os.path.abspath(patch_output_file)
-            except subprocess.CalledProcessError as e:
-                cactuslib_logger.error(f"Failed to download the patch: {e}")
-                sys.exit(1)
-
-    else:
-        cactuslib_logger.error(f"KegAlign patch file is only available for Cactus version 2.9.9, but got {tag}.")
-        cactuslib_logger.error("Please use an earlier version of the pipeline to use a version of Cactus < 2.9.9.");
-        sys.exit(1);
-
-
-#############################################################################
-
 def parseSingularityBindPaths(bind_paths) -> list:
     if bind_paths in [None, ""]:
         return [];

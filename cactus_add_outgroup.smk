@@ -59,15 +59,6 @@ SINGULARITY_BIND_PATHS = config.get("singularity_bind_paths", []);
 CACTUS_PATH, CACTUS_PATH_TMP, VERSION_TAG = CACTUSLIB.parseCactusPath(config["cactus_path"], USE_GPU, MAIN, TMPDIR, SINGULARITY_BIND_PATHS, pad);
 # Parse the cactus path from the config file
 
-KEG_PATCH_FILE = None
-if USE_GPU:
-    # Normalize tag (strip leading "v"), grab the major version before the first dot,
-    # ensure it's numeric, and check if it's less than 3.
-    tag_major = str(VERSION_TAG).lstrip('v').split('.', 1)[0]
-    if tag_major.isdigit() and int(tag_major) < 3:
-        KEG_PATCH_FILE = CACTUSLIB.downloadKegPatch(OUTPUT_DIR, MAIN, VERSION_TAG)
-# Download the KEG patch file if using GPU cactus, and set the path to it
-
 #############################################################################
 # Input files and output paths
 
@@ -287,7 +278,6 @@ rule align:
         path = CACTUS_PATH_TMP,
         post_in = POST_INPUT_FILE, # Note this has to be a param instead of an input or else it will retrigger each time the pipeline is run (since it is created during preprocessing)
         node = NEW_ROOT,
-        keg_patch_file = KEG_PATCH_FILE,
         job_tmp_dir = os.path.join("/tmp", f"{NEW_ROOT}-align"), # This is the tmp dir in the container, which is bound to the host tmp dir
         host_tmp_dir = os.path.join(TMPDIR, f"{NEW_ROOT}-align"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
         work_dir = TMPDIR,
@@ -309,9 +299,6 @@ rule align:
             "--retryCount", "0",
             "--maxCores", str(resources.cpus_per_task),
         ];
-
-        if params.keg_patch_file:
-            cmd += ["--configFile", params.keg_patch_file];
 
         CACTUSLIB.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, params.node)
 ## This rule runs cactus-align for every internal node
