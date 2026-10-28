@@ -3,7 +3,8 @@
 # pipeline: cactus_add_outgroup.smk. It contains the parameters needed to run the pipeline.
 #############################################################################
 
-# time -p snakemake -j 5 -e slurm -s cactus_add_outgroup.smk --configfile config-templates/add-outgroup-config-template.yaml --dryrun
+# ./cactus_snakemake prep add-outgroup --configfile <this config>
+# ./cactus_snakemake run add-outgroup --configfile <this config> -j 5 -e slurm --dryrun
 
 #############################################################################
 #
@@ -14,7 +15,7 @@
 cactus_path:
 # File path or version string (e.g. 2.9.5) or "download".
 # Provide the path to the cactus singularity container. This is needed whether use_gpu is True or False.
-# If you don't have it, set this to "download" and the pipeline will download it for you.
+# If you don't have it, set this to "download" and prep will download it for you (once; every run then uses that image).
 # If you want to download a specific version, provide the version tag, e.g. v2.9.9
 
 singularity_bind_paths:
