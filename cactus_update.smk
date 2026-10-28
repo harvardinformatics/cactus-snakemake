@@ -553,7 +553,7 @@ rule add_to_branch:
         child = CHILD,
         genome_name = GENOME_NAME,
         top_bl = TOP_BL,
-        orig_bl = ORIG_BL,
+        new_bl = NEW_BL,
         host_tmp_dir = os.path.join(TMPDIR, "add-to-branch"),
         rule_name = "add_to_branch"
     log:
@@ -576,8 +576,8 @@ rule add_to_branch:
             cmd += [ str(params.top_bl) ];
         else:
             cmd += [ "1.0" ];
-        if params.orig_bl:
-            cmd += [ str(params.orig_bl) ];
+        if params.new_bl:
+            cmd += [ str(params.new_bl) ];
         else:
             cmd += [ "1.0" ];
 
