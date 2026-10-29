@@ -237,7 +237,7 @@ rule preprocess:
     output:
         NEW_GENOME_FILE
     params:
-        path = CACTUS_PATH,
+        path = CACTUS_PATH_TMP,
         genome_name = GENOME_NAME,
         job_tmp_dir = os.path.join("/tmp", f"{GENOME_NAME}-preprocess"), # This is the tmp dir in the container, which is bound to the host tmp dir
         host_tmp_dir = os.path.join(TMPDIR, f"{GENOME_NAME}-preprocess"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
@@ -345,7 +345,7 @@ rule convert_new_genome:
     output:
         fa_file = rounds[ANCNAME]['convert-output']
     params:
-        path = CACTUS_PATH,
+        path = CACTUS_PATH_TMP,
         node = ANCNAME,
         job_tmp_dir = os.path.join("/tmp", f"{ANCNAME}-convert"), # This is the tmp dir in the container, which is bound to the host tmp dir
         host_tmp_dir = os.path.join(TMPDIR, f"{ANCNAME}-convert"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container        
