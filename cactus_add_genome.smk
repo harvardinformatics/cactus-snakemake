@@ -251,7 +251,7 @@ rule preprocess:
             "cactus-preprocess",
             params.job_tmp_dir,
             input.seq_in,
-            input.seq_out,
+            CACTUSLIB.preprocessSeqFile(input.seq_out, LOG_DIR, params.genome_name),
             "--inputNames", params.genome_name,
             "--logInfo",
             "--retryCount", "0",

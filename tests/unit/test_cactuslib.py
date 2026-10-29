@@ -1,12 +1,15 @@
 #############################################################################
 # Tier-1 tests for lib/cactuslib.py: Singularity bind-path parsing, the singularity
-# command prefixes, Cactus version tag ordering, and per-rule resource lookup.
+# command prefixes, preprocess seqfile copies, Cactus version tag ordering, and
+# per-rule resource lookup.
 #
 # Resource tests use the rule_resources block of the tracked align config,
 # tests/evolverMammals/evolverMammals-cfg.yaml (read-only).
 #############################################################################
 
 import copy
+import os
+import shutil
 
 import pytest
 import yaml
@@ -62,6 +65,22 @@ def test_cactus_commands_gpu():
     cactus_path, cactus_path_tmp = CACTUSLIB.buildCactusCommands("cactus_v3.2.1-gpu.sif", True, "/scratch/cactus-tmp", [])
     assert cactus_path == ["singularity", "exec", "--nv", "--cleanenv", "cactus_v3.2.1-gpu.sif"]
     assert cactus_path_tmp[:3] == ["singularity", "exec", "--nv"]
+
+#############################################################################
+# preprocessSeqFile (uses the tracked cactus-prepare output as the seqfile)
+
+def test_preprocess_seqfile_copy(tmp_path):
+    seqfile = tmp_path / "evolverMammals.txt"
+    shutil.copyfile(os.path.join(MAMMALS_DIR, "evolverMammals-out", "evolverMammals.txt"), seqfile)
+    log_dir = tmp_path / "logs"
+    log_dir.mkdir()
+
+    copy = CACTUSLIB.preprocessSeqFile(str(seqfile), str(log_dir), "simCow.chr6")
+
+    # cactus-preprocess gets this copy to rewrite; the original is a different file
+    assert copy == str(log_dir / "simCow.chr6.preprocess.seqfile.txt")
+    assert open(copy).read() == seqfile.read_text()
+    assert not os.path.samefile(copy, seqfile)
 
 #############################################################################
 # parseCactusVersion

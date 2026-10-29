@@ -210,7 +210,7 @@ rule preprocess:
             "cactus-preprocess",
             params.job_tmp_dir,
             params.input_file,
-            params.cactus_file,
+            CACTUSLIB.preprocessSeqFile(params.cactus_file, LOG_DIR, wildcards.final_tip),
             "--inputNames", params.genome_name,
             "--logInfo",
             "--retryCount", "0",

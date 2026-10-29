@@ -12,10 +12,11 @@
 import os
 
 import pytest
+import yaml
 
 import lib.preplib as PREPLIB
 from tests.helpers import (MAMMALS_DIR, dry_run, file_state, find_test_image, first_line, job_counts,
-                           make_config, run_prep)
+                           make_config, run_prep, run_snakemake)
 
 pytestmark = pytest.mark.prep
 
@@ -88,6 +89,36 @@ def test_dry_run_changes_nothing(prepped):
         assert rc == 0, output
 
     assert [file_state(f) for f in files] == before
+
+
+def test_preprocess_leaves_prep_files_untouched(prepped):
+    # cactus-preprocess always rewrites the output seqfile it is given, so each preprocess job gets its
+    # own copy (CACTUSLIB.preprocessSeqFile). This runs one real preprocess job (simCow.chr6) locally.
+    config_path, config, work = prepped
+    files = prep_files(config)
+    before = [file_state(f) for f in files]
+
+    # Run locally with 2 cores. The tracked config leaves partitions blank, which getResources() accepts
+    # when the executor is slurm; "executor: slurm" in the config says so without -e slurm, so nothing
+    # is submitted. Neither key is part of the prep fingerprint.
+    config["executor"] = "slurm"
+    config["rule_resources"]["preprocess"]["cpus"] = 2
+    with open(config_path, "w") as f:
+        yaml.safe_dump(config, f)
+
+    target = os.path.join(config["output_dir"], "simCow.chr6")
+    rc, output = run_snakemake("align", config_path, work, ["--cores", "2", target])
+    assert rc == 0, output[-5000:]
+    assert os.path.getsize(target) > 0
+
+    # cactus-preprocess got (and rewrote) its own copy; the prep seqfile and manifest are untouched
+    assert os.path.isfile(os.path.join(config["output_dir"], "logs", "simCow.chr6.preprocess.seqfile.txt"))
+    assert [file_state(f) for f in files] == before
+
+    # The finished preprocess job isn't scheduled again
+    rc, output = dry_run("align", config_path, work)
+    assert rc == 0, output
+    assert job_counts(output) == {**BASELINE_JOBS, "preprocess": BASELINE_JOBS["preprocess"] - 1}
 
 
 def test_prep_again_is_noop(prepped):

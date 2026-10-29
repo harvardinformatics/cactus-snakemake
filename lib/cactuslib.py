@@ -486,6 +486,18 @@ def buildCactusCommands(cactus_image_path: str, use_gpu: bool, tmpdir: str, bind
 
 #############################################################################
 
+def preprocessSeqFile(seqfile, log_dir, name):
+# cactus-preprocess always rewrites the output seqfile it is given (it adds its graph event to --ignore,
+# which triggers the rewrite). Each preprocess job gets its own copy in the log dir instead, so the
+# seqfile written by prep, and recorded in the prep manifest, is never rewritten, even when several
+# preprocess jobs run at once. The copy is left in the log dir.
+
+    seqfile_copy = os.path.join(log_dir, f"{name}.preprocess.seqfile.txt");
+    shutil.copyfile(seqfile, seqfile_copy);
+    return seqfile_copy;
+
+#############################################################################
+
 def runCactusPrepare(input_file, cactus_path, output_dir, output_hal, use_gpu, log_dir, dry_run):
 # This function runs cactus-prepare on the input file and saves the output in the output directory
 
