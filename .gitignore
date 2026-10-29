@@ -19,6 +19,13 @@ tests/evolverMammals/evolverMammals-add-out*/**
 !tests/evolverMammals/evolverMammals-add-out/add-outgroup-pre.txt
 !tests/evolverMammals/evolverMammals-add-out/add-outgroup-post.txt
 
+# Output and tmp dirs written by the tracked test configs
+tests/evolverMammals/evolverMammals-align-out/
+tests/evolverMammals/evolverMammals-add-genome-out/
+tests/evolverMammals/evolverMammals-replace-genome-out/
+tests/evolverMammals/evolverMammals-add-outgroup-out/
+tests/evolverMammals/evolverMammals-*-tmp/
+
 tests/yeast-minigraph*/**
 !tests/yeast-minigraph/rulegraphs-dags/
 !tests/yeast-minigraph/rulegraphs-dags/**

@@ -35,8 +35,8 @@ SNAKEFILES = {
 
 FIXTURE_CONFIGS = {
     "align": os.path.join(MAMMALS_DIR, "evolverMammals-cfg.yaml"),
-    "add-genome": os.path.join(MAMMALS_DIR, "evolverMammals-update-cfg.yaml"),
-    "replace-genome": os.path.join(MAMMALS_DIR, "evolverMammals-replace-cfg.yaml"),
+    "add-genome": os.path.join(MAMMALS_DIR, "evolverMammals-add-genome-cfg.yaml"),
+    "replace-genome": os.path.join(MAMMALS_DIR, "evolverMammals-replace-genome-cfg.yaml"),
     "add-outgroup": os.path.join(MAMMALS_DIR, "evolverMammals-add-outgroup-cfg.yaml"),
     "minigraph": os.path.join(YEAST_DIR, "yeast-minigraph-cfg.yaml"),
 }
@@ -90,11 +90,21 @@ def mammals_hal():
 
     It is produced by running the align pipeline on the mammals dataset and is not
     tracked in git, so tests that need it skip when it isn't there. Read-only.
+    $CACTUS_SMK_TEST_HAL wins; otherwise the align test config's output
+    (evolverMammals-align-out/), then evolverMammals-out/ from runs before v4.
     """
-    hal = os.environ.get("CACTUS_SMK_TEST_HAL", os.path.join(MAMMALS_DIR, "evolverMammals-out", "evolverMammals.hal"))
-    if not os.path.isfile(hal):
-        pytest.skip(f"evolverMammals HAL not found at {hal}; set CACTUS_SMK_TEST_HAL")
-    return os.path.abspath(hal)
+    hal = os.environ.get("CACTUS_SMK_TEST_HAL", "")
+    if hal:
+        if not os.path.isfile(hal):
+            pytest.fail(f"CACTUS_SMK_TEST_HAL is set, but {hal} does not exist")
+        return os.path.abspath(hal)
+
+    for out_dir in ("evolverMammals-align-out", "evolverMammals-out"):
+        hal = os.path.join(MAMMALS_DIR, out_dir, "evolverMammals.hal")
+        if os.path.isfile(hal):
+            return hal
+
+    pytest.skip("evolverMammals HAL not found in evolverMammals-align-out/ or evolverMammals-out/; set CACTUS_SMK_TEST_HAL")
 
 
 def copy_seqfile_abs(src, dst):

@@ -40,7 +40,7 @@ def align(tmp_path):
 def test_fingerprint_align(align):
     config, _ = align
     assert PREPLIB.fingerprint("align", config) == {
-        "cactus_path": "3.1.3",
+        "cactus_path": "download",
         "use_gpu": False,
         "input_file_sha256": sha256(config["input_file"]),
     }
@@ -78,9 +78,9 @@ def test_fingerprint_config_changed(align, key, value):
 def test_fingerprint_add_genome(tmp_path):
     _, config = make_config("add-genome", tmp_path)
     assert PREPLIB.fingerprint("add-genome", config) == {
-        "cactus_path": "v3.1.2",
+        "cactus_path": "download",
         "use_gpu": False,
-        "input_hal": os.path.join(MAMMALS_DIR, "evolverMammals-out", "evolverMammals.hal"),
+        "input_hal": os.path.join(MAMMALS_DIR, "evolverMammals-align-out", "evolverMammals.hal"),
         "new_genome_fasta": os.path.join(MAMMALS_DIR, "evolverMammals-seq", "simGorilla.chr6"),
         "new_genome_name": "simGorilla",
         "new_branch_length": 0.075,
@@ -92,19 +92,18 @@ def test_fingerprint_add_genome(tmp_path):
 
 
 def test_fingerprint_replace_genome(tmp_path):
-    # The tracked replace config leaves cactus_path blank (download the latest image)
     _, config = make_config("replace-genome", tmp_path)
     assert PREPLIB.fingerprint("replace-genome", config) == {
-        "cactus_path": "None",
+        "cactus_path": "download",
         "use_gpu": False,
-        "input_hal": os.path.join(MAMMALS_DIR, "evolverMammals-out", "evolverMammals.hal"),
+        "input_hal": os.path.join(MAMMALS_DIR, "evolverMammals-align-out", "evolverMammals.hal"),
         "new_genome_fasta": os.path.join(MAMMALS_DIR, "evolverMammals-seq", "simGorilla.chr6"),
         "replace": "simHuman_chr6",
         "new_genome_name": "simGorilla_chr6",
     }
 
 
-@pytest.mark.parametrize("pipeline, cactus_path", [("add-outgroup", "None"), ("minigraph", "download")])
+@pytest.mark.parametrize("pipeline, cactus_path", [("add-outgroup", "download"), ("minigraph", "download")])
 def test_fingerprint_image_only(tmp_path, pipeline, cactus_path):
     # These pipelines have no prepare step, so prep only depends on the cactus image settings
     _, config = make_config(pipeline, tmp_path)

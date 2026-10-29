@@ -3,7 +3,11 @@
 # pipeline: cactus_add_outgroup.smk. It contains the parameters needed to run the pipeline.
 #############################################################################
 
-# time -p snakemake -j 5 -e slurm -s ../../cactus_add_outgroup.smk --configfile evolverMammals-add-outgroup-cfg.yaml --slurm-partition-config $SMK_PART_CFG --dryrun
+# Test config for the add-outgroup pipeline on the evolverMammals dataset. Run it from tests/evolverMammals/,
+# since the paths below are relative to that directory:
+#   ../../cactus_snakemake prep add-outgroup --configfile evolverMammals-add-outgroup-cfg.yaml
+#   ../../cactus_snakemake run add-outgroup --configfile evolverMammals-add-outgroup-cfg.yaml -j 20 -e slurm --dryrun
+# It starts from the HAL the align test writes (evolverMammals-align-out/), so run that first.
 
 #############################################################################
 #
@@ -11,47 +15,73 @@
 # YOU WILL NEED TO CHANGE THESE
 #
 
-cactus_path:
+cactus_path: download
+# File path, version tag (e.g. v3.3.0), or "download".
 # Provide the path to the cactus singularity container. This is needed whether use_gpu is True or False.
-# If you don't have it, set this to "download" and the pipeline will download it for you.
-# If you want to download a specific version, provide the version tag, e.g. v2.9.7
+# With use_gpu: True, a version tag or "download" gets the GPU build of that version (don't add -gpu
+# yourself), and a file path must point to a GPU image.
+# If you don't have it, set this to "download" and prep will download it for you (once; every run then uses that image).
+# To download a specific version, give its full version tag, e.g. v3.3.0 or 3.3.0 (not 3.3, which YAML
+# reads as a number). Cactus v3.0.0 or later is required.
 
-input_hal: evolverMammals-out/evolverMammals.hal
+singularity_bind_paths:
+# Optional YAML list of extra Singularity bind paths to add to every container command.
+# Each entry must use src[:dest[:opts]] format, e.g. /nfs6:/nfs6 or /scratch:/scratch:rw
+# Leave blank or set to [] to use the cluster defaults only.
+
+input_hal: evolverMammals-align-out/evolverMammals.hal
+# File path.
 # The input HAL file. This is the output of a previous cactus run.
 
 old_root_name: Anc0
+# String.
 # The name of the root node in the input HAL file.
 
 new_genome_name: simGorilla
-# The name of the new genome to be added to the HAL file.
+# String
+# The name of the new genome to be added to the HAL file as an outgroup.
 # This will also be the name in the tree.
 
 new_genome_fasta: evolverMammals-seq/simGorilla.chr6
+# File path.
 # The path to the genome file to be added to the HAL file.
 
 new_root_name: newRoot
+# String.
 # The name of the new root node that will be created in the tree.
 
 branch_length_from_new_genome: 0.075
+# Float or blank (defaults to 1.0).
 # The branch length of the new branch connecting the new genome to new_root_name.
 
-branch_length_from_old_root: 0.10
+branch_length_from_old_root: 0.1
+# Float or blank (defaults to 1.0).
 # The branch length of the new branch connecting the old_root_name to new_root_name.
 
-output_dir: evolverMammals-add-out/
-# The output directory for the snakemake pipeline. This should be the same as the outDir in cactus-prepare.
+output_dir: evolverMammals-add-outgroup-out/
+# Directory path.
+# The output directory for the snakemake pipeline. Prep also writes its files here, including prep-manifest.yaml.
 # This directory will be created if it doesn't exist.
 
-final_prefix: evolverMammals-add-out
+final_prefix: evolverMammals-add-outgroup
+# String.
 # The prefix for the final output files. This will be used to name the final HAL file and the final MAF files.
 
 maf_reference: simHuman_chr6
+# String.
 # The reference genome for the MAF files. This should be the name of the reference genome in the input_file.
 
-tmp_dir: /n/holylfs05/LABS/informatics/Users/gthomas/tmp/evolverMammals/
+maf_include_anc: False
+# True/False.
+# Whether to include the ancestral genomes in the MAF files. If False (the default), they are
+# left out (cactus-hal2maf --noAncestors).
+
+tmp_dir: evolverMammals-add-outgroup-tmp/
+# Directory path.
 # A temporary directory for snakemake and cactus to use. Should have lots of space.
 
 use_gpu: False
+# True/False.
 # Whether or not to use the GPU version of cactus.
 # If you don't have a GPU partition, set this to False.
 # Either way, be sure to set the correct values for the partitions and GPUs below.
@@ -60,21 +90,35 @@ use_gpu: False
 ## Below are the partitions and resources for each rule in the snakemake pipeline.
 ## Be sure to adjust them to meet your needs and the resources available on your cluster.
 ## Notably, for rule blast, if you use the GPU version of cactus you will need to
-## provide a partition with GPUs and set gpus to the number of GPUs you want to use.
-## If you are not using the cactus GPU version, the gpus value will be ignored.
+## provide a partition with GPUs and set exactly one of the two options below:
+##   gpus: number of GPUs to request through Snakemake's gpu resource
+##   gres: GPU GRES request in any of these forms: 1, a100:2, gpu:1, gpu:a100:2
+##         If gpu: is omitted, the pipeline will add it.
+## If you are not using the cactus GPU version, both values will be ignored.
+##
+## The default: block fills in any value that a rule's own entry leaves blank, and is used in
+## full for rules that have no entry of their own.
 ##
 ## mem_mb is in MB
 ## time is in minutes
+## Any resource except gpus and gres can be either a single value or a YAML list of per-attempt values.
+## If a list is provided, attempt 1 uses the first value, attempt 2 the second, etc.,
+## and attempts beyond the list length reuse the last value.
+## This requires Snakemake retries, e.g. --retries 3.
+## Example:
+##   blast:
+##     mem_mb: [25000, 50000, 100000]
+##     time: [30, 60, 120]
 ##
-## If using the Harvard cannon cluster profile with --slurm-partition-config <path to cannon-cfg.yml>, partition names can be left blank.
+## If you run with -e slurm --slurm-partition-config <path to your cluster's partition config>, partition names can be left blank.
 
 rule_resources:
   default:
-    partition: 
+    partition:
     mem_mb: 4000
     cpus: 1
     gpus: 0
-    time: 60  
+    time: 60
 
   get_root_fasta:
     partition:
@@ -89,10 +133,11 @@ rule_resources:
     time: 30
 
   blast:
-    partition:  # If use_gpu is True, this must be a partition with GPUs
+    partition: # If use_gpu is True, this must be a partition with GPUs
     mem_mb: 25000
     cpus: 24
-    gpus: 2           # If use_gpu is False, this will be ignored
+    gpus: 2 # Use this for Snakemake's gpu resource; do not set together with gres
+    gres:            # Use this for Snakemake's gres resource, e.g. 1, a100:2, gpu:1, or gpu:a100:2
     time: 30
 
   align:
