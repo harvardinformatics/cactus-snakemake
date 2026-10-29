@@ -108,15 +108,29 @@ use_gpu:
 #############################################################################
 ## Below are the partitions and resources for each rule in the snakemake pipeline.
 ## Be sure to adjust them to meet your needs and the resources available on your cluster.
-## Notably, for rule blast, if you use the GPU version of cactus you will need to
+## In this pipeline, the blast entry is used by both blast rules (blast_new_genome and blast_parent),
+## the align entry by both align rules (align_new_genome and align_parent), and the convert entry
+## by convert_new_genome.
+## Notably, for the blast rules, if you use the GPU version of cactus you will need to
 ## provide a partition with GPUs and set exactly one of the two options below:
 ##   gpus: number of GPUs to request through Snakemake's gpu resource
 ##   gres: GPU GRES request in any of these forms: 1, a100:2, gpu:1, gpu:a100:2
 ##         If gpu: is omitted, the pipeline will add it.
 ## If you are not using the cactus GPU version, both values will be ignored.
 ##
+## The default: block fills in any value that a rule's own entry leaves blank, and is used in
+## full for rules that have no entry of their own.
+##
 ## mem_mb is in MB
 ## time is in minutes
+## Any resource except gpus and gres can be either a single value or a YAML list of per-attempt values.
+## If a list is provided, attempt 1 uses the first value, attempt 2 the second, etc.,
+## and attempts beyond the list length reuse the last value.
+## This requires Snakemake retries, e.g. --retries 3.
+## Example:
+##   blast:
+##     mem_mb: [80000, 160000, 200000]
+##     time: [1660, 3320, 6640, 7200]
 ##
 ## If you run with -e slurm --slurm-partition-config <path to your cluster's partition config>, partition names can be left blank.
 
@@ -155,6 +169,12 @@ rule_resources:
     time: 
 
   copy_or_get_hal:
+    partition: 
+    mem_mb: 
+    cpus: 
+    time: 
+
+  append_subtrees:
     partition: 
     mem_mb: 
     cpus: 

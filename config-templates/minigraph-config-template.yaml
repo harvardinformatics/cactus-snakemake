@@ -62,8 +62,19 @@ tmp_dir:
 ## Below are the partitions and resources for each rule in the snakemake pipeline.
 ## Be sure to adjust them to meet your needs and the resources available on your cluster.
 ##
+## The default: block fills in any value that a rule's own entry leaves blank, and is used in
+## full for rules that have no entry of their own.
+##
 ## mem_mb is in MB
 ## time is in minutes
+## Any resource except gpus and gres can be either a single value or a YAML list of per-attempt values.
+## If a list is provided, attempt 1 uses the first value, attempt 2 the second, etc.,
+## and attempts beyond the list length reuse the last value.
+## This requires Snakemake retries, e.g. --retries 3.
+## Example:
+##   align:
+##     mem_mb: [80000, 160000, 200000]
+##     time: [1660, 3320, 6640, 7200]
 ##
 ## If you run with -e slurm --slurm-partition-config <path to your cluster's partition config>, partition names can be left blank.
 

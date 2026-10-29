@@ -57,7 +57,7 @@ branch_length_from_old_root:
 
 output_dir:
 # Directory path.
-# The output directory for the snakemake pipeline. This should be the same as the outDir in cactus-prepare.
+# The output directory for the snakemake pipeline. Prep also writes its files here, including prep-manifest.yaml.
 # This directory will be created if it doesn't exist.
 
 final_prefix:
@@ -93,9 +93,12 @@ use_gpu:
 ##         If gpu: is omitted, the pipeline will add it.
 ## If you are not using the cactus GPU version, both values will be ignored.
 ##
+## The default: block fills in any value that a rule's own entry leaves blank, and is used in
+## full for rules that have no entry of their own.
+##
 ## mem_mb is in MB
 ## time is in minutes
-## Any resource can be either a single value or a YAML list of per-attempt values.
+## Any resource except gpus and gres can be either a single value or a YAML list of per-attempt values.
 ## If a list is provided, attempt 1 uses the first value, attempt 2 the second, etc.,
 ## and attempts beyond the list length reuse the last value.
 ## This requires Snakemake retries, e.g. --retries 3.
