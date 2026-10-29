@@ -90,6 +90,11 @@ maf_reference:
 # String.
 # The reference genome for the MAF files. This should be the name of the reference genome in the input_file.
 
+maf_include_anc: False
+# True/False.
+# Whether to include the ancestral genomes in the MAF files. If False (the default), they are
+# left out (cactus-hal2maf --noAncestors).
+
 tmp_dir:
 # Directory path.
 # A temporary directory for snakemake and cactus to use. Should have lots of space.
