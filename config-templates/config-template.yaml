@@ -74,7 +74,7 @@ use_gpu:
 ##     mem_mb: [80000, 160000, 200000]
 ##     time: [1660, 3320, 6640, 7200]
 ##
-## If using the Harvard cannon cluster profile with --slurm-partition-config <path to cannon-cfg.yml>, partition names can be left blank.
+## If you run with -e slurm --slurm-partition-config <path to your cluster's partition config>, partition names can be left blank.
 
 rule_resources:
   default:
