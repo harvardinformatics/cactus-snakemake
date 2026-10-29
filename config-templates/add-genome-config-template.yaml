@@ -16,10 +16,13 @@
 #
 
 cactus_path: 
-# File path or version string (e.g. 2.9.5) or "download".
+# File path, version tag (e.g. v3.3.0), or "download".
 # Provide the path to the cactus singularity container. This is needed whether use_gpu is True or False.
+# With use_gpu: True, a version tag or "download" gets the GPU build of that version (don't add -gpu
+# yourself), and a file path must point to a GPU image.
 # If you don't have it, set this to "download" and prep will download it for you (once; every run then uses that image).
-# If you want to download a specific version, provide the version tag, e.g. v2.9.9
+# To download a specific version, give its full version tag, e.g. v3.3.0 or 3.3.0 (not 3.3, which YAML
+# reads as a number). Cactus v3.0.0 or later is required.
 
 singularity_bind_paths:
 # Optional YAML list of extra Singularity bind paths to add to every container command.
