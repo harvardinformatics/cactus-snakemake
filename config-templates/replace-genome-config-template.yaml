@@ -37,9 +37,10 @@ new_genome_fasta:
 # File path.
 # The path to the genome file to be added to the HAL file.
 
-new_genome_name: simGorilla_chr6
+new_genome_name:
 # String.
-# The name of the new genome to be added to the HAL file.
+# The name the replacement genome will have in the HAL file. It can be the same as the genome
+# being replaced (set in 'replace') or a new name; Cactus v3.0.0 and later allow either.
 
 output_dir:
 # Directory path.
