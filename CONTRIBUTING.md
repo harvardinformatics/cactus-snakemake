@@ -136,7 +136,7 @@ Environment variables:
 | Variable | Used by | Default |
 | -------- | ------- | ------- |
 | `CACTUS_SMK_TEST_IMAGE` | tiers 2, 3 | The newest non-GPU `cactus_v*.sif` in `tests/evolverMammals/` or `tests/yeast-minigraph/` (images are not tracked) |
-| `CACTUS_SMK_TEST_HAL` | tier 2 | `evolverMammals.hal` in `tests/evolverMammals/evolverMammals-align-out/` (written by the align test config), or else in `evolverMammals-out/` from runs before v4 (not tracked) |
+| `CACTUS_SMK_TEST_HAL` | tier 2 | `evolverMammals.hal` in `tests/evolverMammals/evolverMammals-align-out/`, written by running the align test config (not tracked) |
 | `CACTUS_SMK_TEST_SNAKEMAKE` | tiers 2, 3 | The `snakemake` next to the Python running pytest. Point it at another environment's `snakemake` (e.g. one made by `cactus_snakemake setup`) to test that environment's Snakemake version. |
 | `CACTUS_SMK_RUN_E2E` | tier 3 | Unset: tier 3 is skipped. Set to `1` to run it. |
 | `CACTUS_SMK_E2E_ARGS` | tier 3 | `-e slurm -j 20` |

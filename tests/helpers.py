@@ -91,7 +91,7 @@ def mammals_hal():
     It is produced by running the align pipeline on the mammals dataset and is not
     tracked in git, so tests that need it skip when it isn't there. Read-only.
     $CACTUS_SMK_TEST_HAL wins; otherwise the align test config's output
-    (evolverMammals-align-out/), then evolverMammals-out/ from runs before v4.
+    (evolverMammals-align-out/).
     """
     hal = os.environ.get("CACTUS_SMK_TEST_HAL", "")
     if hal:
@@ -99,12 +99,11 @@ def mammals_hal():
             pytest.fail(f"CACTUS_SMK_TEST_HAL is set, but {hal} does not exist")
         return os.path.abspath(hal)
 
-    for out_dir in ("evolverMammals-align-out", "evolverMammals-out"):
-        hal = os.path.join(MAMMALS_DIR, out_dir, "evolverMammals.hal")
-        if os.path.isfile(hal):
-            return hal
+    hal = os.path.join(MAMMALS_DIR, "evolverMammals-align-out", "evolverMammals.hal")
+    if os.path.isfile(hal):
+        return hal
 
-    pytest.skip("evolverMammals HAL not found in evolverMammals-align-out/ or evolverMammals-out/; set CACTUS_SMK_TEST_HAL")
+    pytest.skip("evolverMammals HAL not found in evolverMammals-align-out/; set CACTUS_SMK_TEST_HAL")
 
 
 def copy_seqfile_abs(src, dst):
