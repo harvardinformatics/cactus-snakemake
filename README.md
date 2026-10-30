@@ -44,6 +44,8 @@ Requirements:
 - Singularity, which conda can't provide: the pipelines run Cactus with `singularity exec`. Apptainer installs usually provide a `singularity` command.
 - For most datasets, a cluster with the SLURM job scheduler.
 
+To update the environment later, run `./cactus_snakemake update` to pick newer package versions (written to `envs/environment.yml`), then `./cactus_snakemake setup` to install them. Finish any pipeline runs in progress first: Snakemake records the code of each job it runs, and a different Snakemake version can read that record as changed code ("Code has changed since last execution" in a dry-run) and rerun jobs that had already finished.
+
 Run `./cactus_snakemake help` for every command and option.
 
 ## Usage
