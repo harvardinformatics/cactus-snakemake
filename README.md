@@ -124,7 +124,6 @@ Several meta config options exist across pipelines as pseudo-command line flags,
 - **Renamed files:** `cactus_update.smk` is now `cactus_add_genome.smk` and `cactus_replace.smk` is now `cactus_replace_genome.smk`, with their config templates renamed to match. Config keys are unchanged.
 - **`skip_prepare` is no longer used.** It existed to stop `cactus-update-prepare` re-running on every invocation, which no longer happens. If it's set, the pipelines log a warning and otherwise ignore it.
 - **KegAlign patch support was removed.** It only applied to GPU runs of Cactus v2.9.9, which cactus-snakemake has not supported since v3.0.0.
-- The tutorials linked above show v3 commands. Add the prep step before running, or use the wrapper as shown in [Usage](#usage).
 
 ## Citation
 
