@@ -4,7 +4,7 @@
 # per-rule resource lookup.
 #
 # Resource tests use the rule_resources block of the tracked align config,
-# tests/evolverMammals/evolverMammals-cfg.yaml (read-only).
+# tests/evolverMammals/evolverMammals-align-cfg.yaml (read-only).
 #############################################################################
 
 import copy
@@ -71,7 +71,7 @@ def test_cactus_commands_gpu():
 
 def test_preprocess_seqfile_copy(tmp_path):
     seqfile = tmp_path / "evolverMammals.txt"
-    shutil.copyfile(os.path.join(MAMMALS_DIR, "evolverMammals-out", "evolverMammals.txt"), seqfile)
+    shutil.copyfile(os.path.join(MAMMALS_DIR, "evolverMammals-align-out", "evolverMammals.txt"), seqfile)
     log_dir = tmp_path / "logs"
     log_dir.mkdir()
 

@@ -34,7 +34,7 @@ SNAKEFILES = {
 }
 
 FIXTURE_CONFIGS = {
-    "align": os.path.join(MAMMALS_DIR, "evolverMammals-cfg.yaml"),
+    "align": os.path.join(MAMMALS_DIR, "evolverMammals-align-cfg.yaml"),
     "add-genome": os.path.join(MAMMALS_DIR, "evolverMammals-add-genome-cfg.yaml"),
     "replace-genome": os.path.join(MAMMALS_DIR, "evolverMammals-replace-genome-cfg.yaml"),
     "add-outgroup": os.path.join(MAMMALS_DIR, "evolverMammals-add-outgroup-cfg.yaml"),

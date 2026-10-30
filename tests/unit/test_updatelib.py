@@ -4,10 +4,10 @@
 # pipelines, and the input files the add-outgroup pipeline writes for itself.
 #
 # Fixtures (tracked, read-only), all under tests/evolverMammals/:
-#   evolverMammals-update-out/seq_file.out  - real cactus-update-prepare output (add-genome)
-#   evolverMammals-replace-out/seq_file.out - real cactus-update-prepare output (replace)
-#   evolverMammals-add-out/add-outgroup-{pre,post}.txt - files written by add-outgroup
-#   evolverMammals-add-outgroup-cfg.yaml    - the config those files came from
+#   evolverMammals-add-genome-out/seq_file.out                  - real cactus-update-prepare output (add-genome)
+#   evolverMammals-replace-genome-out/seq_file.out              - real cactus-update-prepare output (replace)
+#   evolverMammals-add-outgroup-out/add-outgroup-{pre,post}.txt - files written by add-outgroup
+#   evolverMammals-add-outgroup-cfg.yaml                        - the config those files came from
 #############################################################################
 
 import os
@@ -18,11 +18,11 @@ import yaml
 import lib.updatelib as UPDATELIB
 from tests.helpers import MAMMALS_DIR
 
-UPDATE_SEQ_OUT = os.path.join(MAMMALS_DIR, "evolverMammals-update-out", "seq_file.out")
-REPLACE_SEQ_OUT = os.path.join(MAMMALS_DIR, "evolverMammals-replace-out", "seq_file.out")
+UPDATE_SEQ_OUT = os.path.join(MAMMALS_DIR, "evolverMammals-add-genome-out", "seq_file.out")
+REPLACE_SEQ_OUT = os.path.join(MAMMALS_DIR, "evolverMammals-replace-genome-out", "seq_file.out")
 ADD_OUTGROUP_CFG = os.path.join(MAMMALS_DIR, "evolverMammals-add-outgroup-cfg.yaml")
-ADD_OUTGROUP_PRE = os.path.join(MAMMALS_DIR, "evolverMammals-add-out", "add-outgroup-pre.txt")
-ADD_OUTGROUP_POST = os.path.join(MAMMALS_DIR, "evolverMammals-add-out", "add-outgroup-post.txt")
+ADD_OUTGROUP_PRE = os.path.join(MAMMALS_DIR, "evolverMammals-add-outgroup-out", "add-outgroup-pre.txt")
+ADD_OUTGROUP_POST = os.path.join(MAMMALS_DIR, "evolverMammals-add-outgroup-out", "add-outgroup-post.txt")
 
 
 def read_seqfile(path):

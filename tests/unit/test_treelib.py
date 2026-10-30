@@ -7,7 +7,7 @@
 #
 # Fixtures (tracked, read-only):
 #   tests/evolverMammals/evolverMammals.txt                    - the input file
-#   tests/evolverMammals/evolverMammals-out/evolverMammals.txt - real cactus-prepare
+#   tests/evolverMammals/evolverMammals-align-out/evolverMammals.txt - real cactus-prepare
 #                                                                output for that input
 #############################################################################
 
@@ -18,7 +18,7 @@ import lib.treelib as TREELIB
 from tests.helpers import MAMMALS_DIR
 
 INPUT_FILE = os.path.join(MAMMALS_DIR, "evolverMammals.txt")
-CACTUS_FILE = os.path.join(MAMMALS_DIR, "evolverMammals-out", "evolverMammals.txt")
+CACTUS_FILE = os.path.join(MAMMALS_DIR, "evolverMammals-align-out", "evolverMammals.txt")
 
 TIP_OUTPUTS = ["simCow.chr6", "simDog.chr6", "simHuman.chr6", "simMouse.chr6", "simRat.chr6"]
 

@@ -24,11 +24,6 @@ cactus_path: download
 # To download a specific version, give its full version tag, e.g. v3.3.0 or 3.3.0 (not 3.3, which YAML
 # reads as a number). Cactus v3.0.0 or later is required.
 
-singularity_bind_paths:
-# Optional YAML list of extra Singularity bind paths to add to every container command.
-# Each entry must use src[:dest[:opts]] format, e.g. /nfs6:/nfs6 or /scratch:/scratch:rw
-# Leave blank or set to [] to use the cluster defaults only.
-
 input_hal: evolverMammals-align-out/evolverMammals.hal
 # File path.
 # The input HAL file. This is the output of a previous cactus run.
@@ -76,7 +71,7 @@ maf_include_anc: False
 # Whether to include the ancestral genomes in the MAF files. If False (the default), they are
 # left out (cactus-hal2maf --noAncestors).
 
-tmp_dir: evolverMammals-add-outgroup-tmp/
+tmp_dir: /n/holylfs05/LABS/informatics/Users/gthomas/tmp/evolverMammals/
 # Directory path.
 # A temporary directory for snakemake and cactus to use. Should have lots of space.
 
@@ -85,6 +80,11 @@ use_gpu: False
 # Whether or not to use the GPU version of cactus.
 # If you don't have a GPU partition, set this to False.
 # Either way, be sure to set the correct values for the partitions and GPUs below.
+
+singularity_bind_paths:
+# Optional YAML list of extra Singularity bind paths to add to every container command.
+# Each entry must use src[:dest[:opts]] format, e.g. /nfs6:/nfs6 or /scratch:/scratch:rw
+# Leave blank or set to [] to use the cluster defaults only.
 
 #############################################################################
 ## Below are the partitions and resources for each rule in the snakemake pipeline.

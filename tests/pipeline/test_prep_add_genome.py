@@ -30,7 +30,7 @@ BASELINE_JOBS = {
 }
 
 # Real cactus-update-prepare output for this config, from an earlier run
-TRACKED_SEQ_OUT = os.path.join(MAMMALS_DIR, "evolverMammals-update-out", "seq_file.out")
+TRACKED_SEQ_OUT = os.path.join(MAMMALS_DIR, "evolverMammals-add-genome-out", "seq_file.out")
 
 PREP_FILES = ["cactus-update-input.txt", "seq_file.in", "seq_file.out"]
 

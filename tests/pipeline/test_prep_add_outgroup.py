@@ -27,8 +27,8 @@ BASELINE_JOBS = {"align": 1, "all": 1, "blast": 1, "combine_hals": 1, "get_root_
 
 # The seqfiles written for this config by an earlier run
 TRACKED_INPUT_FILES = {
-    "add-outgroup-pre.txt": os.path.join(MAMMALS_DIR, "evolverMammals-add-out", "add-outgroup-pre.txt"),
-    "add-outgroup-post.txt": os.path.join(MAMMALS_DIR, "evolverMammals-add-out", "add-outgroup-post.txt"),
+    "add-outgroup-pre.txt": os.path.join(MAMMALS_DIR, "evolverMammals-add-outgroup-out", "add-outgroup-pre.txt"),
+    "add-outgroup-post.txt": os.path.join(MAMMALS_DIR, "evolverMammals-add-outgroup-out", "add-outgroup-post.txt"),
 }
 
 

@@ -4,9 +4,9 @@
 # (cactus-prepare in a container) is covered by the tier-2 tests in tests/pipeline/.
 #
 # Fixtures (tracked, read-only; copied into tmp_path wherever a test edits them):
-#   tests/evolverMammals/evolverMammals-cfg.yaml               - align config
-#   tests/evolverMammals/evolverMammals.txt                    - align input file
-#   tests/evolverMammals/evolverMammals-out/evolverMammals.txt - real cactus-prepare output
+#   tests/evolverMammals/evolverMammals-align-cfg.yaml               - align config
+#   tests/evolverMammals/evolverMammals.txt                          - align input file
+#   tests/evolverMammals/evolverMammals-align-out/evolverMammals.txt - real cactus-prepare output
 #############################################################################
 
 import hashlib
@@ -18,7 +18,7 @@ import pytest
 import lib.preplib as PREPLIB
 from tests.helpers import MAMMALS_DIR, make_config
 
-CACTUS_FILE = os.path.join(MAMMALS_DIR, "evolverMammals-out", "evolverMammals.txt")
+CACTUS_FILE = os.path.join(MAMMALS_DIR, "evolverMammals-align-out", "evolverMammals.txt")
 
 
 def sha256(path):
@@ -126,7 +126,7 @@ def test_fingerprint_hal_by_path_only(tmp_path):
 
 
 def test_seqfile_names():
-    seq_out = os.path.join(MAMMALS_DIR, "evolverMammals-update-out", "seq_file.out")
+    seq_out = os.path.join(MAMMALS_DIR, "evolverMammals-add-genome-out", "seq_file.out")
     assert PREPLIB.readSeqfileNames(seq_out) == ["mr", "simGorilla", "simHuman_chr6", "Anc1", "AncGorilla"]
 
 #############################################################################

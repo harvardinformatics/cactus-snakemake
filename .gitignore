@@ -2,28 +2,29 @@
 .llm-tmp/
 
 tests/evolverMammals/evolverMammals-out*/
-!tests/evolverMammals/evolverMammals-out/evolverMammals.txt
 
 tests/evolverMammals/evolverMammals-out-gpu*/
 !tests/evolverMammals/evolverMammals-out-gpu/evolverMammals.txt
 
 tests/evolverMammals/evolverMammals-update-out*/
-!tests/evolverMammals/evolverMammals-update-out/seq_file.in
-!tests/evolverMammals/evolverMammals-update-out/seq_file.out
 
 tests/evolverMammals/evolverMammals-replace-out*/
-!tests/evolverMammals/evolverMammals-replace-out/seq_file.in
-!tests/evolverMammals/evolverMammals-replace-out/seq_file.out
 
 tests/evolverMammals/evolverMammals-add-out*/**
-!tests/evolverMammals/evolverMammals-add-out/add-outgroup-pre.txt
-!tests/evolverMammals/evolverMammals-add-out/add-outgroup-post.txt
 
-# Output and tmp dirs written by the tracked test configs
-tests/evolverMammals/evolverMammals-align-out/
-tests/evolverMammals/evolverMammals-add-genome-out/
-tests/evolverMammals/evolverMammals-replace-genome-out/
-tests/evolverMammals/evolverMammals-add-outgroup-out/
+# Output and tmp dirs written by the tracked test configs. The files marked with "!"
+# stay tracked, because the tests compare against them.
+tests/evolverMammals/evolverMammals-align-out/*
+!tests/evolverMammals/evolverMammals-align-out/evolverMammals.txt
+tests/evolverMammals/evolverMammals-add-genome-out/*
+!tests/evolverMammals/evolverMammals-add-genome-out/seq_file.in
+!tests/evolverMammals/evolverMammals-add-genome-out/seq_file.out
+tests/evolverMammals/evolverMammals-replace-genome-out/*
+!tests/evolverMammals/evolverMammals-replace-genome-out/seq_file.in
+!tests/evolverMammals/evolverMammals-replace-genome-out/seq_file.out
+tests/evolverMammals/evolverMammals-add-outgroup-out/*
+!tests/evolverMammals/evolverMammals-add-outgroup-out/add-outgroup-pre.txt
+!tests/evolverMammals/evolverMammals-add-outgroup-out/add-outgroup-post.txt
 tests/evolverMammals/evolverMammals-*-tmp/
 
 tests/yeast-minigraph*/**

@@ -23,7 +23,7 @@ pytestmark = pytest.mark.prep
 BASELINE_JOBS = {"align": 4, "all": 1, "append": 1, "blast": 4, "convert": 4, "copy_hal": 1, "maf": 1, "preprocess": 5}
 
 # Real cactus-prepare output for the tracked input file, from an earlier full run
-TRACKED_SEQFILE = os.path.join(MAMMALS_DIR, "evolverMammals-out", "evolverMammals.txt")
+TRACKED_SEQFILE = os.path.join(MAMMALS_DIR, "evolverMammals-align-out", "evolverMammals.txt")
 
 
 def prep(config_path, cwd, *extra_config):

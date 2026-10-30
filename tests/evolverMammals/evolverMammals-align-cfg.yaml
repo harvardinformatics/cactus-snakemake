@@ -6,8 +6,8 @@
 
 # Test config for the align pipeline on the evolverMammals dataset. Run it from tests/evolverMammals/,
 # since the paths below are relative to that directory:
-#   ../../cactus_snakemake prep align --configfile evolverMammals-cfg.yaml
-#   ../../cactus_snakemake run align --configfile evolverMammals-cfg.yaml -j 20 -e slurm --dryrun
+#   ../../cactus_snakemake prep align --configfile evolverMammals-align-cfg.yaml
+#   ../../cactus_snakemake run align --configfile evolverMammals-align-cfg.yaml -j 20 -e slurm --dryrun
 
 #############################################################################
 #
@@ -22,11 +22,6 @@ cactus_path: download
 # If you don't have it, set this to "download" and prep will download it for you (once; every run then uses that image).
 # To download a specific version, give its full version tag, e.g. v3.3.0 or 3.3.0 (not 3.3, which YAML
 # reads as a number). Cactus v3.0.0 or later is required.
-
-singularity_bind_paths:
-# Optional YAML list of extra Singularity bind paths to add to every container command.
-# Each entry must use src[:dest[:opts]] format, e.g. /nfs6:/nfs6 or /scratch:/scratch:rw
-# Leave blank or set to [] to use the cluster defaults only.
 
 input_file: evolverMammals.txt
 # File path.
@@ -50,7 +45,7 @@ maf_include_anc: False
 # Whether to include the ancestral genomes in the MAF files. If False (the default), they are
 # left out (cactus-hal2maf --noAncestors).
 
-tmp_dir: evolverMammals-align-tmp/
+tmp_dir: /n/holylfs05/LABS/informatics/Lab/projects/gwct/tmp/evolverMammals/
 # Directory path.
 # A temporary directory for snakemake and cactus to use. Should have lots of space.
 
@@ -59,6 +54,11 @@ use_gpu: False
 # Whether or not to use the GPU version of cactus.
 # If you have GPU partitions and want to use them, set this to True.
 # If you don't have a GPU partition, set this to False.
+
+singularity_bind_paths:
+# Optional YAML list of extra Singularity bind paths to add to every container command.
+# Each entry must use src[:dest[:opts]] format, e.g. /nfs6:/nfs6 or /scratch:/scratch:rw
+# Leave blank or set to [] to use the cluster defaults only.
 
 #############################################################################
 ## Below are the partitions and resources for each rule in the snakemake pipeline.
