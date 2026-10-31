@@ -76,7 +76,8 @@ def hal_tree(image, hal):
 
 
 def branch_length(tree, name):
-    match = re.search(rf"[(,]{re.escape(name)}:([0-9.eE+-]+)", tree)
+    # A leaf's name follows "(" or ","; an ancestor's follows the ")" that closes its subtree
+    match = re.search(rf"[(,)]{re.escape(name)}:([0-9.eE+-]+)", tree)
     assert match, f"{name} with a branch length not found in {tree}"
     return float(match.group(1))
 
