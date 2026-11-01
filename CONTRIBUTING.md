@@ -104,6 +104,47 @@ After your PR is merged:
 
 ---
 
+## Running tests
+
+The tests in `tests/` are built on the two datasets tracked in the repository: `tests/evolverMammals/` (for `align`, `add-genome`, `replace-genome` and `add-outgroup`) and `tests/yeast-minigraph/` (for `minigraph`). Tests only read those files; everything they write goes to pytest's temporary directory, and test configs always set `overwrite_original_hal: False`.
+
+`pytest` is not part of `envs/environment.yml`, so install it into the environment you test from (e.g. `mamba install -n cactus-snakemake pytest`) and run it from the repository root:
+
+```bash
+pytest tests/unit                       # tier 1
+pytest tests/unit tests/pipeline        # tiers 1 and 2
+CACTUS_SMK_RUN_E2E=1 pytest tests/integration   # tier 3 (opt-in, submits cluster jobs)
+
+# tier 3 with automatic partition selection
+CACTUS_SMK_RUN_E2E=1 CACTUS_SMK_E2E_ARGS="-e slurm -j 20 --slurm-partition-config <partition config>" pytest tests/integration --basetemp=<dir on shared storage>
+```
+
+Tier 3 submits cluster jobs that write into the test output directories, so give pytest a `--basetemp` on storage the compute nodes can see. pytest's default is under `/tmp`, which is local to each node. pytest empties the `--basetemp` directory at the start of each run, so use one that holds nothing else.
+
+On a SLURM cluster, `utils/run_e2e.sbatch` runs tier 3 as a batch job. Submit it from the repository root with `sbatch utils/run_e2e.sbatch`. Each run gets a new `--basetemp` directory, and the job's log, with the test results, is written to `tests/logs/cactus-smk-e2e-<job ID>.out`. The settings at the top of the script are the conda environments, the partition config, and where run directories are made. Their defaults are the maintainer's, so override them from the environment, e.g. `E2E_ROOT=<dir on shared storage> PARTITION_CONFIG=<partition config> sbatch utils/run_e2e.sbatch`.
+
+| Tier | Location | What it checks | Needs | Time |
+| ---- | -------- | -------------- | ----- | ---- |
+| 1 | `tests/unit/` | Tree and seqfile parsing, resources, bind paths, prep manifests and fingerprints, and the `cactus_snakemake` wrapper's argument handling, `init` and `version` | Python, pyyaml, requests | seconds |
+| 2 | `tests/pipeline/` | Each pipeline's real prep step (in the container) and Snakemake dry-runs: prep outputs match the tracked files, job plans match the pre-v4 baselines, dry-runs change nothing, and changed configs are detected as stale | singularity, a local non-GPU Cactus image; the evolverMammals HAL for `add-genome`, `replace-genome` and `add-outgroup` | ~15-20 minutes |
+| 3 | `tests/integration/` | Full runs of every pipeline, their outputs, and that a dry-run afterwards has nothing left to do | the above, plus cluster access | hours |
+
+Tier 1 runs on every pull request into `main` (`.github/workflows/tests.yml`). Tiers 2 and 3 need singularity and a Cactus image, so run them on the cluster before merging changes to the Snakefiles or `lib/`. Tests that need something missing are skipped, with the reason shown by `pytest -rs`.
+
+Tier 2's expected job counts were captured from the v3.5.0 pipelines. A change to a pipeline's job plan fails those tests on purpose; update the expected counts only if the change is intended.
+
+Environment variables:
+
+| Variable | Used by | Default |
+| -------- | ------- | ------- |
+| `CACTUS_SMK_TEST_IMAGE` | tiers 2, 3 | The newest non-GPU `cactus_v*.sif` in `tests/evolverMammals/` or `tests/yeast-minigraph/` (images are not tracked) |
+| `CACTUS_SMK_TEST_HAL` | tier 2 | `evolverMammals.hal` in `tests/evolverMammals/evolverMammals-align-out/`, written by running the align test config (not tracked) |
+| `CACTUS_SMK_TEST_SNAKEMAKE` | tiers 2, 3 | The `snakemake` next to the Python running pytest. Point it at another environment's `snakemake` (e.g. one made by `cactus_snakemake setup`) to test that environment's Snakemake version. |
+| `CACTUS_SMK_RUN_E2E` | tier 3 | Unset: tier 3 is skipped. Set to `1` to run it. |
+| `CACTUS_SMK_E2E_ARGS` | tier 3 | `-e slurm -j 20` |
+
+---
+
 ## Thank You
 
 We appreciate your contributions!

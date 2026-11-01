@@ -3,7 +3,8 @@
 # pipeline: cactus_add_outgroup.smk. It contains the parameters needed to run the pipeline.
 #############################################################################
 
-# time -p snakemake -j 5 -e slurm -s cactus_add_outgroup.smk --configfile config-templates/add-outgroup-config-template.yaml --dryrun
+# ./cactus_snakemake prep add-outgroup --configfile <this config>
+# ./cactus_snakemake run add-outgroup --configfile <this config> -j 5 -e slurm --dryrun
 
 #############################################################################
 #
@@ -12,15 +13,13 @@
 #
 
 cactus_path:
-# File path or version string (e.g. 2.9.5) or "download".
+# File path, version tag (e.g. v3.3.0), or "download".
 # Provide the path to the cactus singularity container. This is needed whether use_gpu is True or False.
-# If you don't have it, set this to "download" and the pipeline will download it for you.
-# If you want to download a specific version, provide the version tag, e.g. v2.9.9
-
-singularity_bind_paths:
-# Optional YAML list of extra Singularity bind paths to add to every container command.
-# Each entry must use src[:dest[:opts]] format, e.g. /nfs6:/nfs6 or /scratch:/scratch:rw
-# Leave blank or set to [] to use the cluster defaults only.
+# With use_gpu: True, a version tag or "download" gets the GPU build of that version (don't add -gpu
+# yourself), and a file path must point to a GPU image.
+# If you don't have it, set this to "download" and prep will download it for you (once; every run then uses that image).
+# To download a specific version, give its full version tag, e.g. v3.3.0 or 3.3.0 (not 3.3, which YAML
+# reads as a number). Cactus v3.0.0 or later is required.
 
 input_hal:
 # File path.
@@ -53,7 +52,7 @@ branch_length_from_old_root:
 
 output_dir:
 # Directory path.
-# The output directory for the snakemake pipeline. This should be the same as the outDir in cactus-prepare.
+# The output directory for the snakemake pipeline. Prep also writes its files here, including prep-manifest.yaml.
 # This directory will be created if it doesn't exist.
 
 final_prefix:
@@ -63,6 +62,11 @@ final_prefix:
 maf_reference:
 # String.
 # The reference genome for the MAF files. This should be the name of the reference genome in the input_file.
+
+maf_include_anc: False
+# True/False.
+# Whether to include the ancestral genomes in the MAF files. If False (the default), they are
+# left out (cactus-hal2maf --noAncestors).
 
 tmp_dir:
 # Directory path.
@@ -84,9 +88,12 @@ use_gpu:
 ##         If gpu: is omitted, the pipeline will add it.
 ## If you are not using the cactus GPU version, both values will be ignored.
 ##
+## The default: block fills in any value that a rule's own entry leaves blank, and is used in
+## full for rules that have no entry of their own.
+##
 ## mem_mb is in MB
 ## time is in minutes
-## Any resource can be either a single value or a YAML list of per-attempt values.
+## Any resource except gpus and gres can be either a single value or a YAML list of per-attempt values.
 ## If a list is provided, attempt 1 uses the first value, attempt 2 the second, etc.,
 ## and attempts beyond the list length reuse the last value.
 ## This requires Snakemake retries, e.g. --retries 3.
@@ -95,7 +102,7 @@ use_gpu:
 ##     mem_mb: [25000, 50000, 100000]
 ##     time: [30, 60, 120]
 ##
-## If using the Harvard cannon cluster profile with --slurm-partition-config <path to cannon-cfg.yml>, partition names can be left blank.
+## If you run with -e slurm --slurm-partition-config <path to your cluster's partition config>, partition names can be left blank.
 
 rule_resources:
   default:
@@ -142,3 +149,14 @@ rule_resources:
     mem_mb: 
     cpus: 
     time: 
+
+#############################################################################
+## OPTIONAL
+## Below are optional settings that most runs can leave blank.
+
+singularity_bind_paths:
+# Optional YAML list of extra Singularity bind paths to add to every container command.
+# Only needed if some of your files are on a filesystem that isn't available inside the
+# container by default; jobs failing to find files that do exist are the usual sign.
+# Each entry must use src[:dest[:opts]] format, e.g. /nfs6:/nfs6 or /scratch:/scratch:rw
+# Leave blank or set to [] to use the cluster defaults only.

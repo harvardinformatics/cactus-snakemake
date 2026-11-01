@@ -1,0 +1,139 @@
+#############################################################################
+# This config file is a necessary input file for the main Cactus Snakemake
+# pipeline: cactus.smk. It contains the parameters needed to run the pipeline.
+# See: https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/progressive.md#running-step-by-step
+#############################################################################
+
+# Test config for the align pipeline on the evolverMammals dataset. Run it from tests/evolverMammals/,
+# since the paths below are relative to that directory:
+#   ../../cactus_snakemake prep align --configfile evolverMammals-align-cfg.yaml
+#   ../../cactus_snakemake run align --configfile evolverMammals-align-cfg.yaml -j 20 -e slurm --dryrun
+
+#############################################################################
+#
+# Below are the parameters you need to set for the cactus snakemake pipeline.
+#
+
+cactus_path: download
+# File path, version tag (e.g. v3.3.0), or "download".
+# Provide the path to the cactus singularity container. This is needed whether use_gpu is True or False.
+# With use_gpu: True, a version tag or "download" gets the GPU build of that version (don't add -gpu
+# yourself), and a file path must point to a GPU image.
+# If you don't have it, set this to "download" and prep will download it for you (once; every run then uses that image).
+# To download a specific version, give its full version tag, e.g. v3.3.0 or 3.3.0 (not 3.3, which YAML
+# reads as a number). Cactus v3.0.0 or later is required.
+
+input_file: evolverMammals.txt
+# File path.
+# File containing rooted Newick tree on the first line, and a list of tip labels and corresponding genome files on the following lines.
+
+output_dir: evolverMammals-align-out/
+# Directory path.
+# The desired output directory for the snakemake pipeline. This directory will be created if it doesn't exist.
+# This directory will be created if it doesn't exist.
+
+final_prefix: evolverMammals
+# String.
+# The prefix for the final output files. This will be used to name the final HAL file and the final MAF files.
+
+maf_reference: simHuman_chr6
+# String.
+# The reference genome for the MAF files. This should be the name of the reference genome in the input_file.
+
+maf_include_anc: False
+# True/False.
+# Whether to include the ancestral genomes in the MAF files. If False (the default), they are
+# left out (cactus-hal2maf --noAncestors).
+
+tmp_dir: /n/holylfs05/LABS/informatics/Lab/projects/gwct/tmp/evolverMammals/
+# Directory path.
+# A temporary directory for snakemake and cactus to use. Should have lots of space.
+
+use_gpu: False
+# True/False.
+# Whether or not to use the GPU version of cactus.
+# If you have GPU partitions and want to use them, set this to True.
+# If you don't have a GPU partition, set this to False.
+
+singularity_bind_paths:
+# Optional YAML list of extra Singularity bind paths to add to every container command.
+# Each entry must use src[:dest[:opts]] format, e.g. /nfs6:/nfs6 or /scratch:/scratch:rw
+# Leave blank or set to [] to use the cluster defaults only.
+
+#############################################################################
+## Below are the partitions and resources for each rule in the snakemake pipeline.
+## Be sure to adjust them to meet your needs and the resources available on your cluster.
+## Notably, for rule blast, if you use the GPU version of cactus you will need to
+## provide a partition with GPUs and set exactly one of the two options below:
+##   gpus: number of GPUs to request through Snakemake's gpu resource
+##   gres: GPU GRES request in any of these forms: 1, a100:2, gpu:1, gpu:a100:2
+##         If gpu: is omitted, the pipeline will add it.
+## If you are not using the cactus GPU version, both values will be ignored.
+##
+## The default: block fills in any value that a rule's own entry leaves blank, and is used in
+## full for rules that have no entry of their own.
+##
+## mem_mb is in MB
+## time is in minutes
+## Any resource except gpus and gres can be either a single value or a YAML list of per-attempt values.
+## If a list is provided, attempt 1 uses the first value, attempt 2 the second, etc.,
+## and attempts beyond the list length reuse the last value.
+## This requires Snakemake retries, e.g. --retries 3.
+## Example:
+##   blast:
+##     mem_mb: [80000, 160000, 200000]
+##     time: [1660, 3320, 6640, 7200]
+##
+## If you run with -e slurm --slurm-partition-config <path to your cluster's partition config>, partition names can be left blank.
+
+rule_resources:
+  default:
+    partition:
+    mem_mb: 30000
+    cpus: 8
+    gpus: 0
+    time: 60
+
+  preprocess:
+    partition:
+    mem_mb: 8000
+    cpus: 8
+    time: 30
+
+  blast:
+    partition: # If use_gpu is True, this must be a partition with GPUs
+    mem_mb: 50000
+    cpus: 24
+    gpus: # Use this for Snakemake's gpu resource; do not set together with gres
+    gres: 1 # Use this for Snakemake's gres resource, e.g. 1, a100:2, gpu:1, or gpu:a100:2
+    time: 120
+
+  align:
+    partition:
+    mem_mb: 25000
+    cpus: 24
+    time: 120
+
+  convert:
+    partition:
+    mem_mb: 8000
+    cpus: 8
+    time: 30
+
+  copy_hal:
+    partition:
+    mem_mb: 8000
+    cpus: 1
+    time: 30
+
+  append:
+    partition:
+    mem_mb: 8000
+    cpus: 8
+    time: 30
+
+  maf:
+    partition:
+    mem_mb: 25000
+    cpus: 8
+    time: 60

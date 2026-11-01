@@ -15,6 +15,7 @@ import subprocess
 import lib.cactuslib as CACTUSLIB
 from lib.cactuslib import spacedOut as SO
 import lib.updatelib as UPDATELIB
+import lib.preplib as PREPLIB
 
 from functools import partial
 
@@ -26,6 +27,7 @@ version_flag = config.get("version", False);
 info_flag = config.get("info", False);
 debug = config.get("debug", False);
 prep_only = config.get("prep", False);
+prep_force = config.get("prep_force", False);
 #debug = True;
 # A hacky way to get some custom command line arguments for the pipeline
 # These just control preprocessing flags that stop the pipeline early anyways
@@ -56,17 +58,20 @@ USE_GPU = config["use_gpu"]
 SINGULARITY_BIND_PATHS = config.get("singularity_bind_paths", []);
 # Optional extra host paths to bind into every singularity command
 
-CACTUS_PATH, CACTUS_PATH_TMP, VERSION_TAG = CACTUSLIB.parseCactusPath(config["cactus_path"], USE_GPU, MAIN, TMPDIR, SINGULARITY_BIND_PATHS, pad);
-# Parse the cactus path from the config file
+#############################################################################
+# Prep: the cactus image
 
-KEG_PATCH_FILE = None
-if USE_GPU:
-    # Normalize tag (strip leading "v"), grab the major version before the first dot,
-    # ensure it's numeric, and check if it's less than 3.
-    tag_major = str(VERSION_TAG).lstrip('v').split('.', 1)[0]
-    if tag_major.isdigit() and int(tag_major) < 3:
-        KEG_PATCH_FILE = CACTUSLIB.downloadKegPatch(OUTPUT_DIR, MAIN, VERSION_TAG)
-# Download the KEG patch file if using GPU cactus, and set the path to it
+if (prep_only or debug) and MAIN:
+    PREPLIB.runPrep("add-outgroup", config, OUTPUT_DIR, LOG_DIR, TMPDIR, MAIN, pad, force=prep_force);
+# Prep only runs when asked for with --config prep=T (or debug=T). This pipeline has no cactus prepare
+# step, so prep only resolves the cactus image and records it in a manifest
+
+PREP = PREPLIB.requirePrep("add-outgroup", config, OUTPUT_DIR, MAIN, pad, workflow.main_snakefile, workflow.configfiles);
+# Every other run, including each cluster job, reads the image from that manifest instead of
+# resolving it again, and stops if the manifest is missing or no longer matches the config
+
+CACTUS_PATH, CACTUS_PATH_TMP = CACTUSLIB.buildCactusCommands(PREP["cactus_image"], USE_GPU, TMPDIR, SINGULARITY_BIND_PATHS);
+# The singularity commands for the image recorded at prep
 
 #############################################################################
 # Input files and output paths
@@ -124,9 +129,7 @@ file_dict = { 'new-genome' : { 'fasta-orig' : os.path.abspath(GENOME_FASTA),
 
 PRE_INPUT_FILE = os.path.join(OUTPUT_DIR, "add-outgroup-pre.txt");
 POST_INPUT_FILE = os.path.join(OUTPUT_DIR, "add-outgroup-post.txt");
-if MAIN:
-    UPDATELIB.createAddOutgroupInputFiles(file_dict, PRE_INPUT_FILE, POST_INPUT_FILE, OUTPUT_DIR, pad);
-# Create some of the input files necessary for the pipeline
+# The input files for cactus-preprocess, blast and align, written by rule make_input_files
 
 ####################
 
@@ -162,7 +165,7 @@ if prep_only:
 # Final rule - rule that depends on final expected output file and initiates all
 # the other rules
 
-localrules: all
+localrules: all, make_input_files
 
 rule all:
     input:
@@ -199,6 +202,26 @@ rule get_root_fasta:
 
 ####################
 
+rule make_input_files:
+    input:
+        new_genome_fasta = GENOME_FASTA
+    output:
+        pre_in = PRE_INPUT_FILE,
+        post_in = POST_INPUT_FILE
+    params:
+        genome_name = GENOME_NAME,
+        bl_from_new = BL_FROM_NEW,
+        old_root = OLD_ROOT,
+        bl_from_old = BL_FROM_OLD,
+        new_root = NEW_ROOT
+    run:
+        UPDATELIB.createAddOutgroupInputFiles(file_dict, output.pre_in, output.post_in, OUTPUT_DIR, pad);
+## This rule writes the seqfiles for cactus-preprocess (pre and post) and blast/align (post), with the tree
+## joining the old root and the new genome under the new root. Run locally, since it only writes two small files.
+## The names and branch lengths are params so that changing them in the config reruns this rule and everything after it.
+
+####################
+
 rule preprocess:
     input:
         new_genome_fasta = GENOME_FASTA,
@@ -208,7 +231,7 @@ rule preprocess:
     output:
         preprocessed_genome_fasta = NEW_GENOME_FILE
     params:
-        path = CACTUS_PATH,
+        path = CACTUS_PATH_TMP,
         genome_name = GENOME_NAME,
         job_tmp_dir = os.path.join("/tmp", f"{GENOME_NAME}-preprocess"), # This is the tmp dir in the container, which is bound to the host tmp dir
         host_tmp_dir = os.path.join(TMPDIR, f"{GENOME_NAME}-preprocess"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
@@ -222,7 +245,7 @@ rule preprocess:
             "cactus-preprocess",
             params.job_tmp_dir,
             input.pre_in,
-            input.post_in,
+            CACTUSLIB.preprocessSeqFile(input.post_in, LOG_DIR, params.genome_name),
             "--inputNames", params.genome_name,
             "--logInfo",
             "--retryCount", "0",
@@ -244,7 +267,7 @@ rule blast:
     params:
         path = CACTUS_PATH_TMP, # Note that if USE_GPU is False, this will be the same as CACTUS_PATH_TMP
         node = NEW_ROOT,
-        post_in = POST_INPUT_FILE, # Note this has to be a param instead of an input or else it will retrigger each time the pipeline is run (since it is created during preprocessing)
+        post_in = POST_INPUT_FILE, # Written by rule make_input_files, which preprocess (and so this rule) already depends on
         job_tmp_dir = os.path.join("/tmp", f"{NEW_ROOT}-blast"), # This is the tmp dir in the container, which is bound to the host tmp dir
         host_tmp_dir = os.path.join(TMPDIR, f"{NEW_ROOT}-blast"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
         gpu_opt = USE_GPU,
@@ -285,9 +308,8 @@ rule align:
         hal_file = OUTPUT_HAL
     params:
         path = CACTUS_PATH_TMP,
-        post_in = POST_INPUT_FILE, # Note this has to be a param instead of an input or else it will retrigger each time the pipeline is run (since it is created during preprocessing)
+        post_in = POST_INPUT_FILE, # Written by rule make_input_files, which preprocess (and so this rule) already depends on
         node = NEW_ROOT,
-        keg_patch_file = KEG_PATCH_FILE,
         job_tmp_dir = os.path.join("/tmp", f"{NEW_ROOT}-align"), # This is the tmp dir in the container, which is bound to the host tmp dir
         host_tmp_dir = os.path.join(TMPDIR, f"{NEW_ROOT}-align"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
         work_dir = TMPDIR,
@@ -309,9 +331,6 @@ rule align:
             "--retryCount", "0",
             "--maxCores", str(resources.cpus_per_task),
         ];
-
-        if params.keg_patch_file:
-            cmd += ["--configFile", params.keg_patch_file];
 
         CACTUSLIB.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, params.node)
 ## This rule runs cactus-align for every internal node

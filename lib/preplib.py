@@ -1,0 +1,365 @@
+#############################################################################
+# Functions for the prep step of the cactus snakemake pipelines.
+#
+# Prep runs once, only when asked for (--config prep=T): it resolves the cactus
+# image, runs cactus-prepare (or the pipeline's equivalent), and records what it
+# did in a manifest in the output directory. Every other run of the pipeline,
+# including each cluster job, only reads that manifest and stops if it is
+# missing or no longer matches the config and input files.
+#
+# Gregg Thomas, October 2026
+#############################################################################
+
+import sys
+import os
+import hashlib
+import logging
+import yaml
+
+import lib.cactuslib as CACTUSLIB
+import lib.treelib as TREELIB
+import lib.updatelib as UPDATELIB
+from lib.cactuslib import spacedOut as SO
+
+#############################################################################
+
+CLOG = logging.getLogger('cactuslib')
+# Get the logger for the cactuslib module
+
+MANIFEST_NAME = "prep-manifest.yaml";
+# The manifest prep writes to the output directory
+
+#############################################################################
+
+def manifestPath(output_dir):
+    return os.path.join(output_dir, MANIFEST_NAME);
+
+#############################################################################
+
+def hashFile(path):
+# Returns the sha256 of a file. Only used on small files (input files and seqfiles),
+# never on genomes or HALs, since it runs every time a Snakefile is parsed.
+
+    sha256 = hashlib.sha256();
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            sha256.update(chunk);
+    return sha256.hexdigest();
+
+#############################################################################
+
+def getVersion():
+# Reads the cactus-snakemake version from lib/info.yaml, to record in the manifest
+
+    info_path = os.path.join(os.path.dirname(__file__), "info.yaml");
+    with open(info_path, "r") as f:
+        info = yaml.safe_load(f);
+    return str(info['version']);
+
+#############################################################################
+
+def usesGpu(pipeline, config):
+# Whether the pipeline runs the GPU cactus image. The minigraph pipeline always uses the CPU image,
+# whatever use_gpu says, as cactus_minigraph.smk always has.
+
+    if pipeline == "minigraph":
+        return False;
+    return bool(config.get("use_gpu", False));
+
+#############################################################################
+
+def fingerprint(pipeline, config):
+# The config values and input file contents a pipeline's prep step depends on. If any of these
+# change after prep, the prep outputs (and anything built from them) may no longer match.
+
+    fp = { "cactus_path" : str(config.get("cactus_path")),
+            "use_gpu" : usesGpu(pipeline, config) };
+    # Every pipeline's prep resolves the cactus image
+
+    if pipeline == "align":
+        fp["input_file_sha256"] = hashFile(os.path.abspath(config["input_file"]));
+    # cactus-prepare's output depends on the whole input file: the tree and the genome paths
+
+    if pipeline in ["add-genome", "replace-genome"]:
+        fp["input_hal"] = os.path.abspath(config["input_hal"]);
+        fp["new_genome_fasta"] = os.path.abspath(config["new_genome_fasta"]);
+    # cactus-update-prepare reads the input HAL and the new genome. Both are fingerprinted by path only:
+    # with overwrite_original_hal the pipeline edits the input HAL during the run, and genome-sized
+    # files are too big to hash on every parse.
+
+    if pipeline == "add-genome":
+        for key in ["new_genome_name", "new_branch_length", "parent_node", "child_node", "new_anc_node", "top_branch_length"]:
+            fp[key] = config[key];
+    # Where the new genome goes in the tree
+    elif pipeline == "replace-genome":
+        for key in ["replace", "new_genome_name"]:
+            fp[key] = config[key];
+    # Which genome is replaced, and by what
+
+    return fp;
+
+#############################################################################
+
+def compareFingerprint(prepped_fp, current_fp):
+# Lists every fingerprint value that differs between prep time and now
+
+    mismatches = [];
+    for key in sorted(set(prepped_fp) | set(current_fp)):
+        prepped_val = prepped_fp.get(key);
+        current_val = current_fp.get(key);
+        if prepped_val == current_val:
+            continue;
+
+        if key.endswith("_sha256"):
+            mismatches.append(f"{key[:-len('_sha256')]}: contents have changed since prep");
+        else:
+            mismatches.append(f"{key}: was {prepped_val!r} at prep, config now has {current_val!r}");
+
+    return mismatches;
+
+#############################################################################
+
+def checkGeneratedFiles(generated_files, output_dir):
+# Lists every file prep wrote that is now missing or has changed since prep
+
+    mismatches = [];
+    for rel_path, prepped_hash in generated_files.items():
+        path = os.path.join(output_dir, rel_path);
+        if not os.path.isfile(path):
+            mismatches.append(f"{rel_path}: written by prep, but no longer exists");
+        elif hashFile(path) != prepped_hash:
+            mismatches.append(f"{rel_path}: has been modified since prep");
+
+    return mismatches;
+
+#############################################################################
+
+def checkManifest(manifest, pipeline, config, output_dir):
+# All the reasons an existing manifest can't be used for this run. An empty list means it can.
+
+    if manifest.get("pipeline") != pipeline:
+        return [f"pipeline: this output directory was prepped for '{manifest.get('pipeline')}', not '{pipeline}'"];
+    # Nothing else is comparable if the manifest is for a different pipeline
+
+    mismatches = compareFingerprint(manifest["fingerprint"], fingerprint(pipeline, config));
+    mismatches += checkGeneratedFiles(manifest["generated_files"], output_dir);
+
+    if not os.path.isfile(manifest["cactus_image"]):
+        mismatches.append(f"cactus_image: {manifest['cactus_image']} no longer exists");
+    # Jobs run this exact image, so it has to still be there
+
+    return mismatches;
+
+#############################################################################
+
+def buildManifest(pipeline, config, cactus_image, version_tag, command, generated_files, output_dir):
+# The record of one prep run. Generated files are stored relative to the output directory,
+# with their sha256, so later runs can tell if they were changed or regenerated.
+
+    return { "pipeline" : pipeline,
+                "cactus_snakemake_version" : getVersion(),
+                "created" : CACTUSLIB.fmtDT(),
+                "cactus_image" : cactus_image,
+                "cactus_version_tag" : version_tag,
+                "fingerprint" : fingerprint(pipeline, config),
+                "prepare_command" : " ".join(command) if command else None,
+                "generated_files" : { os.path.relpath(f, output_dir) : hashFile(f) for f in generated_files } };
+
+#############################################################################
+
+def readManifest(manifest_file):
+    with open(manifest_file, "r") as f:
+        return yaml.safe_load(f);
+
+def writeManifest(manifest, manifest_file):
+    with open(manifest_file, "w") as f:
+        f.write("# Written by the cactus-snakemake prep step. Do not edit: every run checks it against the config and input files.\n");
+        yaml.safe_dump(manifest, f, sort_keys=False);
+
+#############################################################################
+
+def prepAlign(config, cactus_path, use_gpu, output_dir, log_dir, pad):
+# Prep for cactus.smk: runs cactus-prepare to label the tree's internal nodes and write the
+# seqfile the rest of the pipeline reads, then checks the result
+
+    input_file = os.path.abspath(config["input_file"]);
+
+    cactus_file, command = CACTUSLIB.runCactusPrepare(input_file, cactus_path, output_dir, None, use_gpu, log_dir, False);
+    # output_hal and dry_run are not used by runCactusPrepare
+
+    tips = TREELIB.readTips(input_file, False, pad);
+    internals, anc_tree = TREELIB.initializeInternals(cactus_file, tips, False, pad);
+    # Parse the result the same way the Snakefile will
+
+    missing_tips = [ name for name in tips if tips[name]['output'] == "NA" ];
+    if missing_tips:
+        CLOG.error(f"cactus-prepare output {cactus_file} has no sequence file for: {', '.join(missing_tips)}");
+        sys.exit(1);
+    # Every genome in the input file must appear in cactus-prepare's output
+
+    if config["maf_reference"] not in tips:
+        CLOG.error(f"maf_reference '{config['maf_reference']}' is not one of the genomes in {input_file}: {', '.join(tips)}");
+        sys.exit(1);
+    # Catch a bad MAF reference now, rather than after the whole alignment has run
+
+    return [cactus_file], command;
+
+#############################################################################
+
+def readSeqfileNames(seq_file):
+# The genome and node names listed in a cactus seqfile (every line after the tree)
+
+    with open(seq_file, "r") as f:
+        lines = [ line.strip() for line in f if line.strip() ];
+    return [ line.split("\t")[0] for line in lines[1:] ];
+
+#############################################################################
+
+def prepAddGenome(config, cactus_path, use_gpu, output_dir, log_dir, pad):
+# Prep for cactus_add_genome.smk: writes the new genome's input file and runs cactus-update-prepare
+# (add branch), which extracts the sequences it needs from the input HAL and writes seq_file.in/out
+
+    input_file = os.path.join(output_dir, "cactus-update-input.txt");
+    UPDATELIB.createUpdateInputFile(input_file, config["new_genome_name"], config["new_genome_fasta"], config["new_branch_length"], output_dir, pad);
+    # The input file for cactus-update-prepare, with the new genome and its branch length
+
+    top_bl = UPDATELIB.getTopBranchLength(config["top_branch_length"]);
+
+    command = UPDATELIB.runCactusUpdatePrepare(config["input_hal"], input_file, cactus_path, output_dir, "branch", use_gpu, log_dir, False,
+                                                config["parent_node"], config["child_node"], config["new_anc_node"], top_bl);
+    # dry_run is not used by runCactusUpdatePrepare
+
+    seq_in = os.path.join(output_dir, "seq_file.in");
+    seq_out = os.path.join(output_dir, "seq_file.out");
+
+    seq_names = readSeqfileNames(seq_out);
+    for name in [config["new_genome_name"], config["new_anc_node"]]:
+        if name not in seq_names:
+            CLOG.error(f"'{name}' is not in the cactus-update-prepare output {seq_out}: {', '.join(seq_names)}");
+            sys.exit(1);
+    # The rules are built around the new genome and the new ancestor, so both must be in seq_file.out
+
+    UPDATELIB.getOrigBranchLength(seq_out, config["child_node"], config["new_anc_node"], top_bl);
+    # Exits with an error if the split branch lengths don't add up to the original branch
+
+    return [input_file, seq_in, seq_out], command;
+
+#############################################################################
+
+def prepReplaceGenome(config, cactus_path, use_gpu, output_dir, log_dir, pad):
+# Prep for cactus_replace_genome.smk: writes the replacement genome's input file and runs
+# cactus-update-prepare (replace), which extracts the sequences it needs from the input HAL and
+# writes seq_file.in/out
+
+    input_file = os.path.join(output_dir, "cactus-replace-input.txt");
+    UPDATELIB.createReplaceInputFile(input_file, config["new_genome_name"], config["new_genome_fasta"], output_dir, pad);
+    # The input file for cactus-update-prepare, with the replacement genome
+
+    command = UPDATELIB.runCactusUpdatePrepare(config["input_hal"], input_file, cactus_path, output_dir, "replace", use_gpu, log_dir, False,
+                                                config["replace"], "", "", "");
+    # dry_run is not used by runCactusUpdatePrepare, and the last three arguments are only used to add a branch
+
+    seq_in = os.path.join(output_dir, "seq_file.in");
+    seq_out = os.path.join(output_dir, "seq_file.out");
+
+    seq_names = readSeqfileNames(seq_out);
+    if config["new_genome_name"] not in seq_names:
+        CLOG.error(f"'{config['new_genome_name']}' is not in the cactus-update-prepare output {seq_out}: {', '.join(seq_names)}");
+        sys.exit(1);
+    # The rules are built around the replacement genome, so it must be in seq_file.out
+
+    return [input_file, seq_in, seq_out], command;
+
+#############################################################################
+
+def runPrep(pipeline, config, output_dir, log_dir, tmp_dir, main, pad, force=False):
+# Runs the prep step for a pipeline and writes its manifest, unless a matching manifest already exists
+
+    manifest_file = manifestPath(output_dir);
+
+    if os.path.isfile(manifest_file):
+        mismatches = checkManifest(readManifest(manifest_file), pipeline, config, output_dir);
+
+        if not mismatches:
+            CLOG.info(SO("Prep is already up to date", pad) + manifest_file);
+            return;
+        # Nothing to do if the manifest still matches
+
+        if not force:
+            CLOG.error(f"Prep has already been run for {output_dir}, but these no longer match:");
+            for mismatch in mismatches:
+                CLOG.error(f"    {mismatch}");
+            CLOG.error("Files in the output directory were made from the earlier prep. To prep again anyway, add --force to cactus_snakemake prep (or prep_force=T to --config).");
+            sys.exit(1);
+        # A stale manifest is an error unless re-prepping was explicitly asked for
+
+        CLOG.warning(f"prep_force is set: running prep again for {output_dir}. These had changed:");
+        for mismatch in mismatches:
+            CLOG.warning(f"    {mismatch}");
+        CLOG.warning("Intermediate files already in the output directory were made from the earlier prep and may not match the new one. Nothing is deleted.");
+    ## Check any existing manifest first
+
+    use_gpu = usesGpu(pipeline, config);
+
+    cactus_image, version_tag = CACTUSLIB.resolveCactusImage(config["cactus_path"], use_gpu, main, pad);
+    cactus_path, cactus_path_tmp = CACTUSLIB.buildCactusCommands(cactus_image, use_gpu, tmp_dir, config.get("singularity_bind_paths", []));
+    # Resolve the cactus image once; every later run reads its path from the manifest
+
+    if pipeline == "align":
+        generated_files, command = prepAlign(config, cactus_path, use_gpu, output_dir, log_dir, pad);
+    elif pipeline == "add-genome":
+        generated_files, command = prepAddGenome(config, cactus_path, use_gpu, output_dir, log_dir, pad);
+    elif pipeline == "replace-genome":
+        generated_files, command = prepReplaceGenome(config, cactus_path, use_gpu, output_dir, log_dir, pad);
+    elif pipeline in ["add-outgroup", "minigraph"]:
+        generated_files, command = [], None;
+    # These pipelines have no prepare step: their input files are written by rules, so prep only resolves the image
+    else:
+        CLOG.error(f"No prep step is defined for pipeline '{pipeline}'.");
+        sys.exit(1);
+    # Run the pipeline-specific prep
+
+    manifest = buildManifest(pipeline, config, cactus_image, version_tag, command, generated_files, output_dir);
+    writeManifest(manifest, manifest_file);
+    CLOG.info(SO("Wrote prep manifest", pad) + manifest_file);
+
+#############################################################################
+
+def requirePrep(pipeline, config, output_dir, main, pad, snakefile, configfiles):
+# Loads the prep manifest for this output directory, or stops if prep hasn't been run or no
+# longer matches. Runs on every parse of the Snakefile, so it only reads small files.
+
+    manifest_file = manifestPath(output_dir);
+    configfile_args = ' '.join(str(f) for f in configfiles);
+    wrapper_cmd = f"{os.path.join(os.path.dirname(snakefile), 'cactus_snakemake')} prep {pipeline} --configfile {configfile_args}";
+    snakemake_cmd = f"snakemake -s {snakefile} --configfile {configfile_args} --config prep=T";
+    # The commands to run prep, with and without the wrapper, for the error messages (Snakemake gives the
+    # config files as Path objects)
+
+    if not os.path.isfile(manifest_file):
+        CLOG.error(f"No prep manifest found at {manifest_file}.");
+        CLOG.error("Prep must be run once for this output directory before the pipeline can run:");
+        CLOG.error(f"    {wrapper_cmd}");
+        CLOG.error("or, without the wrapper:");
+        CLOG.error(f"    {snakemake_cmd}");
+        sys.exit(1);
+
+    manifest = readManifest(manifest_file);
+    mismatches = checkManifest(manifest, pipeline, config, output_dir);
+    if mismatches:
+        CLOG.error(f"The prep manifest at {manifest_file} no longer matches this run:");
+        for mismatch in mismatches:
+            CLOG.error(f"    {mismatch}");
+        CLOG.error("Files in the output directory were made from that prep. If the change is intended, prep again with:");
+        CLOG.error(f"    {wrapper_cmd} --force");
+        CLOG.error("or, without the wrapper:");
+        CLOG.error(f"    {snakemake_cmd} prep_force=T");
+        sys.exit(1);
+
+    if main:
+        CLOG.info(SO("Using prep manifest", pad) + manifest_file);
+        CLOG.info(SO("Cactus image", pad) + f"{manifest['cactus_image']} ({manifest['cactus_version_tag']})");
+
+    return manifest;
+
+#############################################################################

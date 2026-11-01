@@ -15,6 +15,7 @@ import subprocess
 import lib.cactuslib as CACTUSLIB
 from lib.cactuslib import spacedOut as SO
 import lib.treelib as TREELIB
+import lib.preplib as PREPLIB
 
 from functools import partial
 
@@ -26,6 +27,7 @@ version_flag = config.get("version", False);
 info_flag = config.get("info", False);
 debug = config.get("debug", False);
 prep_only = config.get("prep", False);
+prep_force = config.get("prep_force", False);
 #debug = True;
 # A hacky way to get some custom command line arguments for the pipeline
 # These just control preprocessing flags that stop the pipeline early anyways
@@ -56,19 +58,6 @@ USE_GPU = config["use_gpu"]
 SINGULARITY_BIND_PATHS = config.get("singularity_bind_paths", []);
 # Optional extra host paths to bind into every singularity command
 
-CACTUS_PATH, CACTUS_PATH_TMP, VERSION_TAG = CACTUSLIB.parseCactusPath(config["cactus_path"], USE_GPU, MAIN, TMPDIR, SINGULARITY_BIND_PATHS, pad);
-# Parse the cactus path from the config file
-
-KEG_PATCH_FILE = None
-
-if USE_GPU:
-    # Normalize tag (strip leading "v"), grab the major version before the first dot,
-    # ensure it's numeric, and check if it's less than 3.
-    tag_major = str(VERSION_TAG).lstrip('v').split('.', 1)[0]
-    if tag_major.isdigit() and int(tag_major) < 3 and int(tag_major) > 0:
-        KEG_PATCH_FILE = CACTUSLIB.downloadKegPatch(OUTPUT_DIR, MAIN, VERSION_TAG)
-# Download the KEG patch file if using GPU cactus, and set the path to it
-
 #############################################################################
 # Input files and output paths
 
@@ -97,15 +86,22 @@ if MAIN:
 # The temporary/job directory specified in cactus-prepare
 
 #############################################################################
-# cactus-prepare
+# Prep: cactus-prepare and the cactus image
 
-if MAIN:
-    CACTUSLIB.runCactusPrepare(INPUT_FILE, CACTUS_PATH, OUTPUT_DIR, OUTPUT_HAL, USE_GPU, LOG_DIR, DRY_RUN);
-# if DRY_RUN:
-#     CACTUS_FILE = os.path.join("/tmp/", "cactus-smk-dryrun", os.path.basename(INPUT_FILE));
-#else:
+if (prep_only or debug) and MAIN:
+    PREPLIB.runPrep("align", config, OUTPUT_DIR, LOG_DIR, TMPDIR, MAIN, pad, force=prep_force);
+# Prep only runs when asked for with --config prep=T (or debug=T). It resolves the cactus image,
+# runs cactus-prepare to label the tree and write the seqfile, and records both in a manifest
+
+PREP = PREPLIB.requirePrep("align", config, OUTPUT_DIR, MAIN, pad, workflow.main_snakefile, workflow.configfiles);
+# Every other run, including each cluster job, reads that manifest instead of re-running prep,
+# and stops if it is missing or no longer matches the config and input file
+
+CACTUS_PATH, CACTUS_PATH_TMP = CACTUSLIB.buildCactusCommands(PREP["cactus_image"], USE_GPU, TMPDIR, SINGULARITY_BIND_PATHS);
+# The singularity commands for the image recorded at prep
+
 CACTUS_FILE = os.path.join(OUTPUT_DIR, os.path.basename(INPUT_FILE));
-# Run cactus-prepare to generate the cactus input file with ancestral nodes and labeled tree
+# The seqfile written by cactus-prepare, with ancestral nodes and the labeled tree
 
 #############################################################################
 # Reading files
@@ -214,7 +210,7 @@ rule preprocess:
             "cactus-preprocess",
             params.job_tmp_dir,
             params.input_file,
-            params.cactus_file,
+            CACTUSLIB.preprocessSeqFile(params.cactus_file, LOG_DIR, wildcards.final_tip),
             "--inputNames", params.genome_name,
             "--logInfo",
             "--retryCount", "0",
@@ -288,7 +284,6 @@ rule align:
         #config_file = os.path.join(OUTPUT_DIR, CONFIG_FILE),
         cactus_file = os.path.join(OUTPUT_DIR, CACTUS_FILE),
         node = lambda wildcards: wildcards.internal_node,
-        keg_patch_file = KEG_PATCH_FILE,
         #job_dir = lambda wildcards: os.path.join(TMPDIR, wildcards.internal_node + "-align"),
         host_tmp_dir = lambda wildcards: os.path.join(TMPDIR, wildcards.internal_node + "-align"), # This is the tmp dir for the host system, which is bound to /tmp in the singularity container
         job_tmp_dir = lambda wildcards: os.path.join("/tmp", wildcards.internal_node + "-align"), # This is the tmp dir in the container, which is bound to the host tmp dir
@@ -313,9 +308,6 @@ rule align:
             "--maxCores", str(resources.cpus_per_task),
             #"--defaultDisk", "450G"
         ];
-
-        if params.keg_patch_file:
-            cmd += ["--configFile", params.keg_patch_file];
 
         CACTUSLIB.runCommand(cmd, params.host_tmp_dir, log.job_log, params.rule_name, wildcards.internal_node)
 ## This rule runs cactus-align for every internal node

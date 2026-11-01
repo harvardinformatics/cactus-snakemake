@@ -1,0 +1,712 @@
+#!/usr/bin/env bash
+# cactus-snakemake pseudo-CLI. Subcommands:
+#   setup          - create/update (optionally --force recreate) the conda env from envs/environment.yml
+#   setup --export - print 'conda env export' for the current env (redirect to save a lock file)
+#   update         - check every dependency for a newer available version, prompt per-package,
+#                    and write approved bumps into envs/environment.yml. Never touches the real
+#                    environment itself - run plain 'setup' afterward to pick up the change.
+#                    --dry-run: report candidates without prompting or writing anything.
+#   check          - read-only: report whether the env exists and is up to date, and whether
+#                    singularity is on PATH; never modifies anything
+#                    (global --verbose adds env paths, hash comparison, and installed tool versions)
+#   init           - copy a pipeline's config template to a starter config
+#                    (init <pipeline> [-o PATH, default ./<pipeline>-config.yaml] [--force]);
+#                    no conda env needed
+#   prep           - activate the env and run a pipeline's prep step once for a config
+#                    (prep <pipeline> --configfile PATH [--force]): resolves the cactus image,
+#                    runs cactus-prepare or its equivalent, and writes the prep manifest
+#   run            - activate the env and exec snakemake on a pipeline's Snakefile with all remaining
+#                    args passed through untouched (run <pipeline> <snakemake args>); errors if
+#                    -s/--snakefile is given, since the pipeline name already picks the Snakefile;
+#                    warns if no --executor/-e is given and no Slurm allocation is detected
+#   version        - print the cactus-snakemake version from lib/info.yaml; no conda env needed
+#   help           - show usage
+#
+# Pipelines: align (cactus.smk), add-genome (cactus_add_genome.smk),
+# replace-genome (cactus_replace_genome.smk), add-outgroup (cactus_add_outgroup.smk),
+# minigraph (cactus_minigraph.smk).
+#
+# Env name override: --env-name NAME (must come before the subcommand) or the
+# CACTUS_SMK_ENV_NAME env var; flag takes precedence. Default: cactus-snakemake.
+# --env-name must precede the subcommand so it never collides with run's
+# "everything after run <pipeline> is untouched snakemake args" contract.
+#
+# --verbose/-v (also global, must precede the subcommand) echoes the underlying
+# conda/mamba/snakemake commands to stderr before running them.
+#
+# Adapted from the phyloacc_workflows wrapper in phyloacc-workflows.
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ENV_NAME="${CACTUS_SMK_ENV_NAME:-cactus-snakemake}"
+ENV_FILE="$SCRIPT_DIR/envs/environment.yml"
+VERBOSE=0
+PIPELINES="align, add-genome, replace-genome, add-outgroup, minigraph"
+
+usage() {
+    cat <<EOF
+Usage: $(basename "$0") [--env-name NAME] [--verbose] <command> [args...]
+
+Global options (must come before the command):
+  --env-name NAME         Name of the conda environment to use. Can also be set
+                          via the environment variable CACTUS_SMK_ENV_NAME. Must
+                          always be provided if not using the default environment
+                          name. Default: cactus-snakemake.
+  --verbose, -v           Echo the underlying conda/mamba/snakemake commands to
+                          stderr before running them. For 'check', also prints
+                          env paths, hash comparison, and installed tool versions.
+
+Pipelines:
+  align                   Progressive Cactus whole genome alignment (cactus.smk)
+  add-genome              Add a genome to an existing alignment by splitting a
+                          branch (cactus_add_genome.smk)
+  replace-genome          Replace a genome in an existing alignment
+                          (cactus_replace_genome.smk)
+  add-outgroup            Add a genome as a new outgroup above the root of an
+                          existing alignment (cactus_add_outgroup.smk)
+  minigraph               Minigraph-Cactus pangenome (cactus_minigraph.smk)
+
+Commands:
+  setup                   Create or update the conda environment from
+                          envs/environment.yml.
+    --force               Delete and recreate the environment from scratch
+                          instead of updating it. Destructive; prompts for
+                          explicit confirmation.
+    --export              Print 'conda env export' for the current environment
+                          instead of creating/updating it (redirect to a file
+                          to save a reproducibility lock file).
+  update                  Check every dependency in envs/environment.yml for a
+                          newer available version, prompt per-package, and
+                          write approved bumps into the file. Never touches
+                          the real environment - run plain 'setup' afterward
+                          to apply. Requires the environment to already exist.
+    --dry-run, --dryrun   Report available updates without prompting or
+                          writing anything.
+  check                   Report whether the conda environment exists and is
+                          up to date, and whether singularity is on PATH.
+                          Read-only; never creates, updates, or deletes anything.
+  init <pipeline>         Write a starter config for a pipeline, copied from its
+                          template in config-templates/. Fill in the blank
+                          fields before running prep. No conda env needed.
+    -o, --output PATH     Where to write the config.
+                          Default: ./<pipeline>-config.yaml.
+    --force               Overwrite PATH if it already exists.
+  prep <pipeline>         Run the pipeline's prep step once for a config:
+                          resolve the cactus image (downloading it if needed),
+                          run cactus-prepare or its equivalent, and record both
+                          in <output_dir>/prep-manifest.yaml. Every 'run' reads
+                          that manifest and stops if it is missing or stale.
+    --configfile PATH     The pipeline config (required).
+    --force               Prep again even though the config or input files have
+                          changed since the last prep. Files already in the
+                          output directory were made from the old prep.
+  run <pipeline> <snakemake-args>
+                          Activate the environment and run Snakemake on the
+                          pipeline's Snakefile, passing all arguments after the
+                          pipeline name through to snakemake untouched. Don't
+                          pass -s/--snakefile. Warns if no --executor/-e is given
+                          and no Slurm allocation is detected.
+  version                 Print the cactus-snakemake version. No conda env needed.
+  help, -h, --help        Show this help message.
+
+Examples:
+  $(basename "$0") setup
+  $(basename "$0") init align -o my-config.yaml
+  $(basename "$0") prep align --configfile my-config.yaml
+  $(basename "$0") run align --configfile my-config.yaml -j 20 -e slurm --dryrun
+  $(basename "$0") run align --configfile my-config.yaml -j 20 -e slurm
+  $(basename "$0") prep align --configfile my-config.yaml --force
+  $(basename "$0") setup --export > environment-lock.yml
+  $(basename "$0") update --dry-run
+  $(basename "$0") --verbose check
+  $(basename "$0") --env-name cactus-snakemake-test setup
+  CACTUS_SMK_ENV_NAME=cactus-snakemake-test $(basename "$0") setup
+EOF
+}
+
+# Echoes "$@" to stderr as a "+ cmd ..." trace line when VERBOSE is set, then runs it.
+run_cmd() {
+    if [[ "$VERBOSE" -eq 1 ]]; then
+        { printf '[cactus_snakemake] +'; printf ' %q' "$@"; printf '\n'; } >&2
+    fi
+    "$@"
+}
+
+# --- pipelines ---------------------------------------------------------------------------
+
+# Echoes the Snakefile for a pipeline name; returns 1 for an unknown name.
+pipeline_snakefile() {
+    case "$1" in
+        align)          echo "$SCRIPT_DIR/cactus.smk" ;;
+        add-genome)     echo "$SCRIPT_DIR/cactus_add_genome.smk" ;;
+        replace-genome) echo "$SCRIPT_DIR/cactus_replace_genome.smk" ;;
+        add-outgroup)   echo "$SCRIPT_DIR/cactus_add_outgroup.smk" ;;
+        minigraph)      echo "$SCRIPT_DIR/cactus_minigraph.smk" ;;
+        *)              return 1 ;;
+    esac
+}
+
+# Echoes the config template for a pipeline name; returns 1 for an unknown name.
+pipeline_template() {
+    case "$1" in
+        align)          echo "$SCRIPT_DIR/config-templates/config-template.yaml" ;;
+        add-genome)     echo "$SCRIPT_DIR/config-templates/add-genome-config-template.yaml" ;;
+        replace-genome) echo "$SCRIPT_DIR/config-templates/replace-genome-config-template.yaml" ;;
+        add-outgroup)   echo "$SCRIPT_DIR/config-templates/add-outgroup-config-template.yaml" ;;
+        minigraph)      echo "$SCRIPT_DIR/config-templates/minigraph-config-template.yaml" ;;
+        *)              return 1 ;;
+    esac
+}
+
+# Exits with an error unless $2 is a known pipeline name. $1 is the subcommand, for the message.
+require_pipeline() {
+    local subcommand="$1"
+    local pipeline="${2:-}"
+
+    if [[ -z "$pipeline" ]] || [[ "$pipeline" == -* ]]; then
+        echo "[cactus_snakemake] $subcommand: a pipeline name is required as the first argument ($PIPELINES)" >&2
+        usage >&2
+        exit 1
+    fi
+
+    if ! pipeline_snakefile "$pipeline" >/dev/null; then
+        echo "[cactus_snakemake] $subcommand: unknown pipeline '$pipeline' (use one of: $PIPELINES)" >&2
+        exit 1
+    fi
+}
+
+# --- conda context (only computed for setup/update/check/prep/run) ---------------------
+
+init_conda_context() {
+    if ! command -v conda >/dev/null 2>&1; then
+        echo "[cactus_snakemake] 'conda' was not found on PATH. Load or activate your conda installation (e.g. 'module load miniconda3', or source its conda.sh) and try again." >&2
+        exit 1
+    fi
+
+    if command -v mamba >/dev/null 2>&1; then
+        CONDA_CMD="mamba"
+    else
+        CONDA_CMD="conda"
+    fi
+
+    CONDA_BASE="$(conda info --base)"
+    # shellcheck disable=SC1091
+    source "$CONDA_BASE/etc/profile.d/conda.sh"
+
+    ENV_PREFIX="$CONDA_BASE/envs/$ENV_NAME"
+    HASH_FILE="$ENV_PREFIX/.environment.yml.sha256"
+}
+
+current_hash() {
+    sha256sum "$ENV_FILE" | cut -d' ' -f1
+}
+
+# Echoes exactly one of: missing | stale | ok. Always exits 0 - callers branch on the
+# echoed string, not on this function's exit status.
+describe_env_status() {
+    if [[ ! -d "$ENV_PREFIX" ]]; then
+        echo "missing"
+        return
+    fi
+
+    local current
+    current="$(current_hash)"
+
+    if [[ ! -f "$HASH_FILE" ]] || [[ "$(cat "$HASH_FILE")" != "$current" ]]; then
+        echo "stale"
+    else
+        echo "ok"
+    fi
+}
+
+# Exits with an error unless the environment exists and matches envs/environment.yml.
+require_env_ready() {
+    local status
+    status="$(describe_env_status)"
+
+    if [[ "$status" != "ok" ]]; then
+        echo "[cactus_snakemake] Environment '$ENV_NAME' is not ready ($status). Run '$(basename "$0") setup' first." >&2
+        exit 1
+    fi
+}
+
+# --- subcommands -------------------------------------------------------------------------
+
+cmd_check() {
+    if [[ $# -gt 0 ]]; then
+        echo "[cactus_snakemake] check: unknown argument '$1' (did you mean '--verbose' before the command?)" >&2
+        usage >&2
+        exit 1
+    fi
+
+    local status
+    local rc=0
+    status="$(describe_env_status)"
+
+    case "$status" in
+        missing)
+            echo "[cactus_snakemake] Environment '$ENV_NAME' is NOT installed. Run: $(basename "$0") setup" >&2
+            rc=1
+            ;;
+        stale)
+            echo "[cactus_snakemake] Environment '$ENV_NAME' exists but is STALE (envs/environment.yml has changed since it was last set up). Run: $(basename "$0") setup" >&2
+            rc=1
+            ;;
+        ok)
+            echo "[cactus_snakemake] Environment '$ENV_NAME' is up to date."
+            ;;
+    esac
+    print_verbose_env_details
+
+    # Cactus runs from a singularity image, and the pipelines call 'singularity' directly. It can't
+    # come from the conda environment, so it has to be on the system.
+    if command -v singularity >/dev/null 2>&1; then
+        echo "[cactus_snakemake] singularity found: $(command -v singularity)"
+    else
+        echo "[cactus_snakemake] 'singularity' was NOT found on PATH. The pipelines run Cactus with 'singularity exec'; load it (e.g. 'module load singularity') or install it. Apptainer installs usually provide a 'singularity' command." >&2
+        rc=1
+    fi
+
+    return "$rc"
+}
+
+# Extra diagnostic detail for global --verbose on `check`: paths, hash comparison, and
+# (if the env exists) installed versions of the packages listed in environment.yml.
+print_verbose_env_details() {
+    if [[ "$VERBOSE" -ne 1 ]]; then
+        return
+    fi
+
+    echo "[cactus_snakemake]   env prefix:  $ENV_PREFIX" >&2
+    echo "[cactus_snakemake]   hash file:   $HASH_FILE" >&2
+
+    if [[ -f "$HASH_FILE" ]]; then
+        echo "[cactus_snakemake]   stored hash: $(cat "$HASH_FILE")" >&2
+    else
+        echo "[cactus_snakemake]   stored hash: (none)" >&2
+    fi
+    echo "[cactus_snakemake]   current hash: $(current_hash)" >&2
+
+    if [[ -d "$ENV_PREFIX" ]]; then
+        echo "[cactus_snakemake]   installed versions:" >&2
+        { conda list -n "$ENV_NAME" 2>/dev/null \
+            | grep -Ei '^(python|snakemake-minimal|snakemake-executor-plugin-slurm|pyyaml|requests) ' \
+            | sed 's/^/[cactus_snakemake]     /' >&2; } || true
+    fi
+}
+
+cmd_setup_export() {
+    local status
+    status="$(describe_env_status)"
+
+    if [[ "$status" == "missing" ]]; then
+        echo "[cactus_snakemake] Environment '$ENV_NAME' is NOT installed; nothing to export. Run: $(basename "$0") setup" >&2
+        exit 1
+    fi
+
+    run_cmd conda env export -n "$ENV_NAME"
+}
+
+# Never touches the real environment - only inspects and rewrites envs/environment.yml.
+# Run plain 'setup' afterward to actually apply any changes it made.
+cmd_update() {
+    local dry_run=0
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --dry-run|--dryrun)
+                dry_run=1
+                shift
+                ;;
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            *)
+                echo "[cactus_snakemake] update: unknown argument '$1'" >&2
+                usage >&2
+                exit 1
+                ;;
+        esac
+    done
+
+    local status
+    status="$(describe_env_status)"
+
+    if [[ "$status" == "missing" ]]; then
+        echo "[cactus_snakemake] Environment '$ENV_NAME' is NOT installed; nothing to check. Run: $(basename "$0") setup" >&2
+        exit 1
+    fi
+
+    if [[ "$dry_run" -eq 1 ]]; then
+        run_cmd "$ENV_PREFIX/bin/python" "$SCRIPT_DIR/utils/check_env_updates.py" "$ENV_FILE" "$ENV_NAME" --dry-run
+    else
+        run_cmd "$ENV_PREFIX/bin/python" "$SCRIPT_DIR/utils/check_env_updates.py" "$ENV_FILE" "$ENV_NAME"
+    fi
+}
+
+cmd_setup() {
+    local force=0
+    local do_export=0
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --force)
+                force=1
+                shift
+                ;;
+            --export)
+                do_export=1
+                shift
+                ;;
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            *)
+                echo "[cactus_snakemake] setup: unknown argument '$1'" >&2
+                usage >&2
+                exit 1
+                ;;
+        esac
+    done
+
+    if [[ "$do_export" -eq 1 ]] && [[ "$force" -eq 1 ]]; then
+        echo "[cactus_snakemake] setup: --export and --force cannot be combined" >&2
+        exit 1
+    fi
+
+    if [[ "$do_export" -eq 1 ]]; then
+        cmd_setup_export
+        return
+    fi
+
+    local status
+    status="$(describe_env_status)"
+
+    if [[ "$force" -eq 1 ]] && [[ "$status" != "missing" ]]; then
+        echo "[cactus_snakemake] WARNING: --force will DELETE the existing conda environment '$ENV_NAME' ($ENV_PREFIX) and recreate it from scratch. This cannot be undone." >&2
+        read -r -p "[cactus_snakemake] Type 'yes' to confirm deletion of '$ENV_NAME': " confirm
+        if [[ "$confirm" != "yes" ]]; then
+            echo "[cactus_snakemake] Aborted; environment was not deleted." >&2
+            exit 1
+        fi
+        echo "[cactus_snakemake] Removing conda environment '$ENV_NAME' ..."
+        run_cmd "$CONDA_CMD" env remove -n "$ENV_NAME" -y
+        status="missing"
+    fi
+
+    case "$status" in
+        missing)
+            echo "[cactus_snakemake] Creating conda environment '$ENV_NAME' from $ENV_FILE ..."
+            run_cmd "$CONDA_CMD" env create -n "$ENV_NAME" -f "$ENV_FILE"
+            ;;
+        stale)
+            echo "[cactus_snakemake] envs/environment.yml has changed; updating '$ENV_NAME' ..."
+            run_cmd "$CONDA_CMD" env update -n "$ENV_NAME" -f "$ENV_FILE" --prune
+            ;;
+        ok)
+            echo "[cactus_snakemake] Environment '$ENV_NAME' is already up to date; nothing to do. (Use --force to recreate anyway.)"
+            return 0
+            ;;
+    esac
+
+    current_hash > "$HASH_FILE"
+    echo "[cactus_snakemake] Environment '$ENV_NAME' is ready."
+}
+
+# Warns (non-fatal) if this looks like an unintentional local run: no --executor/-e
+# given, and no active Slurm allocation ($SLURM_JOB_ID unset).
+warn_if_unallocated() {
+    local has_executor_arg=0
+    for arg in "$@"; do
+        case "$arg" in
+            -e|--executor|--executor=*)
+                has_executor_arg=1
+                break
+                ;;
+        esac
+    done
+
+    if [[ "$has_executor_arg" -eq 0 ]] && [[ -z "${SLURM_JOB_ID:-}" ]]; then
+        echo "[cactus_snakemake] WARNING: no --executor/-e given and no active Slurm allocation detected (\$SLURM_JOB_ID unset)." >&2
+        echo "[cactus_snakemake]          Snakemake will run entirely on this node. If this is a login node, pass '-e slurm' or request an interactive allocation first." >&2
+    fi
+}
+
+# Arguments are checked before the conda environment is touched, so mistakes fail fast.
+cmd_prep() {
+    if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+        usage
+        exit 0
+    fi
+    require_pipeline prep "${1:-}"
+    local pipeline="$1"
+    shift
+
+    local configfile=""
+    local force=0
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --configfile)
+                if [[ $# -lt 2 ]]; then
+                    echo "[cactus_snakemake] prep: --configfile requires a value" >&2
+                    exit 1
+                fi
+                configfile="$2"
+                shift 2
+                ;;
+            --configfile=*)
+                configfile="${1#*=}"
+                shift
+                ;;
+            --force)
+                force=1
+                shift
+                ;;
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            *)
+                # Snakemake keeps only the last --config it is given, so extra arguments that might
+                # include one can't be passed through without dropping prep=T
+                echo "[cactus_snakemake] prep: unknown argument '$1' (prep takes only --configfile and --force)" >&2
+                exit 1
+                ;;
+        esac
+    done
+
+    if [[ -z "$configfile" ]]; then
+        echo "[cactus_snakemake] prep: --configfile is required" >&2
+        exit 1
+    fi
+
+    if [[ ! -f "$configfile" ]]; then
+        echo "[cactus_snakemake] prep: config file '$configfile' not found" >&2
+        exit 1
+    fi
+
+    local snakefile
+    snakefile="$(pipeline_snakefile "$pipeline")"
+
+    local config_args=(prep=T)
+    if [[ "$force" -eq 1 ]]; then
+        config_args+=(prep_force=T)
+    fi
+
+    init_conda_context
+    require_env_ready
+    conda activate "$ENV_NAME"
+
+    if [[ "$VERBOSE" -eq 1 ]]; then
+        { printf '[cactus_snakemake] +'; printf ' %q' snakemake -s "$snakefile" --configfile "$configfile" --config "${config_args[@]}"; printf '\n'; } >&2
+    fi
+    exec snakemake -s "$snakefile" --configfile "$configfile" --config "${config_args[@]}"
+}
+
+# Arguments are checked before the conda environment is touched, so mistakes fail fast.
+cmd_run() {
+    if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+        usage
+        exit 0
+    fi
+    require_pipeline run "${1:-}"
+    local pipeline="$1"
+    shift
+
+    local snakefile
+    snakefile="$(pipeline_snakefile "$pipeline")"
+
+    for arg in "$@"; do
+        case "$arg" in
+            -s|--snakefile|--snakefile=*)
+                echo "[cactus_snakemake] run: don't pass -s/--snakefile; the pipeline name '$pipeline' already selects $snakefile" >&2
+                exit 1
+                ;;
+        esac
+    done
+
+    init_conda_context
+    require_env_ready
+    warn_if_unallocated "$@"
+
+    conda activate "$ENV_NAME"
+
+    if [[ "$VERBOSE" -eq 1 ]]; then
+        { printf '[cactus_snakemake] +'; printf ' %q' snakemake -s "$snakefile" "$@"; printf '\n'; } >&2
+    fi
+    exec snakemake -s "$snakefile" "$@"
+}
+
+# Writes a starter config by copying a pipeline's template, with a short header saying
+# what to do next. Pure file generation - reads only the template, needs no conda environment.
+cmd_init() {
+    if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+        usage
+        exit 0
+    fi
+    require_pipeline init "${1:-}"
+    local pipeline="$1"
+    shift
+
+    local out="./${pipeline}-config.yaml"
+    local force=0
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -o|--output)
+                if [[ $# -lt 2 ]]; then
+                    echo "[cactus_snakemake] init: -o/--output requires a value" >&2
+                    exit 1
+                fi
+                out="$2"
+                shift 2
+                ;;
+            -o=*|--output=*)
+                out="${1#*=}"
+                shift
+                ;;
+            --force)
+                force=1
+                shift
+                ;;
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            *)
+                echo "[cactus_snakemake] init: unknown argument '$1'" >&2
+                usage >&2
+                exit 1
+                ;;
+        esac
+    done
+
+    local template
+    template="$(pipeline_template "$pipeline")"
+    if [[ ! -f "$template" ]]; then
+        echo "[cactus_snakemake] init: config template not found at $template" >&2
+        exit 1
+    fi
+
+    if [[ -d "$out" ]]; then
+        echo "[cactus_snakemake] init: '$out' is a directory; give a file path with -o." >&2
+        exit 1
+    fi
+
+    if [[ -e "$out" ]] && [[ "$force" -eq 0 ]]; then
+        echo "[cactus_snakemake] init: '$out' already exists; use --force to overwrite." >&2
+        exit 1
+    fi
+
+    local out_dir
+    out_dir="$(dirname "$out")"
+    if [[ ! -d "$out_dir" ]]; then
+        echo "[cactus_snakemake] init: output directory '$out_dir' does not exist." >&2
+        exit 1
+    fi
+
+    {
+        printf '# Starter config for the cactus-snakemake %s pipeline, generated by "%s init %s"\n' "$pipeline" "$(basename "$0")" "$pipeline"
+        printf '# from config-templates/%s. Fill in the blank fields below; the OPTIONAL section\n' "$(basename "$template")"
+        printf '# at the end can be left blank.\n'
+        printf '\n'
+        cat "$template"
+    } > "$out"
+
+    echo "[cactus_snakemake] Wrote starter $pipeline config to '$out'."
+    echo "[cactus_snakemake]   Fill in the blank fields (the OPTIONAL section at the end can be left blank), then run:"
+    echo "[cactus_snakemake]     $(basename "$0") prep $pipeline --configfile '$out'"
+    echo "[cactus_snakemake]     $(basename "$0") run $pipeline --configfile '$out' -j <N> -e slurm --dryrun"
+}
+
+# Prints the version recorded in lib/info.yaml. Needs no conda environment.
+cmd_version() {
+    if [[ $# -gt 0 ]]; then
+        echo "[cactus_snakemake] version: unknown argument '$1'" >&2
+        exit 1
+    fi
+
+    local version
+    version="$(sed -n 's/^version:[[:space:]]*//p' "$SCRIPT_DIR/lib/info.yaml")"
+    if [[ -z "$version" ]]; then
+        echo "[cactus_snakemake] version: could not read the version from $SCRIPT_DIR/lib/info.yaml" >&2
+        exit 1
+    fi
+
+    echo "cactus-snakemake $version"
+}
+
+# --- main dispatch -----------------------------------------------------------------------
+
+# Global flags must precede the subcommand. Parsing stops at the first token that
+# isn't a recognized global flag, so it can never consume any of run's passthrough args.
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --env-name)
+            if [[ $# -lt 2 ]]; then
+                echo "[cactus_snakemake] --env-name requires a value" >&2
+                exit 1
+            fi
+            ENV_NAME="$2"
+            shift 2
+            ;;
+        --env-name=*)
+            ENV_NAME="${1#--env-name=}"
+            shift
+            ;;
+        --verbose|-v)
+            VERBOSE=1
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+if [[ $# -eq 0 ]]; then
+    usage >&2
+    exit 1
+fi
+
+subcommand="$1"
+shift
+
+case "$subcommand" in
+    help|-h|--help)
+        usage
+        exit 0
+        ;;
+    setup)
+        init_conda_context
+        cmd_setup "$@"
+        ;;
+    update)
+        init_conda_context
+        cmd_update "$@"
+        ;;
+    check)
+        init_conda_context
+        cmd_check "$@"
+        ;;
+    prep)
+        cmd_prep "$@"
+        ;;
+    run)
+        cmd_run "$@"
+        ;;
+    init)
+        cmd_init "$@"
+        ;;
+    version)
+        cmd_version "$@"
+        ;;
+    *)
+        echo "[cactus_snakemake] Unknown command: '$subcommand'" >&2
+        usage >&2
+        exit 1
+        ;;
+esac

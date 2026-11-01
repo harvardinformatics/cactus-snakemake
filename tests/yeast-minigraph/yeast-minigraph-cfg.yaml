@@ -7,67 +7,85 @@
 # https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/pangenome.md
 #############################################################################
 
-# time -p snakemake -j 5 -e slurm -s ../../cactus_minigraph.smk --configfile yeast-minigraph-cfg.yaml --dryrun
-
-# time -p snakemake -p split -j 5 -s ../../cactus_minigraph.smk --configfile yeast-minigraph-cfg.yaml --rulegraph | dot -Tpng -
-# time -p snakemake -p split -j 5 -s ../../cactus_minigraph.smk --configfile yeast-minigraph-cfg.yaml --dag | dot -Tpng -o
-
-# time -p snakemake -j 5 -s ../../cactus_minigraph.smk --configfile yeast-minigraph-cfg.yaml --rulegraph | dot -Tpng -o
-# time -p snakemake -j 5 -s ../../cactus_minigraph.smk --configfile yeast-minigraph-cfg.yaml --dag | dot -Tpng -o
+# Test config for the minigraph pipeline on the yeast-minigraph dataset. Run it from tests/yeast-minigraph/,
+# since the paths below are relative to that directory:
+#   ../../cactus_snakemake prep minigraph --configfile yeast-minigraph-cfg.yaml
+#   ../../cactus_snakemake run minigraph --configfile yeast-minigraph-cfg.yaml -j 20 -e slurm --dryrun
 
 #############################################################################
 #
-# Below are the parameters you need to set for the cactus snakemake pipeline.
-# YOU WILL NEED TO CHANGE THESE
+# Below are the parameters you need to set for the cactus-minigraph snakemake pipeline.
 #
 
 cactus_path: download
+# File path, version tag (e.g. v3.3.0), or "download".
 # Provide the path to the cactus singularity container. 
-# If you don't have it, set this to "download" and the pipeline will download it for you.
-# If you want to download a specific version, provide the version tag, e.g. v2.9.7
+# If you don't have it, set this to "download" and prep will download it for you (once; every run then uses that image).
+# To download a specific version, give its full version tag, e.g. v3.3.0 or 3.3.0 (not 3.3, which YAML
+# reads as a number). Cactus v3.0.0 or later is required.
 
 input_file: yeastPangenome-local.txt
+# File path.
 # File containing a list of sample IDs and genome files.
 
 output_dir: yeastPangenome-out/
+# Directory path.
 # The desired output directory for the snakemake pipeline. This directory will be created if it doesn't exist.
 # This directory will be created if it doesn't exist.
 
 reference: S288C
+# String
 # The reference genome for the pangenome. This should be the name of one of the genomes in the input_file.
 
 prefix: yeast
+# String
 # A prefix for the output files.
 
-join_graph_type: "clip"   # one of: full, clip, filter
+join_graph_type: clip
+# String. One of: full, clip, filter
 # Controls how the final pangenome graph is generated. See the cactus documentation for more details:
 # https://github.com/ComparativeGenomicsToolkit/cactus/blob/master/doc/pangenome.md#clipping-filtering-and-indexing
 
-join_filter: 2            # only relevant if join_graph_type: filter
+join_filter: 2
+# Integer
+# Only relevant for join_graph_type: filter
 # The minimum number of haplotypes that must be present in a node for it to be retained.
 
 tmp_dir: /n/holylfs05/LABS/informatics/Users/gthomas/tmp/yeastPangenome/
 # A temporary directory for snakemake and cactus to use. 
 # Will be created if it doesn't exist, but it should be located somewhere with lots of space.
 
+singularity_bind_paths:
+# Optional YAML list of extra Singularity bind paths to add to every container command.
+# Each entry must use src[:dest[:opts]] format, e.g. /nfs6:/nfs6 or /scratch:/scratch:rw
+# Leave blank or set to [] to use the cluster defaults only.
+
 #############################################################################
 ## Below are the partitions and resources for each rule in the snakemake pipeline.
 ## Be sure to adjust them to meet your needs and the resources available on your cluster.
 ##
-## The partitions are specific to the Harvard cluster. If you run this on a different cluster
-## you must change them.
+## The default: block fills in any value that a rule's own entry leaves blank, and is used in
+## full for rules that have no entry of their own.
 ##
 ## mem_mb is in MB
 ## time is in minutes
+## Any resource except gpus and gres can be either a single value or a YAML list of per-attempt values.
+## If a list is provided, attempt 1 uses the first value, attempt 2 the second, etc.,
+## and attempts beyond the list length reuse the last value.
+## This requires Snakemake retries, e.g. --retries 3.
+## Example:
+##   align:
+##     mem_mb: [80000, 160000, 200000]
+##     time: [1660, 3320, 6640, 7200]
 ##
-## If using the snakemake-executor-plugin-cannon (-e cannon), partition names can be left blank.
+## If you run with -e slurm --slurm-partition-config <path to your cluster's partition config>, partition names can be left blank.
 
 rule_resources:
   default:
     partition: shared
     mem_mb: 25000
     cpus: 1
-    time: 60  
+    time: 60
 
   copy_input:
     partition:
