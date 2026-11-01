@@ -1,9 +1,9 @@
-version: 3.5.0
-releasedate-major: 2025-06-19
-releasedate-minor: 2026-06-09
+version: 4.0.0
+releasedate-major: 2026-11-01
+releasedate-minor: 2026-11-01
 releasedate-patch: 2026-06-01
-latest-commit-date: 2026-06-09
-latest-commit-msg: "chore: [bump-minor]"
+latest-commit-date: 2026-11-01
+latest-commit-msg: "[major] Explicit prep step and cactus_snakemake wrapper (#22)"
 doi:
 link: https://github.com/harvardinformatics/cactus-snakemake
 #github: https://github.com/harvardinformatics/cactus-snakemake
