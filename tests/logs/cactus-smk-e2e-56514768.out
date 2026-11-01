@@ -1,0 +1,33 @@
+Repository:       /n/holylfs05/LABS/informatics/Lab/projects/gwct/dev/cactus-snakemake (wrapper @ 1e1ab4b)
+Snakemake:        /n/home07/gthomas/miniconda3/envs/cactus-tests/bin/snakemake (9.27.1)
+Partition config: /n/holylfs05/LABS/informatics/Everyone/internal-share/cannon-snakemake-cfg/cannon-snakemake.yml
+Run directory:    /n/holylfs05/LABS/informatics/Users/gthomas/tmp/cactus-smk-e2e/run-56514768
+Test image:       newest non-GPU cactus_v*.sif in tests/evolverMammals or tests/yeast-minigraph
+Started:          Fri Oct 30 22:05:05 EDT 2026
+
+============================= test session starts ==============================
+platform linux -- Python 3.11.11, pytest-8.3.5, pluggy-1.5.0 -- /n/home07/gthomas/miniconda3/envs/cactus-smk9/bin/python3.11
+cachedir: .pytest_cache
+rootdir: /n/holylfs05/LABS/informatics/Lab/projects/gwct/dev/cactus-snakemake
+configfile: pytest.ini
+collecting ... collected 5 items
+
+tests/integration/test_e2e.py::test_align PASSED                         [ 20%]
+tests/integration/test_e2e.py::test_add_genome PASSED                    [ 40%]
+tests/integration/test_e2e.py::test_replace_genome PASSED                [ 60%]
+tests/integration/test_e2e.py::test_add_outgroup PASSED                  [ 80%]
+tests/integration/test_e2e.py::test_minigraph PASSED                     [100%]
+
+============================== slowest durations ===============================
+2552.21s call     tests/integration/test_e2e.py::test_minigraph
+2152.43s setup    tests/integration/test_e2e.py::test_align
+1220.13s call     tests/integration/test_e2e.py::test_add_genome
+1046.67s call     tests/integration/test_e2e.py::test_replace_genome
+798.46s call     tests/integration/test_e2e.py::test_add_outgroup
+1.04s call     tests/integration/test_e2e.py::test_align
+
+(9 durations < 0.005s hidden.  Use -vv to show these durations.)
+======================== 5 passed in 7775.83s (2:09:35) ========================
+
+Finished:         Sat Oct 31 00:15:11 EDT 2026
+pytest exit code: 0

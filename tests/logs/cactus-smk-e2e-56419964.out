@@ -1,0 +1,102 @@
+Repository:       /n/holylfs05/LABS/informatics/Lab/projects/gwct/dev/cactus-snakemake (wrapper @ 3419ff2)
+Snakemake:        /n/home07/gthomas/miniconda3/envs/cactus-tests/bin/snakemake (9.27.1)
+Partition config: /n/holylfs05/LABS/informatics/Everyone/internal-share/cannon-snakemake-cfg/cannon-snakemake.yml
+Run directory:    /n/holylfs05/LABS/informatics/Users/gthomas/tmp/cactus-smk-e2e/run-56419964
+Test image:       newest non-GPU cactus_v*.sif in tests/evolverMammals or tests/yeast-minigraph
+Started:          Fri Oct 30 16:30:50 EDT 2026
+
+============================= test session starts ==============================
+platform linux -- Python 3.11.11, pytest-8.3.5, pluggy-1.5.0 -- /n/home07/gthomas/miniconda3/envs/cactus-smk9/bin/python3.11
+cachedir: .pytest_cache
+rootdir: /n/holylfs05/LABS/informatics/Lab/projects/gwct/dev/cactus-snakemake
+configfile: pytest.ini
+collecting ... collected 5 items
+
+tests/integration/test_e2e.py::test_align PASSED                         [ 20%]
+tests/integration/test_e2e.py::test_add_genome FAILED                    [ 40%]
+tests/integration/test_e2e.py::test_replace_genome PASSED                [ 60%]
+tests/integration/test_e2e.py::test_add_outgroup FAILED                  [ 80%]
+tests/integration/test_e2e.py::test_minigraph PASSED                     [100%]
+
+=================================== FAILURES ===================================
+_______________________________ test_add_genome ________________________________
+
+tmp_path = PosixPath('/n/holylfs05/LABS/informatics/Users/gthomas/tmp/cactus-smk-e2e/run-56419964/test_add_genome0')
+mammals_alignment = ({'cactus_path': '/n/holylfs05/LABS/informatics/Lab/projects/gwct/dev/cactus-snakemake/tests/evolverMammals/cactus_v3....92353ebc0d0738f4d8\n\nBuilding DAG of jobs...\nNothing to be done (all requested files are present and up to date).\n')
+image = '/n/holylfs05/LABS/informatics/Lab/projects/gwct/dev/cactus-snakemake/tests/evolverMammals/cactus_v3.3.0.sif'
+
+    def test_add_genome(tmp_path, mammals_alignment, image):
+        align_config, _ = mammals_alignment
+        config, resume_output = run_pipeline("add-genome", tmp_path, image, input_hal=output_hal(align_config))
+        assert_non_empty([output_hal(config)] + output_mafs(config))
+    
+        # The new leaf gets new_branch_length (the halAddToBranch fix), and the new ancestor sits
+        # top_branch_length below its parent
+        tree = hal_tree(image, output_hal(config))
+        assert branch_length(tree, config["new_genome_name"]) == pytest.approx(config["new_branch_length"])
+>       assert branch_length(tree, config["new_anc_node"]) == pytest.approx(config["top_branch_length"])
+
+tests/integration/test_e2e.py:116: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tree = '((simHuman_chr6:0.144018,((simMouse_chr6:0.084509,simRat_chr6:0.091589)mr:0.171974,simGorilla:0.075)AncGorilla:0.1)Anc1:0.020593,(simCow_chr6:0.18908,simDog_chr6:0.16303)Anc2:0.032898)Anc0;'
+name = 'AncGorilla'
+
+    def branch_length(tree, name):
+        match = re.search(rf"[(,]{re.escape(name)}:([0-9.eE+-]+)", tree)
+>       assert match, f"{name} with a branch length not found in {tree}"
+E       AssertionError: AncGorilla with a branch length not found in ((simHuman_chr6:0.144018,((simMouse_chr6:0.084509,simRat_chr6:0.091589)mr:0.171974,simGorilla:0.075)AncGorilla:0.1)Anc1:0.020593,(simCow_chr6:0.18908,simDog_chr6:0.16303)Anc2:0.032898)Anc0;
+E       assert None
+
+tests/integration/test_e2e.py:80: AssertionError
+______________________________ test_add_outgroup _______________________________
+
+tmp_path = PosixPath('/n/holylfs05/LABS/informatics/Users/gthomas/tmp/cactus-smk-e2e/run-56419964/test_add_outgroup0')
+mammals_alignment = ({'cactus_path': '/n/holylfs05/LABS/informatics/Lab/projects/gwct/dev/cactus-snakemake/tests/evolverMammals/cactus_v3....92353ebc0d0738f4d8\n\nBuilding DAG of jobs...\nNothing to be done (all requested files are present and up to date).\n')
+image = '/n/holylfs05/LABS/informatics/Lab/projects/gwct/dev/cactus-snakemake/tests/evolverMammals/cactus_v3.3.0.sif'
+
+    def test_add_outgroup(tmp_path, mammals_alignment, image):
+        align_config, _ = mammals_alignment
+        config, resume_output = run_pipeline("add-outgroup", tmp_path, image, input_hal=output_hal(align_config))
+        assert_non_empty([output_hal(config)] + output_mafs(config))
+    
+        # The old root and the new genome are joined under the new root
+        tree = hal_tree(image, output_hal(config))
+        assert re.search(rf"\){re.escape(config['new_root_name'])};?$", tree), tree
+        assert branch_length(tree, config["new_genome_name"]) == pytest.approx(config["branch_length_from_new_genome"])
+>       assert branch_length(tree, config["old_root_name"]) == pytest.approx(config["branch_length_from_old_root"])
+
+tests/integration/test_e2e.py:142: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tree = '(((simHuman_chr6:0.144018,(simMouse_chr6:0.084509,simRat_chr6:0.091589)mr:0.271974)Anc1:0.020593,(simCow_chr6:0.18908,simDog_chr6:0.16303)Anc2:0.032898)Anc0:0.1,simGorilla:0.075)newRoot;'
+name = 'Anc0'
+
+    def branch_length(tree, name):
+        match = re.search(rf"[(,]{re.escape(name)}:([0-9.eE+-]+)", tree)
+>       assert match, f"{name} with a branch length not found in {tree}"
+E       AssertionError: Anc0 with a branch length not found in (((simHuman_chr6:0.144018,(simMouse_chr6:0.084509,simRat_chr6:0.091589)mr:0.271974)Anc1:0.020593,(simCow_chr6:0.18908,simDog_chr6:0.16303)Anc2:0.032898)Anc0:0.1,simGorilla:0.075)newRoot;
+E       assert None
+
+tests/integration/test_e2e.py:80: AssertionError
+============================== slowest durations ===============================
+3307.81s call     tests/integration/test_e2e.py::test_minigraph
+3263.75s call     tests/integration/test_e2e.py::test_add_genome
+3122.88s call     tests/integration/test_e2e.py::test_add_outgroup
+2312.15s setup    tests/integration/test_e2e.py::test_align
+1578.97s call     tests/integration/test_e2e.py::test_replace_genome
+1.24s call     tests/integration/test_e2e.py::test_align
+0.09s setup    tests/integration/test_e2e.py::test_minigraph
+0.06s setup    tests/integration/test_e2e.py::test_replace_genome
+0.04s setup    tests/integration/test_e2e.py::test_add_outgroup
+0.04s setup    tests/integration/test_e2e.py::test_add_genome
+
+(5 durations < 0.005s hidden.  Use -vv to show these durations.)
+=========================== short test summary info ============================
+FAILED tests/integration/test_e2e.py::test_add_genome - AssertionError: AncGo...
+FAILED tests/integration/test_e2e.py::test_add_outgroup - AssertionError: Anc...
+================== 2 failed, 3 passed in 13593.68s (3:46:33) ===================
+ERROR conda.cli.main_run:execute(125): `conda run pytest tests/integration -v -ra --durations=0 --basetemp=/n/holylfs05/LABS/informatics/Users/gthomas/tmp/cactus-smk-e2e/run-56419964` failed. (See above for error)
+
+Finished:         Fri Oct 30 20:17:43 EDT 2026
+pytest exit code: 1
