@@ -13,7 +13,8 @@
 #
 # Each run writes to its own new directory, $E2E_ROOT/run-<SLURM job ID>, and
 # nothing there is deleted afterwards. Snakemake's logs for each pipeline are in
-# <that directory>/<test>/.snakemake/log/ while the run is going.
+# <that directory>/<test>/.snakemake/log/ while the run is going. This job's own
+# log, with the test results, goes to tests/logs/cactus-smk-e2e-<SLURM job ID>.out.
 #############################################################################
 
 #SBATCH --job-name=cactus-smk-e2e
@@ -23,7 +24,7 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=8G
 #SBATCH --time=2-00:00:00
-#SBATCH --output=cactus-smk-e2e-%j.out
+#SBATCH --output=tests/logs/cactus-smk-e2e-%j.out
 # The Cactus jobs take about 3-4 hours in total when the queue is quick; the long
 # time limit covers queue waits, which have added hours before.
 
