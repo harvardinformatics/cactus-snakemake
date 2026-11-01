@@ -121,10 +121,12 @@ CACTUS_SMK_RUN_E2E=1 CACTUS_SMK_E2E_ARGS="-e slurm -j 20 --slurm-partition-confi
 
 Tier 3 submits cluster jobs that write into the test output directories, so give pytest a `--basetemp` on storage the compute nodes can see. pytest's default is under `/tmp`, which is local to each node. pytest empties the `--basetemp` directory at the start of each run, so use one that holds nothing else.
 
+On a SLURM cluster, `utils/run_e2e.sbatch` runs tier 3 as a batch job. Submit it from the repository root with `sbatch utils/run_e2e.sbatch`. Each run gets a new `--basetemp` directory, and the job's log, with the test results, is written to `tests/logs/cactus-smk-e2e-<job ID>.out`. The settings at the top of the script are the conda environments, the partition config, and where run directories are made. Their defaults are the maintainer's, so override them from the environment, e.g. `E2E_ROOT=<dir on shared storage> PARTITION_CONFIG=<partition config> sbatch utils/run_e2e.sbatch`.
+
 | Tier | Location | What it checks | Needs | Time |
 | ---- | -------- | -------------- | ----- | ---- |
 | 1 | `tests/unit/` | Tree and seqfile parsing, resources, bind paths, prep manifests and fingerprints, and the `cactus_snakemake` wrapper's argument handling, `init` and `version` | Python, pyyaml, requests | seconds |
-| 2 | `tests/pipeline/` | Each pipeline's real prep step (in the container) and Snakemake dry-runs: prep outputs match the tracked files, job plans match the pre-v4 baselines, dry-runs change nothing, and changed configs are detected as stale | singularity, a local non-GPU Cactus image; the evolverMammals HAL for `add-genome`, `replace-genome` and `add-outgroup` | ~11 minutes |
+| 2 | `tests/pipeline/` | Each pipeline's real prep step (in the container) and Snakemake dry-runs: prep outputs match the tracked files, job plans match the pre-v4 baselines, dry-runs change nothing, and changed configs are detected as stale | singularity, a local non-GPU Cactus image; the evolverMammals HAL for `add-genome`, `replace-genome` and `add-outgroup` | ~15-20 minutes |
 | 3 | `tests/integration/` | Full runs of every pipeline, their outputs, and that a dry-run afterwards has nothing left to do | the above, plus cluster access | hours |
 
 Tier 1 runs on every pull request into `main` (`.github/workflows/tests.yml`). Tiers 2 and 3 need singularity and a Cactus image, so run them on the cluster before merging changes to the Snakefiles or `lib/`. Tests that need something missing are skipped, with the reason shown by `pytest -rs`.
